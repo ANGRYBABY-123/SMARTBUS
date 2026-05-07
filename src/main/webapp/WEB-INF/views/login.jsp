@@ -46,14 +46,6 @@
             cursor: pointer; margin-top: 8px; transition: background 0.2s;
         }
         .btn-submit:hover { background: #00c853; color: #000; }
-        .role-select { display: flex; gap: 8px; margin-bottom: 16px; }
-        .role-opt {
-            flex: 1; padding: 10px 6px; text-align: center; border: 1.5px solid #e0e0e0;
-            border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #666;
-            transition: all 0.15s;
-        }
-        .role-opt.selected, .role-opt:hover { border-color: #000; background: #000; color: #fff; }
-        .role-opt i { display: block; font-size: 1.3rem; margin-bottom: 4px; }
         .forgot-link { font-size: 0.8rem; color: #888; text-decoration: none; }
         .forgot-link:hover { color: #000; }
         .alert-box { border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; margin-bottom: 16px; }
@@ -138,32 +130,31 @@
     <!-- ── Register Form ── -->
     <div class="form-section" id="section-register">
         <form method="post" action="${pageContext.request.contextPath}/users/register" id="reg-form">
-            <!-- Role Picker -->
-            <div class="mb-4">
-                <label class="form-label">I am registering as a…</label>
-                <div class="role-select">
-                    <div class="role-opt selected" id="role-passenger" onclick="selectRole('PASSENGER')">
-                        <i class="bi bi-person-fill"></i>
-                        Passenger
-                    </div>
-                    <div class="role-opt" id="role-driver" onclick="selectRole('DRIVER')">
-                        <i class="bi bi-bus-front-fill"></i>
-                        Driver
-                    </div>
+            <!-- Role toggle -->
+            <div class="mb-3">
+                <div style="display:flex;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;">
+                    <button type="button" id="role-passenger" onclick="selectRole('PASSENGER')"
+                        style="flex:1;padding:9px 6px;border:none;background:#000;color:#fff;font-size:0.83rem;font-weight:700;cursor:pointer;transition:all .15s;">
+                        <i class="bi bi-person-fill me-1"></i>Passenger
+                    </button>
+                    <button type="button" id="role-driver" onclick="selectRole('DRIVER')"
+                        style="flex:1;padding:9px 6px;border:none;background:#fff;color:#999;font-size:0.83rem;font-weight:700;cursor:pointer;transition:all .15s;border-left:1.5px solid #e0e0e0;">
+                        <i class="bi bi-bus-front-fill me-1"></i>Driver
+                    </button>
                 </div>
                 <input type="hidden" name="registerRole" id="registerRole" value="PASSENGER">
             </div>
+
             <div class="mb-3">
                 <label class="form-label">Full Name</label>
                 <input type="text" name="name" class="form-control" required placeholder="Jane Doe" minlength="2" maxlength="100">
             </div>
             <div class="mb-3">
-                <label class="form-label">Email address</label>
+                <label class="form-label">Email</label>
                 <input type="email" name="email" class="form-control" required placeholder="you@example.com">
             </div>
-            <!-- Driver-only field -->
             <div class="mb-3" id="license-field" style="display:none">
-                <label class="form-label">Driver Licence / Registration Number</label>
+                <label class="form-label">Licence / Registration No.</label>
                 <input type="text" name="licenseNumber" id="licenseNumber" class="form-control" placeholder="e.g. DRV-00123" maxlength="50">
             </div>
             <div class="mb-3">
@@ -173,18 +164,18 @@
             <div class="mb-3">
                 <label class="form-label">Confirm Password</label>
                 <input type="password" name="confirmPassword" id="confirmPassword" class="form-control" required placeholder="Repeat password">
-                <div id="pw-match-msg" style="font-size:0.78rem; margin-top:4px;"></div>
+                <div id="pw-match-msg" style="font-size:0.78rem;margin-top:4px;"></div>
             </div>
-            <div class="alert-box" style="background:#fff8e1; border:1px solid #f9a825; color:#5d4037; border-radius:10px; padding:10px 14px; font-size:0.82rem; margin-bottom:14px;">
-                <i class="bi bi-clock-history me-1"></i>
-                <strong>Pending Approval:</strong> Your account will be reviewed by an administrator before you can sign in.
+
+            <div style="display:flex;align-items:flex-start;gap:8px;background:#fff8e1;border:1px solid #f9a825;border-radius:10px;padding:10px 12px;font-size:0.8rem;color:#5d4037;margin-bottom:14px;">
+                <i class="bi bi-clock-history" style="margin-top:1px;flex-shrink:0;"></i>
+                <span>Your account will be reviewed by an admin before you can sign in.</span>
             </div>
-            <button type="submit" class="btn-submit" id="reg-submit-btn">
-                <i class="bi bi-send-fill me-2"></i>Submit Registration Request
-            </button>
+
+            <button type="submit" class="btn-submit" id="reg-submit-btn">Create Account</button>
         </form>
-        <div style="text-align:center; margin-top:14px; font-size:0.8rem; color:#888;">
-            Already have an account? <a href="#" onclick="showTab('login'); return false;" style="color:#000; font-weight:700;">Sign in</a>
+        <div style="text-align:center;margin-top:14px;font-size:0.8rem;color:#888;">
+            Already have an account? <a href="#" onclick="showTab('login');return false;" style="color:#000;font-weight:700;">Sign in</a>
         </div>
     </div>
 </div>
@@ -206,8 +197,15 @@ function toggleForgot(e) {
 
 function selectRole(role) {
     document.getElementById('registerRole').value = role;
-    document.getElementById('role-passenger').classList.toggle('selected', role === 'PASSENGER');
-    document.getElementById('role-driver').classList.toggle('selected', role === 'DRIVER');
+    const pBtn = document.getElementById('role-passenger');
+    const dBtn = document.getElementById('role-driver');
+    if (role === 'PASSENGER') {
+        pBtn.style.background='#000'; pBtn.style.color='#fff';
+        dBtn.style.background='#fff'; dBtn.style.color='#999';
+    } else {
+        dBtn.style.background='#000'; dBtn.style.color='#fff';
+        pBtn.style.background='#fff'; pBtn.style.color='#999';
+    }
     const licField = document.getElementById('license-field');
     const licInput = document.getElementById('licenseNumber');
     if (role === 'DRIVER') {
