@@ -128,6 +128,17 @@ CREATE TABLE IF NOT EXISTS notifications (
     CONSTRAINT fk_notif_trip          FOREIGN KEY (trip_id) REFERENCES trips(trip_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- --------------------------------------------------------
+-- 10. remember_me_tokens
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS remember_me_tokens (
+    token      VARCHAR(64) NOT NULL,
+    user_id    BIGINT      NOT NULL,
+    expires_at DATETIME    NOT NULL,
+    CONSTRAINT pk_rmt      PRIMARY KEY (token),
+    CONSTRAINT fk_rmt_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ============================================================
 -- SEED DATA
 -- ============================================================

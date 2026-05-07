@@ -23,10 +23,11 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Deploy app at root context path (serves at / instead of /smartbus)
 COPY --from=build /app/target/smartbus.war /usr/local/tomcat/webapps/ROOT.war
 
-# Render injects a PORT env var – update Tomcat connector to match
-# Falls back to 8080 when running locally via `docker run`
+# Render injects PORT env var – patch HTTP connector to bind 0.0.0.0:$PORT
 CMD ["/bin/sh", "-c", \
-     "sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" \
-       /usr/local/tomcat/conf/server.xml && catalina.sh run"]
+     "PORT=${PORT:-8080} && \
+      sed -i \"s|<Connector port=\\\"8080\\\" protocol=\\\"HTTP/1.1\\\"|<Connector port=\\\"${PORT}\\\" address=\\\"0.0.0.0\\\" protocol=\\\"HTTP/1.1\\\"|g\" \
+        /usr/local/tomcat/conf/server.xml && \
+      catalina.sh run"]
 
 EXPOSE 8080

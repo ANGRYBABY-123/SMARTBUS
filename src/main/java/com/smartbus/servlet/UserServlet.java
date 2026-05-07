@@ -1,22 +1,31 @@
 package com.smartbus.servlet;
 
+import com.smartbus.dao.RememberMeDAO;
 import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
+import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet("/users/*")
 public class UserServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
+    private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+    private final UserDAO       userDAO       = new UserDAO();
+    private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -32,7 +41,22 @@ public class UserServlet extends HttpServlet {
                     req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                     return;
                 case "/logout":
-                    req.getSession().invalidate();
+                    // Clear remember-me cookie and DB token
+                    Cookie[] cookies = req.getCookies();
+                    if (cookies != null) {
+                        for (Cookie c : cookies) {
+                            if (COOKIE_NAME.equals(c.getName())) {
+                                rememberMeDAO.deleteByToken(c.getValue());
+                                Cookie clear = new Cookie(COOKIE_NAME, "");
+                                clear.setMaxAge(0);
+                                clear.setPath("/");
+                                clear.setHttpOnly(true);
+                                resp.addCookie(clear);
+                                break;
+                            }
+                        }
+                    }
+                    if (req.getSession(false) != null) req.getSession().invalidate();
                     resp.sendRedirect(req.getContextPath() + "/users/login");
                     return;
                 case "/register":
@@ -220,6 +244,16 @@ public class UserServlet extends HttpServlet {
             }
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedUser", user);
+
+            // Issue persistent remember-me cookie (30 days)
+            String token = UUID.randomUUID().toString().replace("-", "");
+            rememberMeDAO.save(new RememberMeToken(token, user, LocalDateTime.now().plusDays(30)));
+            Cookie rememberCookie = new Cookie(COOKIE_NAME, token);
+            rememberCookie.setMaxAge(COOKIE_MAX_AGE);
+            rememberCookie.setPath("/");
+            rememberCookie.setHttpOnly(true);
+            resp.addCookie(rememberCookie);
+
             String dest;
             if ("DRIVER".equals(user.getRole())) {
                 dest = "/driver/dashboard";
