@@ -227,6 +227,15 @@ public class UserServlet extends HttpServlet {
     private void deleteUser(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         Long id = Long.parseLong(req.getParameter("id"));
+        // Prevent admin from deleting themselves
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            User loggedUser = (User) session.getAttribute("loggedUser");
+            if (loggedUser != null && loggedUser.getUserId().equals(id)) {
+                resp.sendRedirect(req.getContextPath() + "/users/list?error=Cannot+delete+your+own+account");
+                return;
+            }
+        }
         userDAO.delete(id);
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }

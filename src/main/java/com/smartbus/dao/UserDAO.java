@@ -116,4 +116,26 @@ public class UserDAO extends GenericDAO<User> {
             em.close();
         }
     }
+
+    /** Delete a user and all related records (notifications, remember-me tokens). */
+    @Override
+    public void delete(Long id) {
+        EntityManager em = getEntityManager();
+        try {
+            em.getTransaction().begin();
+            // Remove child records that may not have CASCADE set by Hibernate
+            em.createQuery("DELETE FROM Notification n WHERE n.user.userId = :id").setParameter("id", id).executeUpdate();
+            em.createQuery("DELETE FROM RememberMeToken t WHERE t.user.userId = :id").setParameter("id", id).executeUpdate();
+            User user = em.find(User.class, id);
+            if (user != null) {
+                em.remove(user);
+            }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
 }
