@@ -34,8 +34,11 @@ public class AuthFilter implements Filter {
 
         String path = req.getRequestURI().substring(req.getContextPath().length());
 
-        // Always allow: login page, static resources
-        if (path.startsWith("/users/login") || path.startsWith("/WEB-INF/")) {
+        // Always allow: login, register, Google OAuth flow, static resources
+        if (path.startsWith("/users/login")
+                || path.startsWith("/users/register")
+                || path.startsWith("/oauth/google/")
+                || path.startsWith("/WEB-INF/")) {
             chain.doFilter(request, response);
             return;
         }

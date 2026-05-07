@@ -6,6 +6,26 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
+@NamedQueries({
+    @NamedQuery(
+        name  = "User.findByEmail",
+        query = "SELECT u FROM User u WHERE u.email = :email"),
+    @NamedQuery(
+        name  = "User.findByRole",
+        query = "SELECT u FROM User u WHERE u.role = :role ORDER BY u.name"),
+    @NamedQuery(
+        name  = "User.findByStatus",
+        query = "SELECT u FROM User u WHERE u.status = :status ORDER BY u.userId DESC"),
+    @NamedQuery(
+        name  = "User.findByGoogleId",
+        query = "SELECT u FROM User u WHERE u.googleId = :googleId"),
+    @NamedQuery(
+        name  = "User.countByEmail",
+        query = "SELECT COUNT(u) FROM User u WHERE u.email = :email"),
+    @NamedQuery(
+        name  = "User.searchByName",
+        query = "SELECT u FROM User u WHERE LOWER(u.name) LIKE :name ORDER BY u.name")
+})
 public class User {
 
     @Id
@@ -27,6 +47,9 @@ public class User {
 
     @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'")
     private String status = "ACTIVE";
+
+    @Column(name = "google_id", length = 100, unique = true)
+    private String googleId;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Notification> notifications;
@@ -52,6 +75,8 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
     public List<Notification> getNotifications() { return notifications; }
     public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
 }

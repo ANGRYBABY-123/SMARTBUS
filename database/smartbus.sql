@@ -21,8 +21,10 @@ CREATE TABLE IF NOT EXISTS users (
     password  VARCHAR(255) NOT NULL,
     role      VARCHAR(20)  NOT NULL,
     status    VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT pk_users     PRIMARY KEY (user_id),
-    CONSTRAINT uq_user_email UNIQUE (email)
+    google_id VARCHAR(100) NULL,
+    CONSTRAINT pk_users      PRIMARY KEY (user_id),
+    CONSTRAINT uq_user_email  UNIQUE (email),
+    CONSTRAINT uq_google_id   UNIQUE (google_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -139,19 +141,39 @@ CREATE TABLE IF NOT EXISTS remember_me_tokens (
     CONSTRAINT fk_rmt_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- --------------------------------------------------------
+-- 11. driver_schedules  (weekly recurring driver assignments)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS driver_schedules (
+    ds_id          BIGINT      NOT NULL AUTO_INCREMENT,
+    driver_id      BIGINT      NOT NULL,
+    bus_id         BIGINT      NOT NULL,
+    route_id       BIGINT      NOT NULL,
+    shift_type     VARCHAR(20) NOT NULL,
+    shift_start    TIME        NOT NULL,
+    shift_end      TIME        NOT NULL,
+    week_start_date DATE       NOT NULL,
+    published      TINYINT(1)  NOT NULL DEFAULT 0,
+    CONSTRAINT pk_driver_schedules      PRIMARY KEY (ds_id),
+    CONSTRAINT fk_ds_driver FOREIGN KEY (driver_id) REFERENCES drivers(driver_id),
+    CONSTRAINT fk_ds_bus    FOREIGN KEY (bus_id)    REFERENCES buses(bus_id),
+    CONSTRAINT fk_ds_route  FOREIGN KEY (route_id)  REFERENCES routes(route_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ============================================================
 -- SEED DATA
 -- ============================================================
+-- NOTE: Passwords below are plain-text for initial seeding convenience.
+-- The application automatically re-hashes them to BCrypt (work factor 12)
+-- the first time each account successfully logs in.
+-- For production, replace with pre-computed BCrypt hashes.
+-- ============================================================
 
--- Admin user (password: admin123)
+-- Single admin account (password: M@sydo123 — auto-migrated to BCrypt on first login)
 INSERT IGNORE INTO users (name, email, password, role, status) VALUES
-    ('Admin User',    'admin@smartbus.com',   'admin123',   'ADMIN',     'ACTIVE'),
-    ('John Driver',   'john@smartbus.com',    'driver123',  'DRIVER',    'ACTIVE'),
-    ('Alice Driver',  'alice@smartbus.com',   'driver123',  'DRIVER',    'ACTIVE'),
-    ('Bob Passenger', 'bob@smartbus.com',     'pass123',    'PASSENGER', 'ACTIVE'),
-    ('Eve Passenger', 'eve@smartbus.com',     'pass123',    'PASSENGER', 'ACTIVE');
+    ('Administrator', 'Maetsok01@gmail.com', 'M@sydo123', 'ADMIN', 'ACTIVE');
 
--- Drivers (link to user rows 2 and 3)
+-- Drivers (link driver-role users to the drivers table)
 INSERT IGNORE INTO drivers (driver_id, registration_number)
     SELECT user_id, CONCAT('DRV-', LPAD(user_id, 4, '0'))
     FROM users WHERE role = 'DRIVER';
@@ -181,3 +203,50 @@ INSERT IGNORE INTO schedules (route_id, departure_time, arrival_time) VALUES
 INSERT IGNORE INTO trips (driver_id, bus_id, route_id, start_time, status)
     SELECT d.driver_id, 1, 1, NOW(), 'SCHEDULED'
     FROM drivers d LIMIT 1;
+
+-- ============================================================
+-- TUT / TRIPONZA TEMPLATE SEED DATA
+-- Adds the Mon–Fri Soshanguve/Arcadia/Ga-Rankuwa routes,
+-- dedicated buses and driver accounts so the admin can
+-- immediately create weekly schedule entries.
+-- ============================================================
+
+-- TUT Buses (Bus 01–05)
+INSERT IGNORE INTO buses (registration_number, capacity) VALUES
+    ('BUS-TUT-01', 72),
+    ('BUS-TUT-02', 72),
+    ('BUS-TUT-03', 72),
+    ('BUS-TUT-04', 40),
+    ('BUS-TUT-05', 72);
+
+-- TUT Routes (Route 1–15 from the Triponza template)
+INSERT IGNORE INTO routes (route_name, start_location, end_location) VALUES
+    ('Route 1',  'Soshanguve North Campus', 'Pretoria Campus'),
+    ('Route 2',  'Soshanguve South Campus', 'Pretoria Campus'),
+    ('Route 3',  'Soshanguve North Campus', 'Arcadia Campus'),
+    ('Route 4',  'Ga-Rankuwa Campus',       'Pretoria Campus'),
+    ('Route 5',  'Ga-Rankuwa Campus',       'Arcadia Campus'),
+    ('Route 6',  'Arcadia Campus',          'Pretoria Campus'),
+    ('Route 7',  'Pretoria Campus',         'Arcadia Campus'),
+    ('Route 8',  'Arcadia Campus',          'Pretoria Campus'),
+    ('Route 9',  'Pretoria Campus',         'Arcadia Campus'),
+    ('Route 10', 'Pretoria Campus',         'Soshanguve North Campus'),
+    ('Route 11', 'Pretoria Campus',         'Soshanguve South Campus'),
+    ('Route 12', 'Arcadia Campus',          'Soshanguve North Campus'),
+    ('Route 13', 'Pretoria Campus',         'Ga-Rankuwa Campus'),
+    ('Route 14', 'Arcadia Campus',          'Ga-Rankuwa Campus'),
+    ('Route 15', 'Pretoria Campus',         'Arcadia Campus');
+
+-- TUT Driver user accounts (Driver A–E; password: driver123 — auto-migrated to BCrypt on first login)
+INSERT IGNORE INTO users (name, email, password, role, status) VALUES
+    ('Driver A', 'driver.a@triponza.ac.za', 'driver123', 'DRIVER', 'ACTIVE'),
+    ('Driver B', 'driver.b@triponza.ac.za', 'driver123', 'DRIVER', 'ACTIVE'),
+    ('Driver C', 'driver.c@triponza.ac.za', 'driver123', 'DRIVER', 'ACTIVE'),
+    ('Driver D', 'driver.d@triponza.ac.za', 'driver123', 'DRIVER', 'ACTIVE'),
+    ('Driver E', 'driver.e@triponza.ac.za', 'driver123', 'DRIVER', 'ACTIVE');
+
+INSERT IGNORE INTO drivers (driver_id, registration_number)
+    SELECT user_id, CONCAT('TUT-', LPAD(user_id, 4, '0'))
+    FROM users
+    WHERE email LIKE '%@triponza.ac.za' AND role = 'DRIVER';
+

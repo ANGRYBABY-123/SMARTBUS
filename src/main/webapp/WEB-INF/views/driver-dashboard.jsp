@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c"  uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,6 +74,21 @@
         #dd-submit:hover { background:#00c853; color:#000; }
         #dd-cancel { background:transparent; border:none; color:#aaa; width:100%; padding:8px; cursor:pointer; font-size:.85rem; margin-top:4px; }
         #dd-done { display:none; text-align:center; padding:16px 0 8px; color:#16a34a; font-weight:700; }
+        /* Schedule banner */
+        .sched-banner { position:fixed; top:58px; left:0; right:0; z-index:99; background:#0f2a4a; border-bottom:2px solid #3b82f6; padding:10px 16px; display:flex; align-items:flex-start; gap:10px; }
+        .sched-banner i { color:#60a5fa; font-size:1.1rem; flex-shrink:0; margin-top:2px; }
+        .sched-banner-text { font-size:.78rem; color:#cbd5e1; flex:1; line-height:1.45; }
+        .sched-banner-close { background:none; border:none; color:#64748b; font-size:1.1rem; cursor:pointer; padding:0 4px; flex-shrink:0; }
+        .sched-banner-close:hover { color:#f87171; }
+        /* Week schedule card */
+        .week-sched-card { background:#0f172a; border:1.5px solid #1e3a5f; border-radius:14px; padding:13px 15px; margin-bottom:10px; }
+        .week-sched-route { font-weight:700; font-size:.95rem; color:#e2e8f0; }
+        .week-sched-sub { font-size:.74rem; color:#64748b; margin-top:2px; }
+        .week-sched-meta { display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+        .shift-pill { font-size:.68rem; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:.06em; }
+        .shift-Morning  { background:#0d2a1f; color:#34d399; border:1px solid #064e3b; }
+        .shift-Afternoon{ background:#1e1a07; color:#fbbf24; border:1px solid #713f12; }
+        .shift-Shuttle  { background:#0d1f3c; color:#60a5fa; border:1px solid #1e3a5f; }
     </style>
 </head>
 <body>
@@ -88,6 +104,21 @@
         <i class="bi bi-box-arrow-right"></i>
     </a>
 </div>
+
+<%-- Schedule notification banner (shown when a new schedule has been posted) --%>
+<c:if test="${not empty scheduleNotifs}">
+<div class="sched-banner" id="sched-banner">
+    <i class="bi bi-calendar-check-fill"></i>
+    <div class="sched-banner-text">
+        <strong style="color:#60a5fa">New Schedule Posted</strong>&nbsp;
+        ${scheduleNotifs[0].message}
+        <c:if test="${fn:length(scheduleNotifs) > 1}">
+            &nbsp;<span style="color:#475569">+${fn:length(scheduleNotifs)-1} more</span>
+        </c:if>
+    </div>
+    <button class="sched-banner-close" onclick="document.getElementById('sched-banner').style.display='none'" title="Dismiss">&times;</button>
+</div>
+</c:if>
 
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" onclick="toggleSheet()"></div>
@@ -105,6 +136,35 @@
             <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Upcoming</div></div>
             <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Done</div></div>
         </div>
+        <%-- My Schedule This Week --%>
+        <c:if test="${not empty weekSchedule}">
+        <div class="section-lbl" style="margin-bottom:8px">
+            <i class="bi bi-calendar-week" style="color:#3b82f6"></i> My Schedule &mdash; Week of ${weekStart}
+        </div>
+        <c:forEach var="ds" items="${weekSchedule}">
+        <div class="week-sched-card">
+            <div class="week-sched-route">${ds.route.routeName}</div>
+            <div class="week-sched-sub">
+                <i class="bi bi-geo-alt"></i> ${ds.route.startLocation} &rarr; ${ds.route.endLocation}
+            </div>
+            <div class="week-sched-meta">
+                <span class="shift-pill shift-${ds.shiftType}">${ds.shiftType}</span>
+                <span style="font-size:.75rem;color:#94a3b8">
+                    <i class="bi bi-bus-front"></i> ${ds.bus.registrationNumber}
+                </span>
+                <span style="font-size:.75rem;font-family:monospace">
+                    <span style="color:#34d399">${ds.shiftStart}</span>&ndash;<span style="color:#f87171">${ds.shiftEnd}</span>
+                </span>
+            </div>
+        </div>
+        </c:forEach>
+        </c:if>
+        <c:if test="${empty weekSchedule}">
+        <div style="background:#0f172a;border:1px dashed #1e293b;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.78rem;color:#475569">
+            <i class="bi bi-calendar-x me-1"></i>No schedule posted for this week yet.
+        </div>
+        </c:if>
+
         <div class="section-lbl">My Trips</div>
         <c:choose>
             <c:when test="${not empty trips}">
@@ -129,8 +189,8 @@
                                 <div class="card-title">${t.route.routeName}</div>
                                 <div class="card-sub">
                                     <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                    &nbsp;·&nbsp;Trip #${t.tripId}
-                                    <c:if test="${t.startTime != null}">&nbsp;·&nbsp;<i class="bi bi-clock"></i> ${t.startTime}</c:if>
+                                    &nbsp;ï¿½&nbsp;Trip #${t.tripId}
+                                    <c:if test="${t.startTime != null}">&nbsp;ï¿½&nbsp;<i class="bi bi-clock"></i> ${t.startTime}</c:if>
                                 </div>
                             </div>
                             <c:choose>
@@ -162,13 +222,13 @@
 <div id="dd-overlay">
     <div id="dd-modal">
         <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Report a Delay</h5>
-        <p>Select a reason — all passengers on this trip will be notified instantly.</p>
+        <p>Select a reason ï¿½ all passengers on this trip will be notified instantly.</p>
         <button class="dd-reason" onclick="ddSelectReason(this,'Heavy traffic')">?? Heavy traffic</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Road accident ahead')">?? Road accident ahead</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Bus mechanical issue')">?? Bus mechanical issue</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Weather conditions')">??? Weather conditions</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Passenger boarding delay')">?? Boarding delay</button>
-        <input id="dd-custom" type="text" placeholder="Or type a custom reason…" maxlength="200" oninput="ddCustomReason(this)"/>
+        <input id="dd-custom" type="text" placeholder="Or type a custom reasonï¿½" maxlength="200" oninput="ddCustomReason(this)"/>
         <div id="dd-done">? Passengers have been notified!</div>
         <button id="dd-submit" onclick="submitDashDelay()">Send Alert</button>
         <button id="dd-cancel" onclick="closeDelayModal()">Cancel</button>

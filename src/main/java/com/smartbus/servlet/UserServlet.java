@@ -6,6 +6,8 @@ import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
+import com.smartbus.util.InputValidator;
+import com.smartbus.util.PasswordUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -191,24 +193,22 @@ public class UserServlet extends HttpServlet {
         String pwd     = req.getParameter("password");
 
         if (idParam != null && !idParam.isEmpty()) {
-            // Edit existing — update base fields only (role changes on existing users are
-            // intentionally kept as a base-field update to avoid complex table migrations)
+            // Edit existing — update base fields only
             User user = userDAO.findById(Long.parseLong(idParam));
             user.setName(name);
             user.setEmail(email);
             user.setRole(role);
             if (pwd != null && !pwd.trim().isEmpty()) {
-                user.setPassword(pwd);
+                user.setPassword(PasswordUtil.hash(pwd));
             }
             userDAO.save(user);
         } else {
-            // New user — persist the correct JPA subtype so JOINED-table rows are created.
-            // userDAO.save() calls em.merge() which uses the runtime type for JOINED inheritance.
+            // New user — persist the correct JPA subtype
             if ("DRIVER".equals(role)) {
                 Driver driver = new Driver();
                 driver.setName(name);
                 driver.setEmail(email);
-                driver.setPassword(pwd);
+                driver.setPassword(PasswordUtil.hash(pwd));
                 String regNum = req.getParameter("registrationNumber");
                 if (regNum == null || regNum.trim().isEmpty()) {
                     regNum = "DRV-" + System.currentTimeMillis() % 100000L;
@@ -216,9 +216,9 @@ public class UserServlet extends HttpServlet {
                 driver.setRegistrationNumber(regNum.trim().toUpperCase());
                 userDAO.save(driver);
             } else if ("PASSENGER".equals(role)) {
-                userDAO.save(new Passenger(name, email, pwd));
+                userDAO.save(new Passenger(name, email, PasswordUtil.hash(pwd)));
             } else {
-                userDAO.save(new User(name, email, pwd, role));
+                userDAO.save(new User(name, email, PasswordUtil.hash(pwd), role));
             }
         }
         resp.sendRedirect(req.getContextPath() + "/users/list");
@@ -283,10 +283,11 @@ public class UserServlet extends HttpServlet {
         }
 
         // Basic validation
-        if (name == null || name.trim().isEmpty()
-                || email == null || email.trim().isEmpty()
-                || password == null || password.length() < 6) {
-            req.setAttribute("error", "Please fill in all fields. Password must be at least 6 characters.");
+        if (InputValidator.anyBlank(name, email, password)
+                || !InputValidator.isValidEmail(email)
+                || !InputValidator.isValidPassword(password)
+                || !InputValidator.isValidName(name)) {
+            req.setAttribute("error", "Please fill in all fields correctly. Password must be at least 6 characters.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;
@@ -307,21 +308,24 @@ public class UserServlet extends HttpServlet {
         }
 
         // Check email uniqueness
-        if (userDAO.findByEmail(email.trim()) != null) {
+        if (userDAO.emailExists(email.trim())) {
             req.setAttribute("error", "An account with this email already exists. Please sign in.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;
         }
 
+        // Hash password before storing
+        String hashedPassword = PasswordUtil.hash(password);
+
         // Create PENDING user
         User pending;
         if ("DRIVER".equals(role)) {
-            Driver d = new Driver(name.trim(), email.trim(), password, licenseNumber.trim().toUpperCase());
+            Driver d = new Driver(name.trim(), email.trim(), hashedPassword, licenseNumber.trim().toUpperCase());
             d.setStatus("PENDING");
             pending = d;
         } else {
-            Passenger p = new Passenger(name.trim(), email.trim(), password);
+            Passenger p = new Passenger(name.trim(), email.trim(), hashedPassword);
             p.setStatus("PENDING");
             pending = p;
         }

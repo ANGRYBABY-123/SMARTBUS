@@ -144,4 +144,23 @@ public class NotificationDAO extends GenericDAO<Notification> {
             em.close();
         }
     }
+
+    /** SCHEDULE-type notifications for a driver, newest first (max 10). */
+    @SuppressWarnings("unchecked")
+    public List<Notification> findScheduleNotificationsByUser(Long userId) {
+        EntityManager em = getEntityManager();
+        try {
+            return em.createQuery(
+                "SELECT n FROM Notification n " +
+                "WHERE n.user.userId = :userId AND n.type = 'SCHEDULE' " +
+                "ORDER BY n.timestamp DESC")
+                .setParameter("userId", userId)
+                .setMaxResults(10)
+                .getResultList();
+        } catch (Exception e) {
+            return java.util.Collections.emptyList();
+        } finally {
+            em.close();
+        }
+    }
 }

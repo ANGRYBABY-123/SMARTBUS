@@ -1,6 +1,10 @@
 package com.smartbus.servlet;
 
+import com.smartbus.dao.DriverScheduleDAO;
+import com.smartbus.dao.NotificationDAO;
 import com.smartbus.dao.TripDAO;
+import com.smartbus.entity.DriverSchedule;
+import com.smartbus.entity.Notification;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
 import jakarta.servlet.ServletException;
@@ -9,13 +13,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @WebServlet("/driver/*")
 public class DriverServlet extends HttpServlet {
 
-    private final TripDAO tripDAO = new TripDAO();
+    private final TripDAO             tripDAO  = new TripDAO();
+    private final DriverScheduleDAO   dsDAO    = new DriverScheduleDAO();
+    private final NotificationDAO     notifDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -41,8 +49,21 @@ public class DriverServlet extends HttpServlet {
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User user = (User) req.getSession().getAttribute("loggedUser");
+
+        // Trips assigned to this driver
         List<Trip> trips = tripDAO.findByDriver(user.getUserId());
-        req.setAttribute("trips", trips);
+
+        // Current week's schedule (Monday of today's week)
+        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        List<DriverSchedule> weekSchedule = dsDAO.findByDriverAndWeek(user.getUserId(), weekStart);
+
+        // Unread SCHEDULE notifications for this driver
+        List<Notification> scheduleNotifs = notifDAO.findScheduleNotificationsByUser(user.getUserId());
+
+        req.setAttribute("trips",          trips);
+        req.setAttribute("weekSchedule",   weekSchedule);
+        req.setAttribute("weekStart",      weekStart);
+        req.setAttribute("scheduleNotifs", scheduleNotifs);
         req.getRequestDispatcher("/WEB-INF/views/driver-dashboard.jsp").forward(req, resp);
     }
 

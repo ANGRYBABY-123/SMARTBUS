@@ -7,6 +7,21 @@
 
     <display-name>SmartBus System</display-name>
 
+    <!--
+        Google OAuth 2.0 credentials.
+        Replace the placeholder values with your real credentials from:
+        https://console.cloud.google.com/apis/credentials
+        Authorised redirect URI to register: {app-base-url}/oauth/google/callback
+    -->
+    <context-param>
+        <param-name>google.client.id</param-name>
+        <param-value>YOUR_GOOGLE_CLIENT_ID</param-value>
+    </context-param>
+    <context-param>
+        <param-name>google.client.secret</param-name>
+        <param-value>YOUR_GOOGLE_CLIENT_SECRET</param-value>
+    </context-param>
+
     <!-- Default welcome page — routed through DashboardServlet so auth filter applies -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
