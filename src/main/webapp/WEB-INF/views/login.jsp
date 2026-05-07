@@ -1,243 +1,134 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SmartBus – Sign In</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            min-height: 100vh; margin: 0;
-            background: linear-gradient(135deg, #000 0%, #0d1b2a 60%, #1a3c5e 100%);
-            display: flex; align-items: flex-start; justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 20px 12px;
-        }
-        .auth-card {
-            background: #fff; border-radius: 20px; padding: 32px 28px;
-            width: 100%; max-width: 460px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        }
-        .brand { text-align: center; margin-bottom: 24px; }
-        .brand .logo { font-size: 2rem; font-weight: 900; color: #000; letter-spacing: -1px; }
-        .brand .logo span { color: #00c853; }
-        .brand .tagline { font-size: 0.82rem; color: #888; margin-top: 4px; }
-        .tabs { display: flex; gap: 0; border-radius: 12px; overflow: hidden; border: 1.5px solid #e0e0e0; margin-bottom: 24px; }
-        .tab-btn {
-            flex: 1; padding: 10px; font-size: 0.875rem; font-weight: 700;
-            background: #fff; border: none; cursor: pointer; color: #666;
-            transition: all 0.2s;
-        }
-        .tab-btn.active { background: #000; color: #fff; }
-        .form-section { display: none; }
-        .form-section.active { display: block; }
-        .form-label { font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 4px; }
-        .form-control {
-            border-radius: 10px; border: 1.5px solid #e0e0e0;
-            padding: 10px 14px; font-size: 0.9rem; transition: border-color 0.2s;
-        }
-        .form-control:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
-        .btn-submit {
-            background: #000; color: #fff; border: none; border-radius: 12px;
-            width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 800;
-            cursor: pointer; margin-top: 8px; transition: background 0.2s;
-        }
-        .btn-submit:hover { background: #00c853; color: #000; }
-        .forgot-link { font-size: 0.8rem; color: #888; text-decoration: none; }
-        .forgot-link:hover { color: #000; }
-        .alert-box { border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; margin-bottom: 16px; }
-        .alert-error { background: #fff2f2; color: #c0392b; border: 1px solid #f5c6cb; }
-        .alert-success { background: #f0fff4; color: #1a7a3a; border: 1px solid #b2dfdb; }
-        #forgot-panel { display: none; margin-top: 12px; background: #f8fafc; border-radius: 12px; padding: 16px; }
-        #forgot-panel.show { display: block; }
-        #forgot-panel p { font-size: 0.82rem; color: #555; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-<div class="auth-card">
-    <div class="brand">
-        <div class="logo"><i class="bi bi-bus-front-fill" style="color:#00c853"></i> Smart<span>Bus</span></div>
-        <div class="tagline">Real-time bus tracking & AI assistant</div>
-    </div>
-
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartBus - Sign In</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#0a3d2b 100%);display:flex;align-items:center;justify-content:center;font-family:Segoe UI,system-ui,sans-serif;padding:20px 16px}
+.card{background:#fff;border-radius:24px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.5);overflow:hidden}
+.card-hdr{background:linear-gradient(135deg,#0a0f1e,#0d2137);padding:26px 28px 20px;text-align:center}
+.brand-icon{font-size:2rem;color:#00e676}.brand-name{font-size:1.7rem;font-weight:900;color:#fff;letter-spacing:-.5px;margin-top:6px}.brand-name span{color:#00e676}.brand-tag{font-size:.77rem;color:#64748b;margin-top:4px}
+.tabs{display:flex;border-bottom:1px solid #f0f0f0;background:#fafafa}
+.tab-btn{flex:1;padding:12px 8px;font-size:.87rem;font-weight:700;border:none;background:transparent;color:#94a3b8;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab-btn.active{color:#0d1f38;border-bottom-color:#00c853;background:#fff}
+.card-body{padding:26px}
+.form-section{display:none}.form-section.active{display:block}
+.alert{border-radius:10px;padding:11px 14px;font-size:.82rem;margin-bottom:18px;display:flex;align-items:flex-start;gap:8px}
+.alert-error{background:#fff2f2;color:#c0392b;border:1px solid #fcc}
+.alert-success{background:#f0fff4;color:#15803d;border:1px solid #bbf7d0}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:12px;background:#fff;color:#374151;font-size:.9rem;font-weight:600;text-decoration:none;transition:border-color .2s,box-shadow .2s;margin-bottom:18px}
+.btn-google:hover{border-color:#4285F4;box-shadow:0 2px 8px rgba(66,133,244,.15);color:#374151}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.divider hr{flex:1;border:none;border-top:1px solid #e5e7eb}
+.divider span{font-size:.75rem;color:#9ca3af}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.field input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:.9rem;color:#111;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:#00c853;box-shadow:0 0 0 3px rgba(0,200,83,.12)}
+.field input::placeholder{color:#9ca3af}
+.remember{display:flex;align-items:center;gap:8px;font-size:.83rem;color:#6b7280;margin-bottom:6px;cursor:pointer}
+.remember input{accent-color:#000;width:15px;height:15px}
+.btn-main{width:100%;padding:13px;background:#000;color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:800;cursor:pointer;transition:background .2s;margin-top:6px}
+.btn-main:hover{background:#00c853;color:#000}
+.btn-main:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
+.link-row{text-align:center;margin-top:14px;font-size:.8rem;color:#9ca3af}
+.link-row a{color:#0d1f38;font-weight:700;text-decoration:none}
+.link-row a:hover{text-decoration:underline}
+.forgot{font-size:.8rem;color:#9ca3af;text-decoration:none;display:block;text-align:center;margin-top:10px}
+.forgot:hover{color:#374151}
+.forgot-panel{display:none;margin-top:14px;background:#f8fafc;border-radius:12px;padding:14px;font-size:.82rem;color:#555;border:1px solid #e5e7eb}
+.forgot-panel.show{display:block}
+.role-toggle{display:flex;border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.role-btn{flex:1;padding:11px 8px;border:none;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .18s}
+.role-btn.on{background:#0d1f38;color:#fff}
+.role-btn.off{background:#fff;color:#9ca3af;border-left:1.5px solid #e5e7eb}
+.pending-notice{display:flex;align-items:flex-start;gap:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;font-size:.8rem;color:#78350f;margin-bottom:14px}
+.pending-notice i{margin-top:1px;flex-shrink:0;color:#d97706}
+.pw-msg{font-size:.76rem;margin-top:4px;min-height:16px}
+</style></head><body>
+<div class="card">
+  <div class="card-hdr">
+    <div class="brand-icon"><i class="bi bi-bus-front-fill"></i></div>
+    <div class="brand-name">Smart<span>Bus</span></div>
+    <div class="brand-tag">Real-time bus tracking &amp; AI assistant</div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-login" onclick="showTab('login')"><i class="bi bi-box-arrow-in-right"></i> Sign In</button>
+    <button class="tab-btn" id="tab-register" onclick="showTab('register')"><i class="bi bi-person-plus"></i> Register</button>
+  </div>
+  <div class="card-body">
     <% if (request.getAttribute("error") != null) { %>
-    <div class="alert-box alert-error"><i class="bi bi-exclamation-triangle-fill me-2"></i><%= request.getAttribute("error") %></div>
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill"></i><span><%= request.getAttribute("error") %></span></div>
     <% } %>
     <% if (request.getAttribute("success") != null) { %>
-    <div class="alert-box alert-success"><i class="bi bi-check-circle-fill me-2"></i><%= request.getAttribute("success") %></div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i><span><%= request.getAttribute("success") %></span></div>
     <% } %>
-
-    <!-- Tabs -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('login')">Sign In</button>
-        <button class="tab-btn" onclick="showTab('register')" id="tab-register">Register</button>
-    </div>
-
-    <!-- ── Login Form ── -->
+    <!-- SIGN IN -->
     <div class="form-section active" id="section-login">
-
-        <!-- Google Sign-In (top) -->
-        <a href="${pageContext.request.contextPath}/oauth/google/init"
-           style="display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;color:#333;text-decoration:none;font-size:0.9rem;font-weight:600;transition:border-color .2s;margin-bottom:16px;"
-           onmouseover="this.style.borderColor='#4285F4'" onmouseout="this.style.borderColor='#e0e0e0'">
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
-            Login with Google
-        </a>
-
-        <!-- OR divider -->
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-            <hr style="flex:1;border:none;border-top:1px solid #e0e0e0;margin:0;">
-            <span style="color:#aaa;font-size:0.78rem;white-space:nowrap;">OR</span>
-            <hr style="flex:1;border:none;border-top:1px solid #e0e0e0;margin:0;">
-        </div>
-
-        <form method="post" action="${pageContext.request.contextPath}/users/login">
-            <div class="mb-3">
-                <label class="form-label">E-Mail</label>
-                <input type="email" name="email" class="form-control" required autofocus placeholder="you@example.com">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required placeholder="••••••••">
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="rememberMe" id="rememberMe" value="true">
-                <label class="form-check-label" for="rememberMe" style="font-size:0.85rem;color:#555;">Remember Me</label>
-            </div>
-            <button type="submit" class="btn-submit">Log in</button>
-            <div style="text-align:center;margin-top:10px;">
-                <a href="#" class="forgot-link" onclick="toggleForgot(event)" style="display:inline;text-align:center;">Forgot Your Password?</a>
-            </div>
-        </form>
-
-        <!-- Forgot password (client-side hint panel) -->
-        <div id="forgot-panel">
-            <p><i class="bi bi-info-circle me-1"></i> Please contact your system administrator to reset your password, or create a new passenger account using the <strong>New Passenger</strong> tab.</p>
-            <button class="btn-submit" style="background:#1a3c5e; font-size:0.82rem; padding:9px;" onclick="showTab('register')">
-                <i class="bi bi-person-plus me-1"></i>Create Passenger Account
-            </button>
-        </div>
+      <a href="${pageContext.request.contextPath}/oauth/google/init" class="btn-google">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+        Continue with Google
+      </a>
+      <div class="divider"><hr><span>or sign in with email</span><hr></div>
+      <form method="post" action="${pageContext.request.contextPath}/users/login">
+        <div class="field"><label>Email</label><input type="email" name="email" required autofocus placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" name="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+        <label class="remember"><input type="checkbox" name="rememberMe" value="true"> Remember me for 30 days</label>
+        <button type="submit" class="btn-main">Sign In</button>
+        <a href="#" class="forgot" onclick="toggleForgot(event)">Forgot password?</a>
+      </form>
+      <div class="forgot-panel" id="forgot-panel">
+        <p style="margin-bottom:10px"><i class="bi bi-info-circle"></i> Contact your admin to reset your password, or register a new account.</p>
+        <button class="btn-main" style="font-size:.82rem" onclick="showTab('register')"><i class="bi bi-person-plus"></i> Create New Account</button>
+      </div>
+      <div class="link-row">Don&apos;t have an account? <a href="#" onclick="showTab('register');return false;">Register</a></div>
     </div>
-
-        <div style="text-align:center; margin-top:16px; font-size:0.85rem; color:#888;">
-            Don't have an account? <a href="#" onclick="showTab('register'); return false;" style="color:#000; font-weight:700;">Register</a>
-        </div>
-    </div>
-
-    <!-- ── Register Form ── -->
+    <!-- REGISTER -->
     <div class="form-section" id="section-register">
-        <form method="post" action="${pageContext.request.contextPath}/users/register" id="reg-form">
-            <!-- Role toggle -->
-            <div class="mb-3">
-                <div style="display:flex;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;">
-                    <button type="button" id="role-passenger" onclick="selectRole('PASSENGER')"
-                        style="flex:1;padding:9px 6px;border:none;background:#000;color:#fff;font-size:0.83rem;font-weight:700;cursor:pointer;transition:all .15s;">
-                        <i class="bi bi-person-fill me-1"></i>Passenger
-                    </button>
-                    <button type="button" id="role-driver" onclick="selectRole('DRIVER')"
-                        style="flex:1;padding:9px 6px;border:none;background:#fff;color:#999;font-size:0.83rem;font-weight:700;cursor:pointer;transition:all .15s;border-left:1.5px solid #e0e0e0;">
-                        <i class="bi bi-bus-front-fill me-1"></i>Driver
-                    </button>
-                </div>
-                <input type="hidden" name="registerRole" id="registerRole" value="PASSENGER">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="name" class="form-control" required placeholder="Jane Doe" minlength="2" maxlength="100">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" class="form-control" required placeholder="you@example.com">
-            </div>
-            <div class="mb-3" id="license-field" style="display:none">
-                <label class="form-label">Licence / Registration No.</label>
-                <input type="text" name="licenseNumber" id="licenseNumber" class="form-control" placeholder="e.g. DRV-00123" maxlength="50">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" id="reg-password" class="form-control" required placeholder="At least 6 characters" minlength="6">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Confirm Password</label>
-                <input type="password" name="confirmPassword" id="confirmPassword" class="form-control" required placeholder="Repeat password">
-                <div id="pw-match-msg" style="font-size:0.78rem;margin-top:4px;"></div>
-            </div>
-
-            <div style="display:flex;align-items:flex-start;gap:8px;background:#fff8e1;border:1px solid #f9a825;border-radius:10px;padding:10px 12px;font-size:0.8rem;color:#5d4037;margin-bottom:14px;">
-                <i class="bi bi-clock-history" style="margin-top:1px;flex-shrink:0;"></i>
-                <span>Your account will be reviewed by an admin before you can sign in.</span>
-            </div>
-
-            <button type="submit" class="btn-submit" id="reg-submit-btn">Create Account</button>
-        </form>
-        <div style="text-align:center;margin-top:14px;font-size:0.8rem;color:#888;">
-            Already have an account? <a href="#" onclick="showTab('login');return false;" style="color:#000;font-weight:700;">Sign in</a>
+      <form method="post" action="${pageContext.request.contextPath}/users/register" id="reg-form">
+        <div class="role-toggle">
+          <button type="button" class="role-btn on" id="role-passenger" onclick="selectRole('PASSENGER')"><i class="bi bi-person-fill"></i> Passenger</button>
+          <button type="button" class="role-btn off" id="role-driver" onclick="selectRole('DRIVER')"><i class="bi bi-bus-front-fill"></i> Driver</button>
         </div>
+        <input type="hidden" name="registerRole" id="registerRole" value="PASSENGER">
+        <div class="field"><label>Full Name</label><input type="text" name="name" required placeholder="Jane Doe" minlength="2" maxlength="100"></div>
+        <div class="field"><label>Email</label><input type="email" name="email" required placeholder="you@example.com"></div>
+        <div class="field" id="license-field" style="display:none"><label>Licence / Registration No.</label><input type="text" name="licenseNumber" id="licenseNumber" placeholder="e.g. DRV-00123" maxlength="50"></div>
+        <div class="field"><label>Password</label><input type="password" name="password" id="reg-password" required placeholder="At least 6 characters" minlength="6"></div>
+        <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="confirmPassword" required placeholder="Repeat password"><div class="pw-msg" id="pw-match-msg"></div></div>
+        <div class="pending-notice"><i class="bi bi-clock-history"></i><span>Your account will be reviewed by an admin before you can sign in.</span></div>
+        <button type="submit" class="btn-main" id="reg-submit-btn">Create Account</button>
+      </form>
+      <div class="link-row">Already have an account? <a href="#" onclick="showTab('login');return false;">Sign in</a></div>
     </div>
+  </div>
 </div>
-
 <script>
-function showTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
-    });
-    document.getElementById('section-login').classList.toggle('active', tab === 'login');
-    document.getElementById('section-register').classList.toggle('active', tab === 'register');
-    document.getElementById('forgot-panel').classList.remove('show');
+function showTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('section-login').classList.toggle('active',tab==='login');
+  document.getElementById('section-register').classList.toggle('active',tab==='register');
+  if(tab==='login')document.getElementById('forgot-panel').classList.remove('show');
 }
-
-function toggleForgot(e) {
-    e.preventDefault();
-    document.getElementById('forgot-panel').classList.toggle('show');
+function toggleForgot(e){e.preventDefault();document.getElementById('forgot-panel').classList.toggle('show');}
+function selectRole(role){
+  document.getElementById('registerRole').value=role;
+  document.getElementById('role-passenger').className='role-btn '+(role==='PASSENGER'?'on':'off');
+  document.getElementById('role-driver').className='role-btn '+(role==='DRIVER'?'on':'off');
+  const show=role==='DRIVER';
+  const lf=document.getElementById('license-field');
+  const li=document.getElementById('licenseNumber');
+  lf.style.display=show?'block':'none';li.required=show;if(!show)li.value='';
 }
-
-function selectRole(role) {
-    document.getElementById('registerRole').value = role;
-    const pBtn = document.getElementById('role-passenger');
-    const dBtn = document.getElementById('role-driver');
-    if (role === 'PASSENGER') {
-        pBtn.style.background='#000'; pBtn.style.color='#fff';
-        dBtn.style.background='#fff'; dBtn.style.color='#999';
-    } else {
-        dBtn.style.background='#000'; dBtn.style.color='#fff';
-        pBtn.style.background='#fff'; pBtn.style.color='#999';
-    }
-    const licField = document.getElementById('license-field');
-    const licInput = document.getElementById('licenseNumber');
-    if (role === 'DRIVER') {
-        licField.style.display = 'block';
-        licInput.required = true;
-    } else {
-        licField.style.display = 'none';
-        licInput.required = false;
-        licInput.value = '';
-    }
-}
-
-// Password match validation
-const cp = document.getElementById('confirmPassword');
-const msg = document.getElementById('pw-match-msg');
-const regBtn = document.getElementById('reg-submit-btn');
-cp.addEventListener('input', function() {
-    const pw = document.getElementById('reg-password').value;
-    if (!this.value) { msg.textContent = ''; return; }
-    if (this.value === pw) {
-        msg.style.color = '#1a7a3a'; msg.textContent = '✓ Passwords match';
-        regBtn.disabled = false;
-    } else {
-        msg.style.color = '#c0392b'; msg.textContent = '✗ Passwords do not match';
-        regBtn.disabled = true;
-    }
+document.getElementById('confirmPassword').addEventListener('input',function(){
+  const pw=document.getElementById('reg-password').value;
+  const msg=document.getElementById('pw-match-msg');
+  const btn=document.getElementById('reg-submit-btn');
+  if(!this.value){msg.textContent='';btn.disabled=false;return;}
+  if(this.value===pw){msg.style.color='#15803d';msg.textContent='? Passwords match';btn.disabled=false;}
+  else{msg.style.color='#c0392b';msg.textContent='? Passwords do not match';btn.disabled=true;}
 });
-
-// If there's an error/success for register, open register tab
-<% if ("register".equals(request.getAttribute("tab"))) { %>
-showTab('register');
-<% } %>
-</script>
-</body>
-</html>
+<% if ("register".equals(request.getAttribute("tab"))) { %>showTab('register');<% } %>
+</script></body></html>
