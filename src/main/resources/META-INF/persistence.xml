@@ -18,7 +18,6 @@
         <class>com.smartbus.entity.GpsTracking</class>
         <class>com.smartbus.entity.Schedule</class>
         <class>com.smartbus.entity.Notification</class>
-        <class>com.smartbus.entity.ChatMessage</class>
 
         <properties>
             <!-- ===== DATABASE CONNECTION ===== -->
