@@ -1,4 +1,10 @@
-<%@ page contentType="text/html;charset=UTF-8" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><style>
+<%@ page contentType="text/html;charset=UTF-8" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ page import="com.smartbus.dao.UserDAO" %><%
+    int _pendingCount = 0;
+    com.smartbus.entity.User _navUser = (com.smartbus.entity.User) session.getAttribute("loggedUser");
+    if (_navUser != null && "ADMIN".equals(_navUser.getRole())) {
+        try { _pendingCount = new UserDAO().findPending().size(); } catch (Exception ignored) {}
+    }
+%><style>
 /* ============================================================
    SmartBus Admin – Global Dark Theme  (injected by navbar.jsp)
    ============================================================ */
@@ -54,7 +60,7 @@ String _wa=_u.contains("/weekly-schedule")?"active":"";
         <i class="bi bi-bus-front-fill"></i><span>SmartBus</span><span class="sub">ADMIN</span>
     </a>
     <div class="sb-div"></div>
-    <a href="${pageContext.request.contextPath}/users/list"     class="sb-lnk <%=_ua%>"><i class="bi bi-people-fill"></i>Personnel</a>
+    <a href="${pageContext.request.contextPath}/users/list"     class="sb-lnk <%=_ua%>"><i class="bi bi-people-fill"></i>Personnel<% if (_pendingCount > 0) { %><span style="background:#f57c00;color:#fff;border-radius:10px;font-size:.65rem;font-weight:700;padding:1px 6px;margin-left:4px;"><%=_pendingCount%></span><% } %></a>
     <a href="${pageContext.request.contextPath}/buses/list"     class="sb-lnk <%=_ba%>"><i class="bi bi-bus-front"></i>Fleet</a>
     <a href="${pageContext.request.contextPath}/routes/list"    class="sb-lnk <%=_ra%>"><i class="bi bi-map-fill"></i>Routes</a>
     <a href="${pageContext.request.contextPath}/trips/list"     class="sb-lnk <%=_ta%>"><i class="bi bi-signpost-split-fill"></i>Trip&nbsp;Dispatch</a>
