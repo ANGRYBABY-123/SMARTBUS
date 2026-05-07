@@ -2,7 +2,6 @@ package com.smartbus.dao;
 
 import com.smartbus.entity.Driver;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 public class DriverDAO extends GenericDAO<Driver> {

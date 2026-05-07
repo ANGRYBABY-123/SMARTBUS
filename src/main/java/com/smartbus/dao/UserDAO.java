@@ -4,7 +4,6 @@ import com.smartbus.entity.User;
 import com.smartbus.util.PasswordUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 public class UserDAO extends GenericDAO<User> {

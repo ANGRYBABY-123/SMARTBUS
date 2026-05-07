@@ -2,7 +2,6 @@ package com.smartbus.dao;
 
 import com.smartbus.util.JPAUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 

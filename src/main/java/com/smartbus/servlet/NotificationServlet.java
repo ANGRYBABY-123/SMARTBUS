@@ -2,7 +2,6 @@ package com.smartbus.servlet;
 
 import com.smartbus.dao.NotificationDAO;
 import com.smartbus.dao.TripDAO;
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.Notification;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
@@ -23,7 +22,6 @@ public class NotificationServlet extends HttpServlet {
 
     private final NotificationDAO notifDAO = new NotificationDAO();
     private final TripDAO         tripDAO  = new TripDAO();
-    private final UserDAO         userDAO  = new UserDAO();
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 

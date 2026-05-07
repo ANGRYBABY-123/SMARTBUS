@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -118,7 +119,7 @@ public class AiServlet extends HttpServlet {
     private String callGemini(String prompt) {
         try {
             String body = "{\"contents\":[{\"parts\":[{\"text\":" + jsonString(prompt) + "}]}]}";
-            URL url = new URL(GEMINI_URL);
+            URL url = URI.create(GEMINI_URL).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");

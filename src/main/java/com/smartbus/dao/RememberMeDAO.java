@@ -6,7 +6,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class RememberMeDAO {
 
