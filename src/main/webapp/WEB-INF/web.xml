@@ -15,11 +15,11 @@
     -->
     <context-param>
         <param-name>google.client.id</param-name>
-        <param-value>YOUR_GOOGLE_CLIENT_ID</param-value>
+        <param-value>226760208652-61mt2u1vlqg1m0co57v6p3m951srg9ha.apps.googleusercontent.com</param-value>
     </context-param>
     <context-param>
         <param-name>google.client.secret</param-name>
-        <param-value>YOUR_GOOGLE_CLIENT_SECRET</param-value>
+        <param-value>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</param-value>
     </context-param>
 
     <!-- Default welcome page — routed through DashboardServlet so auth filter applies -->
