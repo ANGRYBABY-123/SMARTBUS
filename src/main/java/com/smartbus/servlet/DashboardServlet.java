@@ -30,6 +30,6 @@ public class DashboardServlet extends HttpServlet {
         req.setAttribute("activeTripsList", activeTripsList);
         req.setAttribute("totalRoutes", routeDAO.findAll().size());
         req.setAttribute("totalUsers",  userDAO.findAll().size());
-        req.getRequestDispatcher("/index.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/views/dashboard.jsp").forward(req, resp);
     }
 }
