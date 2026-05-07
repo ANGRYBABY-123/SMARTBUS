@@ -1,0 +1,24 @@
+# Build outputs
+target/
+
+# Git metadata
+.git/
+.gitignore
+
+# Local dev scripts
+*.bat
+*.sh
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+.settings/
+
+# macOS noise
+.DS_Store
+
+# Local Cargo/Tomcat downloads (can be several GB)
+.cargo/

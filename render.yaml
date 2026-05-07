@@ -1,0 +1,39 @@
+# Render Blueprint – https://render.com/docs/blueprint-spec
+#
+# HOW TO USE
+# ──────────────────────────────────────────────────────────────────────────────
+# 1. Push this repo to GitHub / GitLab.
+# 2. On render.com → New → Blueprint → connect your repo.
+# 3. Fill in the four secret env vars (DB_HOST, DB_USER, DB_PASS, DB_NAME).
+#    Recommended MySQL providers (free tier available):
+#      • PlanetScale  https://planetscale.com
+#      • Railway      https://railway.app
+#      • Aiven        https://aiven.io
+#      • TiDB Cloud   https://tidbcloud.com
+# 4. Deploy – Render will build the Docker image and start the app at
+#    https://<service-name>.onrender.com/login
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: smartbus
+    runtime: docker
+    plan: free          # upgrade to `starter` for no spin-down
+    healthCheckPath: /login
+
+    envVars:
+      # ── Database connection ───────────────────────────────────────────────
+      - key: DB_HOST
+        sync: false     # set manually in Render dashboard (never commit secrets)
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: smartbus
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+
+      # ── Optional JVM tuning ───────────────────────────────────────────────
+      - key: JAVA_OPTS
+        value: "-Xms128m -Xmx400m -XX:+UseContainerSupport"

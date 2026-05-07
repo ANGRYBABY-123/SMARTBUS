@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+             https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="SmartBusPU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Entities -->
+        <class>com.smartbus.entity.User</class>
+        <class>com.smartbus.entity.Passenger</class>
+        <class>com.smartbus.entity.Driver</class>
+        <class>com.smartbus.entity.Bus</class>
+        <class>com.smartbus.entity.Route</class>
+        <class>com.smartbus.entity.Trip</class>
+        <class>com.smartbus.entity.GpsTracking</class>
+        <class>com.smartbus.entity.Schedule</class>
+        <class>com.smartbus.entity.Notification</class>
+        <class>com.smartbus.entity.ChatMessage</class>
+
+        <properties>
+            <!-- ===== DATABASE CONNECTION ===== -->
+            <!-- Override any value at startup with env vars: DB_HOST, DB_PORT, DB_USER, DB_PASS -->
+            <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/smartbus?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
+            <property name="jakarta.persistence.jdbc.user"     value="root"/>
+            <property name="jakarta.persistence.jdbc.password" value="M@sydo123"/>
+
+            <!-- ===== HIBERNATE SETTINGS ===== -->
+            <property name="hibernate.dialect"          value="org.hibernate.dialect.MySQLDialect"/>
+            <!-- update = auto-create/alter tables on startup -->
+            <property name="hibernate.hbm2ddl.auto"    value="update"/>
+            <property name="hibernate.show_sql"         value="true"/>
+            <property name="hibernate.format_sql"       value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+
+            <!-- ===== CONNECTION POOL (HikariCP) ===== -->
+            <property name="hibernate.connection.provider_class"
+                      value="org.hibernate.hikaricp.internal.HikariCPConnectionProvider"/>
+            <property name="hibernate.hikari.minimumIdle"       value="2"/>
+            <property name="hibernate.hikari.maximumPoolSize"   value="10"/>
+            <property name="hibernate.hikari.connectionTimeout" value="30000"/>
+            <property name="hibernate.hikari.idleTimeout"       value="600000"/>
+        </properties>
+    </persistence-unit>
+</persistence>
