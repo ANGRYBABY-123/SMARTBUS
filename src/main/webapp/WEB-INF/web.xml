@@ -9,7 +9,7 @@
 
     <!-- Default welcome page — routed through DashboardServlet so auth filter applies -->
     <welcome-file-list>
-        <welcome-file>users/login</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
     <!-- Session timeout: 30 minutes -->
