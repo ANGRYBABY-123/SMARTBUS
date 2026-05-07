@@ -222,10 +222,17 @@ public class GoogleAuthServlet extends HttpServlet {
     }
 
     private String buildRedirectUri(HttpServletRequest req) {
-        int port = req.getServerPort();
-        String portPart = (port == 80 || port == 443) ? "" : ":" + port;
-        return req.getScheme() + "://" + req.getServerName() + portPart
-               + req.getContextPath() + "/oauth/google/callback";
+        // Honour reverse-proxy headers (Render, nginx, etc.) so the URI
+        // presented to Google matches the public-facing HTTPS address.
+        String scheme = req.getHeader("X-Forwarded-Proto");
+        if (scheme == null || scheme.isBlank()) scheme = req.getScheme();
+        // X-Forwarded-Host may carry "host:port" already
+        String host = req.getHeader("X-Forwarded-Host");
+        if (host == null || host.isBlank()) {
+            int port = req.getServerPort();
+            host = req.getServerName() + ((port == 80 || port == 443) ? "" : ":" + port);
+        }
+        return scheme + "://" + host + req.getContextPath() + "/oauth/google/callback";
     }
 
     private static String encode(String value) {
