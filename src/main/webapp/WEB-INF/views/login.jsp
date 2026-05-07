@@ -12,12 +12,13 @@
         body {
             min-height: 100vh; margin: 0;
             background: linear-gradient(135deg, #000 0%, #0d1b2a 60%, #1a3c5e 100%);
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: flex-start; justify-content: center;
             font-family: 'Segoe UI', sans-serif;
+            padding: 20px 12px;
         }
         .auth-card {
-            background: #fff; border-radius: 20px; padding: 36px 32px;
-            width: 400px; max-width: 95vw;
+            background: #fff; border-radius: 20px; padding: 32px 28px;
+            width: 100%; max-width: 460px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.4);
         }
         .brand { text-align: center; margin-bottom: 24px; }
@@ -45,21 +46,6 @@
             cursor: pointer; margin-top: 8px; transition: background 0.2s;
         }
         .btn-submit:hover { background: #00c853; color: #000; }
-        .role-select { display: flex; gap: 12px; margin-top: 8px; }
-        .role-opt { flex: 1; border: 2px solid #e0e0e0; border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all .2s; color: #555; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .role-opt i { font-size: 1.6rem; }
-        .role-opt.selected { border-color: #1e1e1e; background: #1e1e1e; color: #fff; }
-        .role-opt:hover:not(.selected) { border-color: #999; background: #f5f5f5; }
-        .forgot-link { font-size: 0.8rem; color: #888; text-decoration: none; display: block; text-align: right; margin-top: -8px; margin-bottom: 8px; }
-        .forgot-link:hover { color: #000; }
-        .divider { border: none; border-top: 1px solid #f0f0f0; margin: 20px 0; }
-        .alert-box { border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 16px; }
-        .alert-error { background: #fff2f2; color: #c0392b; border: 1px solid #f5c6cb; }
-        .alert-success { background: #f0fff4; color: #1a7a3a; border: 1px solid #b2dfdb; }
-        /* Forgot password panel */
-        #forgot-panel { display: none; margin-top: 12px; background: #f8fafc; border-radius: 12px; padding: 16px; }
-        #forgot-panel.show { display: block; }
-        #forgot-panel p { font-size: 0.82rem; color: #555; margin-bottom: 10px; }
         .role-select { display: flex; gap: 8px; margin-bottom: 16px; }
         .role-opt {
             flex: 1; padding: 10px 6px; text-align: center; border: 1.5px solid #e0e0e0;
@@ -68,6 +54,14 @@
         }
         .role-opt.selected, .role-opt:hover { border-color: #000; background: #000; color: #fff; }
         .role-opt i { display: block; font-size: 1.3rem; margin-bottom: 4px; }
+        .forgot-link { font-size: 0.8rem; color: #888; text-decoration: none; }
+        .forgot-link:hover { color: #000; }
+        .alert-box { border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; margin-bottom: 16px; }
+        .alert-error { background: #fff2f2; color: #c0392b; border: 1px solid #f5c6cb; }
+        .alert-success { background: #f0fff4; color: #1a7a3a; border: 1px solid #b2dfdb; }
+        #forgot-panel { display: none; margin-top: 12px; background: #f8fafc; border-radius: 12px; padding: 16px; }
+        #forgot-panel.show { display: block; }
+        #forgot-panel p { font-size: 0.82rem; color: #555; margin-bottom: 10px; }
     </style>
 </head>
 <body>
