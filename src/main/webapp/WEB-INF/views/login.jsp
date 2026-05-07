@@ -92,31 +92,40 @@
 
     <!-- ── Login Form ── -->
     <div class="form-section active" id="section-login">
+
+        <!-- Google Sign-In (top) -->
+        <a href="${pageContext.request.contextPath}/oauth/google/init"
+           style="display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;color:#333;text-decoration:none;font-size:0.9rem;font-weight:600;transition:border-color .2s;margin-bottom:16px;"
+           onmouseover="this.style.borderColor='#4285F4'" onmouseout="this.style.borderColor='#e0e0e0'">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+            Login with Google
+        </a>
+
+        <!-- OR divider -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <hr style="flex:1;border:none;border-top:1px solid #e0e0e0;margin:0;">
+            <span style="color:#aaa;font-size:0.78rem;white-space:nowrap;">OR</span>
+            <hr style="flex:1;border:none;border-top:1px solid #e0e0e0;margin:0;">
+        </div>
+
         <form method="post" action="${pageContext.request.contextPath}/users/login">
             <div class="mb-3">
-                <label class="form-label">Email address</label>
+                <label class="form-label">E-Mail</label>
                 <input type="email" name="email" class="form-control" required autofocus placeholder="you@example.com">
             </div>
             <div class="mb-3">
                 <label class="form-label">Password</label>
                 <input type="password" name="password" class="form-control" required placeholder="••••••••">
-                <a href="#" class="forgot-link mt-1" onclick="toggleForgot(event)">Forgot password?</a>
             </div>
-            <button type="submit" class="btn-submit"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</button>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="rememberMe" id="rememberMe" value="true">
+                <label class="form-check-label" for="rememberMe" style="font-size:0.85rem;color:#555;">Remember Me</label>
+            </div>
+            <button type="submit" class="btn-submit">Log in</button>
+            <div style="text-align:center;margin-top:10px;">
+                <a href="#" class="forgot-link" onclick="toggleForgot(event)" style="display:inline;text-align:center;">Forgot Your Password?</a>
+            </div>
         </form>
-
-        <!-- Google Sign-In -->
-        <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
-            <hr style="flex:1;border-color:#333;margin:0;">
-            <span style="color:#888;font-size:0.78rem;white-space:nowrap;">or continue with</span>
-            <hr style="flex:1;border-color:#333;margin:0;">
-        </div>
-        <a href="${pageContext.request.contextPath}/oauth/google/init"
-           style="display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border:1px solid #444;border-radius:10px;background:#1e1e3a;color:#e0e0e0;text-decoration:none;font-size:0.88rem;font-weight:600;transition:border-color .2s;"
-           onmouseover="this.style.borderColor='#5585b5'" onmouseout="this.style.borderColor='#444'">
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
-            Sign in with Google
-        </a>
 
         <!-- Forgot password (client-side hint panel) -->
         <div id="forgot-panel">
@@ -124,6 +133,11 @@
             <button class="btn-submit" style="background:#1a3c5e; font-size:0.82rem; padding:9px;" onclick="showTab('register')">
                 <i class="bi bi-person-plus me-1"></i>Create Passenger Account
             </button>
+        </div>
+    </div>
+
+        <div style="text-align:center; margin-top:16px; font-size:0.85rem; color:#888;">
+            Don't have an account? <a href="#" onclick="showTab('register'); return false;" style="color:#000; font-weight:700;">Register</a>
         </div>
     </div>
 
