@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     email     VARCHAR(150) NOT NULL,
     password  VARCHAR(255) NOT NULL,
     role      VARCHAR(20)  NOT NULL,
+    status    VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
     CONSTRAINT pk_users     PRIMARY KEY (user_id),
     CONSTRAINT uq_user_email UNIQUE (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -117,11 +118,14 @@ CREATE TABLE IF NOT EXISTS schedules (
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id BIGINT      NOT NULL AUTO_INCREMENT,
     user_id         BIGINT      NOT NULL,
+    trip_id         BIGINT      NULL,
     message         TEXT        NOT NULL,
     type            VARCHAR(50),
+    is_read         TINYINT(1)  NOT NULL DEFAULT 0,
     timestamp       DATETIME    NOT NULL,
     CONSTRAINT pk_notifications       PRIMARY KEY (notification_id),
-    CONSTRAINT fk_notification_user   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    CONSTRAINT fk_notification_user   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_notif_trip          FOREIGN KEY (trip_id) REFERENCES trips(trip_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
@@ -129,12 +133,12 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- ============================================================
 
 -- Admin user (password: admin123)
-INSERT IGNORE INTO users (name, email, password, role) VALUES
-    ('Admin User',    'admin@smartbus.com',   'admin123',   'ADMIN'),
-    ('John Driver',   'john@smartbus.com',    'driver123',  'DRIVER'),
-    ('Alice Driver',  'alice@smartbus.com',   'driver123',  'DRIVER'),
-    ('Bob Passenger', 'bob@smartbus.com',     'pass123',    'PASSENGER'),
-    ('Eve Passenger', 'eve@smartbus.com',     'pass123',    'PASSENGER');
+INSERT IGNORE INTO users (name, email, password, role, status) VALUES
+    ('Admin User',    'admin@smartbus.com',   'admin123',   'ADMIN',     'ACTIVE'),
+    ('John Driver',   'john@smartbus.com',    'driver123',  'DRIVER',    'ACTIVE'),
+    ('Alice Driver',  'alice@smartbus.com',   'driver123',  'DRIVER',    'ACTIVE'),
+    ('Bob Passenger', 'bob@smartbus.com',     'pass123',    'PASSENGER', 'ACTIVE'),
+    ('Eve Passenger', 'eve@smartbus.com',     'pass123',    'PASSENGER', 'ACTIVE');
 
 -- Drivers (link to user rows 2 and 3)
 INSERT IGNORE INTO drivers (driver_id, registration_number)

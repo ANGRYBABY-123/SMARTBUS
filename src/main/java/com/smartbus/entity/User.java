@@ -25,7 +25,7 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private String role;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'")
     private String status = "ACTIVE";
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

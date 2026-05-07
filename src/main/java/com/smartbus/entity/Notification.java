@@ -26,7 +26,7 @@ public class Notification {
     @Column(name = "type", length = 50)
     private String type;
 
-    @Column(name = "is_read", nullable = false)
+    @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean isRead = false;
 
     @Column(name = "timestamp", nullable = false)
