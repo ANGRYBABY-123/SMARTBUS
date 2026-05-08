@@ -56,6 +56,12 @@ public class RouteServlet extends HttpServlet {
             route.setRouteName(req.getParameter("routeName"));
             route.setStartLocation(req.getParameter("startLocation"));
             route.setEndLocation(req.getParameter("endLocation"));
+            String sLat = req.getParameter("startLat"), sLng = req.getParameter("startLng");
+            String eLat = req.getParameter("endLat"),   eLng = req.getParameter("endLng");
+            route.setStartLat(sLat != null && !sLat.isEmpty() ? Double.parseDouble(sLat) : null);
+            route.setStartLng(sLng != null && !sLng.isEmpty() ? Double.parseDouble(sLng) : null);
+            route.setEndLat(eLat != null && !eLat.isEmpty() ? Double.parseDouble(eLat) : null);
+            route.setEndLng(eLng != null && !eLng.isEmpty() ? Double.parseDouble(eLng) : null);
             routeDAO.save(route);
         }
         resp.sendRedirect(req.getContextPath() + "/routes/list");

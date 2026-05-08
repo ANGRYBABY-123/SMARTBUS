@@ -195,6 +195,12 @@ const TRIP_ID = ${trip.tripId};
 const CTX     = '${pageContext.request.contextPath}';
 const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
+// Route endpoint coordinates (from DB — null-safe via JSP EL)
+const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.route.startLat}') : null;
+const ROUTE_START_LNG = '${trip.route.startLng}' !== '' ? parseFloat('${trip.route.startLng}') : null;
+const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.route.endLat}')   : null;
+const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.route.endLng}')   : null;
+
 let map, driverMarker, routeLayer, historyLayer;
 let lastLat = null, lastLng = null;
 let watchId = null, tracking = false;
@@ -203,7 +209,27 @@ let steps = [], stepIdx = 0, sheetExpanded = true;
 function initMap() {
   map = L.map('map', { zoomControl:false, attributionControl:false });
   L.tileLayer(DARK_TILES, { maxZoom:19 }).addTo(map);
-  map.setView([3.1390, 101.6869], 13);
+  // Default centre on Pretoria / TUT area; overridden once GPS or route loads
+  const defaultCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
+    ? [ROUTE_START_LAT, ROUTE_START_LNG]
+    : [-25.7313, 28.1648]; // Pretoria Campus fallback
+  map.setView(defaultCenter, 13);
+
+  // Show origin + destination markers if coordinates are available
+  if (ROUTE_START_LAT && ROUTE_START_LNG) {
+    L.circleMarker([ROUTE_START_LAT, ROUTE_START_LNG], {radius:7, color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.8})
+      .addTo(map).bindPopup('${trip.route.startLocation}');
+  }
+  if (ROUTE_END_LAT && ROUTE_END_LNG) {
+    L.circleMarker([ROUTE_END_LAT, ROUTE_END_LNG], {radius:7, color:'#ef4444', fillColor:'#ef4444', fillOpacity:0.8})
+      .addTo(map).bindPopup('${trip.route.endLocation}');
+  }
+  if (ROUTE_START_LAT && ROUTE_END_LAT) {
+    // Draw straight-line preview until OSRM loads
+    routeLayer = L.polyline([[ROUTE_START_LAT, ROUTE_START_LNG],[ROUTE_END_LAT, ROUTE_END_LNG]],
+      {color:'#3b82f6', weight:3, dashArray:'8 6', opacity:0.5}).addTo(map);
+    map.fitBounds(routeLayer.getBounds(), {padding:[60,60]});
+  }
   loadRouteHistory();
 }
 
@@ -242,7 +268,7 @@ function onPos(pos) {
   if (!driverMarker) {
     driverMarker = L.marker([lastLat,lastLng], {icon:busIcon()}).addTo(map);
     map.setView([lastLat,lastLng], 15);
-    buildOsrmRoute(lastLat, lastLng);
+    buildOsrmRoute(lastLat, lastLng); // build real road route from driver position to destination
   } else {
     driverMarker.setLatLng([lastLat,lastLng]);
     advanceStep(lastLat, lastLng);
@@ -251,18 +277,54 @@ function onPos(pos) {
 }
 
 function buildOsrmRoute(lat, lng) {
-  const endLat = ${trip.route.endLocation != null ? "null" : "null"};
-  // Use OSRM for nearest route segment
-  fetch('https://router.project-osrm.org/route/v1/driving/'+lng+','+lat+'/'+lng+','+lat+'?steps=true&overview=full&geometries=geojson')
-    .catch(()=>{});
+  if (!ROUTE_END_LAT || !ROUTE_END_LNG) return;
+  const url = 'https://router.project-osrm.org/route/v1/driving/'
+    + lng + ',' + lat + ';'
+    + ROUTE_END_LNG + ',' + ROUTE_END_LAT
+    + '?steps=true&overview=full&geometries=geojson';
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.routes || !data.routes.length) return;
+      const route = data.routes[0];
+      // Replace preview line with real road geometry
+      if (routeLayer) map.removeLayer(routeLayer);
+      const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+      routeLayer = L.polyline(coords, {color:'#22c55e', weight:4, opacity:0.85}).addTo(map);
+      // Build turn-by-turn steps
+      steps = [];
+      (route.legs || []).forEach(leg => {
+        (leg.steps || []).forEach(s => {
+          const type = s.maneuver ? s.maneuver.type : '';
+          const mod  = s.maneuver ? (s.maneuver.modifier || '') : '';
+          const inst = s.name
+            ? (type === 'turn' ? 'Turn ' + mod + ' onto ' + s.name
+                : type === 'arrive' ? 'Arrive at destination'
+                : 'Continue on ' + s.name)
+            : (type === 'arrive' ? 'Arrive at destination' : 'Continue straight');
+          steps.push({ instruction: inst, distance: s.distance || 0 });
+        });
+      });
+      stepIdx = 0;
+      if (steps.length) {
+        document.getElementById('instruction-text').textContent = steps[0].instruction;
+        document.getElementById('distance-text').textContent    = formatDist(steps[0].distance);
+      }
+    }).catch(() => {});
 }
 
 function advanceStep(lat, lng) {
-  if (!steps.length) return;
+  if (!steps.length || stepIdx >= steps.length) return;
   const s = steps[stepIdx];
-  if (!s) return;
   document.getElementById('instruction-text').textContent = s.instruction;
   document.getElementById('distance-text').textContent    = formatDist(s.distance);
+  // Advance to next step when within ~40 m of the current waypoint
+  // (simple proximity: decrement remaining distance by movement)
+  if (s.distance < 40 && stepIdx < steps.length - 1) {
+    stepIdx++;
+  } else if (s.distance > 0) {
+    steps[stepIdx].distance = Math.max(0, s.distance - 20);
+  }
 }
 
 function formatDist(m) {

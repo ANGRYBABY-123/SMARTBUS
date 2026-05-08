@@ -21,6 +21,18 @@ public class Route {
     @Column(name = "end_location", nullable = false, length = 150)
     private String endLocation;
 
+    @Column(name = "start_lat")
+    private Double startLat;
+
+    @Column(name = "start_lng")
+    private Double startLng;
+
+    @Column(name = "end_lat")
+    private Double endLat;
+
+    @Column(name = "end_lng")
+    private Double endLng;
+
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Schedule> schedules;
 
@@ -43,6 +55,14 @@ public class Route {
     public void setStartLocation(String startLocation) { this.startLocation = startLocation; }
     public String getEndLocation() { return endLocation; }
     public void setEndLocation(String endLocation) { this.endLocation = endLocation; }
+    public Double getStartLat() { return startLat; }
+    public void setStartLat(Double startLat) { this.startLat = startLat; }
+    public Double getStartLng() { return startLng; }
+    public void setStartLng(Double startLng) { this.startLng = startLng; }
+    public Double getEndLat() { return endLat; }
+    public void setEndLat(Double endLat) { this.endLat = endLat; }
+    public Double getEndLng() { return endLng; }
+    public void setEndLng(Double endLng) { this.endLng = endLng; }
     public List<Schedule> getSchedules() { return schedules; }
     public void setSchedules(List<Schedule> schedules) { this.schedules = schedules; }
     public List<Trip> getTrips() { return trips; }
