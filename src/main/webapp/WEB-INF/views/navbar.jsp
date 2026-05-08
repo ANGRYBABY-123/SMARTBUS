@@ -59,11 +59,11 @@ String _wa=_u.contains("/weekly-schedule")?"active":"";
         <i class="bi bi-bus-front-fill"></i><span>SmartBus</span><span class="sub">ADMIN</span>
     </a>
     <div class="sb-div"></div>
-    <a href="${pageContext.request.contextPath}/users/list"     class="sb-lnk <%=_ua%>"><i class="bi bi-people-fill"></i>Personnel<% if (_pendingCount > 0) { %><span style="background:#f57c00;color:#fff;border-radius:10px;font-size:.65rem;font-weight:700;padding:1px 6px;margin-left:4px;"><%=_pendingCount%></span><% } %></a>
-    <a href="${pageContext.request.contextPath}/buses/list"     class="sb-lnk <%=_ba%>"><i class="bi bi-bus-front"></i>Fleet</a>
+    <a href="${pageContext.request.contextPath}/users/list"     class="sb-lnk <%=_ua%>"><i class="bi bi-people-fill"></i>Staff<% if (_pendingCount > 0) { %><span style="background:#f57c00;color:#fff;border-radius:10px;font-size:.65rem;font-weight:700;padding:1px 6px;margin-left:4px;"><%=_pendingCount%></span><% } %></a>
+    <a href="${pageContext.request.contextPath}/buses/list"     class="sb-lnk <%=_ba%>"><i class="bi bi-bus-front"></i>Vehicles</a>
     <a href="${pageContext.request.contextPath}/routes/list"    class="sb-lnk <%=_ra%>"><i class="bi bi-map-fill"></i>Routes</a>
     <a href="${pageContext.request.contextPath}/trips/list"          class="sb-lnk <%=_ta%>"><i class="bi bi-signpost-split-fill"></i>Trips</a>
-    <a href="${pageContext.request.contextPath}/weekly-schedule/list" class="sb-lnk <%=_wa%>"><i class="bi bi-calendar-week"></i>Weekly&nbsp;Schedule</a>
+    <a href="${pageContext.request.contextPath}/weekly-schedule/list" class="sb-lnk <%=_wa%>"><i class="bi bi-calendar-week"></i>Schedule</a>
     <div class="sb-sp"></div>
     <c:if test="${not empty sessionScope.loggedUser}">
         <div class="sb-chip"><i class="bi bi-person-circle"></i>${sessionScope.loggedUser.name}</div>
