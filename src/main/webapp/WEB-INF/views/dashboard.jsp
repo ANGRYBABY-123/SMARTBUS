@@ -46,11 +46,12 @@
     </div>
 
     <!-- Pending Approvals notice -->
+    <div id="pending-banner">
     <c:if test="${pendingUsersCount > 0}">
     <div class="alert d-flex align-items-center gap-3 mb-4" style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px">
         <i class="bi bi-clock-history" style="font-size:1.5rem;color:#f57c00;flex-shrink:0"></i>
         <div style="flex:1">
-            <div style="font-weight:700;color:#5d4037">
+            <div style="font-weight:700;color:#5d4037" id="pending-count-text">
                 ${pendingUsersCount} account${pendingUsersCount == 1 ? '' : 's'} waiting for approval
             </div>
             <div style="font-size:.82rem;color:#795548">New users have registered and cannot sign in until you approve them.</div>
@@ -60,6 +61,7 @@
         </a>
     </div>
     </c:if>
+    </div>
 
     <!-- This week's schedule panel -->
     <div class="card mb-4" id="sb-schedule-panel" style="border-color:${unpublishedThisWeek > 0 ? '#f59e0b' : '#334155'}!important">
@@ -153,6 +155,70 @@
         } catch (e) { /* silent */ }
     }
     setInterval(autoRefresh, 15000);
+})();
+
+// ── Live pending-approvals banner + 2-second beep ──
+(function () {
+    var ctxPath = '${pageContext.request.contextPath}';
+    var lastCount = ${pendingUsersCount};
+
+    function beep() {
+        try {
+            var ac = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ac.createOscillator();
+            var gain = ac.createGain();
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ac.currentTime);
+            gain.gain.setValueAtTime(0.6, ac.currentTime);
+            // Fade out gently at the end
+            gain.gain.linearRampToValueAtTime(0, ac.currentTime + 2);
+            osc.start(ac.currentTime);
+            osc.stop(ac.currentTime + 2);
+        } catch (e) { /* AudioContext not available */ }
+    }
+
+    function renderBanner(count) {
+        var banner = document.getElementById('pending-banner');
+        if (!banner) return;
+        if (count > 0) {
+            banner.innerHTML =
+                '<div class="alert d-flex align-items-center gap-3 mb-4"'
+                + ' style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px">'
+                + '<i class="bi bi-clock-history" style="font-size:1.5rem;color:#f57c00;flex-shrink:0"></i>'
+                + '<div style="flex:1">'
+                + '<div style="font-weight:700;color:#5d4037">'
+                + count + ' account' + (count === 1 ? '' : 's') + ' waiting for approval'
+                + '</div>'
+                + '<div style="font-size:.82rem;color:#795548">New users have registered and cannot sign in until you approve them.</div>'
+                + '</div>'
+                + '<a href="' + ctxPath + '/users/list" class="btn btn-sm"'
+                + ' style="background:#f57c00;color:#fff;border:none;font-weight:600;white-space:nowrap">'
+                + '<i class="bi bi-person-check-fill me-1"></i>Review Now</a>'
+                + '</div>';
+        } else {
+            banner.innerHTML = '';
+        }
+    }
+
+    async function pollPending() {
+        try {
+            var res = await fetch(ctxPath + '/api/pending-count', { credentials: 'same-origin' });
+            if (!res.ok) return;
+            var data = await res.json();
+            var count = data.count || 0;
+            if (count > lastCount) {
+                beep();
+            }
+            if (count !== lastCount) {
+                lastCount = count;
+                renderBanner(count);
+            }
+        } catch (e) { /* silent */ }
+    }
+
+    setInterval(pollPending, 6000);
 })();
 </script>
 </html>
