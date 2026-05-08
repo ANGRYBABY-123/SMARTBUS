@@ -21,13 +21,21 @@
     <div class="card">
         <table class="table table-hover mb-0">
             <thead>
-                <tr><th>#</th><th>Service Route</th><th>Scheduled Departure</th><th>Scheduled Arrival</th><th>Actions</th></tr>
+                <tr><th>#</th><th>Service Route</th><th>Days</th><th>Shift Start</th><th>Shift End</th><th>Actions</th></tr>
             </thead>
             <tbody>
             <c:forEach var="s" items="${schedules}">
                 <tr>
                     <td style="color:#64748b;font-size:.8rem">${s.scheduleId}</td>
                     <td style="font-weight:500">${s.route.routeName}</td>
+                    <td>
+                        <c:if test="${not empty s.daysOfWeek}">
+                            <span style="font-size:.75rem;letter-spacing:.5px;color:#3b82f6;font-weight:600">${s.daysOfWeek}</span>
+                        </c:if>
+                        <c:if test="${empty s.daysOfWeek}">
+                            <span style="color:#94a3b8;font-size:.75rem">—</span>
+                        </c:if>
+                    </td>
                     <td style="color:#34d399">${s.departureTime}</td>
                     <td style="color:#f87171">${s.arrivalTime}</td>
                     <td>
@@ -40,7 +48,7 @@
                 </tr>
             </c:forEach>
             <c:if test="${empty schedules}">
-                <tr><td colspan="5" class="text-center py-4" style="color:#64748b">No schedules defined.</td></tr>
+                <tr><td colspan="6" class="text-center py-4" style="color:#64748b">No schedules defined.</td></tr>
             </c:if>
             </tbody>
         </table>

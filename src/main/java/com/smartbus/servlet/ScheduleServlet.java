@@ -61,6 +61,8 @@ public class ScheduleServlet extends HttpServlet {
                     : new Schedule();
             Route route = routeDAO.findById(Long.parseLong(req.getParameter("routeId")));
             schedule.setRoute(route);
+            String[] days = req.getParameterValues("days");
+            schedule.setDaysOfWeek(days != null ? String.join(",", days) : "");
             schedule.setDepartureTime(LocalTime.parse(req.getParameter("departureTime")));
             schedule.setArrivalTime(LocalTime.parse(req.getParameter("arrivalTime")));
             scheduleDAO.save(schedule);
