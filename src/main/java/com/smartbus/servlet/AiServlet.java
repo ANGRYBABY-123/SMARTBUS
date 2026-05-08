@@ -37,7 +37,7 @@ public class AiServlet extends HttpServlet {
 
     private static final String GEMINI_KEY = "AIzaSyAMMxrYl49Xij4srs-sVjOmEv8Jq3BeJaw";
     private static final String GEMINI_URL =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_KEY;
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_KEY;
 
     private static final Pattern TEXT_PAT =
         Pattern.compile("\"text\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
