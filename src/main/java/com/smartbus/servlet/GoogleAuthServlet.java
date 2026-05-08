@@ -80,7 +80,10 @@ public class GoogleAuthServlet extends HttpServlet {
             throws IOException {
         // CSRF state token stored in session
         String state = UUID.randomUUID().toString();
+        // Remember whether the user came from the login tab or the register tab
+        String action = "register".equals(req.getParameter("action")) ? "register" : "login";
         req.getSession(true).setAttribute("oauth_state", state);
+        req.getSession(true).setAttribute("oauth_action", action);
 
         String redirectUri = buildRedirectUri(req);
         String authUrl = AUTH_URI
@@ -115,7 +118,13 @@ public class GoogleAuthServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;
         }
-        if (existingSession != null) existingSession.removeAttribute("oauth_state");
+        String oauthAction = (existingSession != null)
+                ? (String) existingSession.getAttribute("oauth_action") : "login";
+        if (oauthAction == null) oauthAction = "login";
+        if (existingSession != null) {
+            existingSession.removeAttribute("oauth_state");
+            existingSession.removeAttribute("oauth_action");
+        }
 
         try {
             // Exchange authorisation code for access token
@@ -144,11 +153,21 @@ public class GoogleAuthServlet extends HttpServlet {
             }
 
             if (user == null) {
-                // First-time Google sign-in → create PENDING Passenger (requires admin approval)
-                Passenger p = new Passenger(name, email, "GOOGLE:" + UUID.randomUUID());
-                p.setStatus("PENDING");
-                p.setGoogleId(googleId);
-                user = userDAO.save(p);
+                if ("register".equals(oauthAction)) {
+                    // Register tab → create PENDING account awaiting admin approval
+                    Passenger p = new Passenger(name, email, "GOOGLE:" + UUID.randomUUID());
+                    p.setStatus("PENDING");
+                    p.setGoogleId(googleId);
+                    user = userDAO.save(p);
+                } else {
+                    // Login tab → no account found, tell them to register
+                    req.setAttribute("error",
+                            "No account found for " + email + ". "
+                            + "Please register first, then wait for admin approval.");
+                    req.setAttribute("tab", "register");
+                    req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                    return;
+                }
             } else if (user.getGoogleId() == null) {
                 // Link Google ID to pre-existing account
                 user.setGoogleId(googleId);

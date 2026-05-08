@@ -50,26 +50,25 @@
 
     <% String tokenError = (String) request.getAttribute("tokenError"); %>
     <% String formError  = (String) request.getAttribute("error"); %>
-    <% String token      = (String) request.getAttribute("token"); %>
 
     <% if (tokenError != null) { %>
-    <!-- Invalid / expired token -->
+    <!-- Session not verified -->
     <div class="alert-box alert-error">
         <i class="bi bi-x-circle-fill me-2"></i><%= tokenError %>
     </div>
     <p style="font-size:.85rem;color:#555;margin-bottom:16px">
-        Request a new link from the login page.
+        Please request a new reset code.
     </p>
-    <a href="${pageContext.request.contextPath}/users/login"
+    <a href="${pageContext.request.contextPath}/forgot-password"
        class="btn-submit" style="display:block;text-align:center;text-decoration:none;padding:13px">
-        <i class="bi bi-arrow-left me-1"></i>Back to Login
+        <i class="bi bi-arrow-left me-1"></i>Request New Code
     </a>
 
     <% } else { %>
-    <!-- Valid token — show the reset form -->
+    <!-- Code verified — show the reset form -->
     <h5 class="fw-bold mb-1" style="font-size:1.1rem">Choose a new password</h5>
     <p style="font-size:.82rem;color:#888;margin-bottom:20px">
-        Must be at least 6 characters. The link expires in 15&nbsp;minutes.
+        Must be at least 6 characters.
     </p>
 
     <% if (formError != null) { %>
@@ -77,7 +76,6 @@
     <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/reset-password" id="reset-form">
-        <input type="hidden" name="token" value="<%= token %>">
 
         <div class="mb-3">
             <label class="form-label">New Password</label>

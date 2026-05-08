@@ -39,6 +39,7 @@ public class AuthFilter implements Filter {
                 || path.startsWith("/users/register")
                 || path.startsWith("/oauth/google/")
                 || path.startsWith("/forgot-password")
+                || path.startsWith("/verify-code")
                 || path.startsWith("/reset-password")
                 || path.startsWith("/WEB-INF/")) {
             chain.doFilter(request, response);

@@ -23,13 +23,14 @@ public class ForgotPasswordServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
 
-    /** GET: redirect to login page (form is inline there). */
+    /** GET: show the standalone forgot-password page. */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        resp.sendRedirect(req.getContextPath() + "/users/login");
+            throws ServletException, IOException {
+        req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
     }
 
+    /** POST: validate email, generate 5-digit code, send email, redirect to verify page. */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -37,8 +38,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         String email = req.getParameter("email");
         if (email == null || email.isBlank()) {
             req.setAttribute("forgotError", "Please enter your email address.");
-            req.setAttribute("showForgot", true);
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
             return;
         }
 
@@ -48,56 +48,45 @@ public class ForgotPasswordServlet extends HttpServlet {
             User user = userDAO.findByEmail(normalised);
 
             if (user == null) {
-                // Tell the user explicitly — no account with that email
                 req.setAttribute("forgotError",
                         "No account found for \"" + normalised + "\". "
                         + "Please check the email you registered with, or create a new account.");
-                req.setAttribute("showForgot", true);
-                req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
                 return;
             }
 
-            // Remove any existing token for this user
+            // Remove any existing code for this user
             tokenDAO.deleteByUserId(user.getUserId());
 
-            // Generate a 64-char hex token (32 random bytes)
-            byte[] bytes = new byte[32];
-            RANDOM.nextBytes(bytes);
-            StringBuilder sb = new StringBuilder(64);
-            for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
-            }
-            String token = sb.toString();
+            // Generate a 5-digit code (zero-padded)
+            String code = String.format("%05d", RANDOM.nextInt(100000));
 
-            // Save token with 15-minute expiry
+            // Save with 15-minute expiry
             LocalDateTime expiry = LocalDateTime.now().plusMinutes(TOKEN_EXPIRY_MINUTES);
-            tokenDAO.save(new PasswordResetToken(user.getUserId(), token, expiry));
+            tokenDAO.save(new PasswordResetToken(user.getUserId(), code, expiry));
 
-            // Send reset email
+            // Send code via email
             try {
-                EmailUtil.sendPasswordReset(user.getEmail(), token);
+                EmailUtil.sendPasswordResetCode(user.getEmail(), code);
             } catch (Exception mailEx) {
                 getServletContext().log("Password reset email failed for: " + normalised, mailEx);
                 req.setAttribute("forgotError",
                         "Your account was found but the email could not be sent. "
                         + "Please contact the administrator.");
-                req.setAttribute("showForgot", true);
-                req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
                 return;
             }
+
+            // Store email in session so the verify page can display it
+            req.getSession(true).setAttribute("resetEmail", normalised);
 
         } catch (Exception ex) {
             getServletContext().log("ForgotPasswordServlet error", ex);
             req.setAttribute("forgotError", "An unexpected error occurred. Please try again.");
-            req.setAttribute("showForgot", true);
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
             return;
         }
 
-        req.setAttribute("success",
-                "Reset link sent to \"" + normalised + "\". "
-                + "Check your inbox (and spam/junk folder) — valid for 15 minutes.");
-        req.setAttribute("showForgot", true);
-        req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+        resp.sendRedirect(req.getContextPath() + "/verify-code");
     }
 }
