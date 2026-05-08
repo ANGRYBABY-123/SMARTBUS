@@ -1,6 +1,8 @@
 package com.smartbus.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Entity
@@ -24,7 +26,7 @@ import java.util.List;
         query = "SELECT COUNT(u) FROM User u WHERE u.email = :email"),
     @NamedQuery(
         name  = "User.searchByName",
-        query = "SELECT u FROM User u WHERE LOWER(u.name) LIKE :name ORDER BY u.name")
+        query = "SELECT u FROM User u WHERE LOWER(u.name) LIKE :name AND u.status <> 'PENDING_REMOVAL' ORDER BY u.name")
 })
 public class User {
 
@@ -50,6 +52,9 @@ public class User {
 
     @Column(name = "google_id", length = 100, unique = true)
     private String googleId;
+
+    @Column(name = "removal_scheduled_at")
+    private LocalDateTime removalScheduledAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Notification> notifications;
@@ -77,6 +82,13 @@ public class User {
     public void setStatus(String status) { this.status = status; }
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
+    public LocalDateTime getRemovalScheduledAt() { return removalScheduledAt; }
+    public void setRemovalScheduledAt(LocalDateTime removalScheduledAt) { this.removalScheduledAt = removalScheduledAt; }
+    /** Epoch-milliseconds when the 30-minute removal window closes; 0 if not scheduled. */
+    public long getRemovalDeadlineEpochMillis() {
+        if (removalScheduledAt == null) return 0;
+        return removalScheduledAt.plusMinutes(30).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
     public List<Notification> getNotifications() { return notifications; }
     public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
 }

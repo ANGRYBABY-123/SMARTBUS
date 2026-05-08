@@ -314,7 +314,7 @@ pollNotifs();
             );
         } else {
             const dir = compassDir(uLat, uLng, nearest.lat, nearest.lng);
-            const distTxt = minDist < 1 ? (minDist * 1000).toFixed(0) + ' m' : minDist.toFixed(1) + ' km';
+            const distTxt = minDist < 0.1 ? minDist.toFixed(3) + ' km' : minDist.toFixed(2) + ' km';
             setRec(
                 '',
                 'geo-alt-fill',

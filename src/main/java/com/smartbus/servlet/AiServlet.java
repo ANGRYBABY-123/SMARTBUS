@@ -185,7 +185,7 @@ public class AiServlet extends HttpServlet {
             if (trip != null && trip.getRoute().getEndLat() != null && trip.getRoute().getEndLng() != null) {
                 GpsTracking lastPt = pts.get(pts.size() - 1);
                 distKm = haversine(lastPt.getLatitude(), lastPt.getLongitude(),
-                                   trip.getRoute().getEndLat(), trip.getRoute().getEndLng());
+                                   trip.getRoute().getEndLat(), trip.getRoute().getEndLng()) / 1000.0;
                 double effectiveSpeed = Math.max(speedKmh, 5); // avoid division by zero / huge ETA
                 etaMinutes = (distKm / effectiveSpeed) * 60;
             }

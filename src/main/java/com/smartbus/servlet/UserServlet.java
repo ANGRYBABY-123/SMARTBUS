@@ -6,6 +6,7 @@ import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
+import com.smartbus.listener.ActiveSessionRegistry;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.PasswordUtil;
 import jakarta.servlet.ServletException;
@@ -99,6 +100,9 @@ public class UserServlet extends HttpServlet {
             case "/reject":
                 rejectUser(req, resp);
                 break;
+            case "/readmit":
+                readmitUser(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/users/list");
         }
@@ -156,10 +160,11 @@ public class UserServlet extends HttpServlet {
         if (search != null && !search.trim().isEmpty()) {
             users = userDAO.searchByName(search.trim());
         } else {
-            users = userDAO.findAll();
+            users = userDAO.findAllActive();
         }
         req.setAttribute("users", users);
         req.setAttribute("pendingUsers", userDAO.findPending());
+        req.setAttribute("pendingRemovalUsers", userDAO.findPendingRemoval());
         req.getRequestDispatcher("/WEB-INF/views/users.jsp").forward(req, resp);
     }
 
@@ -241,7 +246,16 @@ public class UserServlet extends HttpServlet {
                 return;
             }
         }
-        userDAO.delete(id);
+        // Soft-delete: kick session immediately, but keep account for 30 min so admin can re-admit
+        userDAO.softDelete(id);
+        ActiveSessionRegistry.invalidateSessionForUser(id);
+        resp.sendRedirect(req.getContextPath() + "/users/list");
+    }
+
+    private void readmitUser(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        Long id = Long.parseLong(req.getParameter("id"));
+        userDAO.readmitUser(id);
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
 
@@ -253,6 +267,11 @@ public class UserServlet extends HttpServlet {
         if (user != null) {
             if ("PENDING".equals(user.getStatus())) {
                 req.setAttribute("error", "Your account is pending admin approval. You'll be notified once approved.");
+                req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                return;
+            }
+            if ("PENDING_REMOVAL".equals(user.getStatus())) {
+                req.setAttribute("error", "Your account has been removed by an administrator.");
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                 return;
             }

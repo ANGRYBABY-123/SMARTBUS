@@ -58,8 +58,13 @@ public class AuthFilter implements Filter {
                         RememberMeToken rmt = rememberMeDAO.findByToken(c.getValue());
                         if (rmt != null) {
                             loggedUser = rmt.getUser();
-                            HttpSession newSession = req.getSession(true);
-                            newSession.setAttribute("loggedUser", loggedUser);
+                            // Safety net: don't restore sessions for removed accounts
+                            if ("PENDING_REMOVAL".equals(loggedUser.getStatus())) {
+                                loggedUser = null;
+                            } else {
+                                HttpSession newSession = req.getSession(true);
+                                newSession.setAttribute("loggedUser", loggedUser);
+                            }
                         }
                         break;
                     }

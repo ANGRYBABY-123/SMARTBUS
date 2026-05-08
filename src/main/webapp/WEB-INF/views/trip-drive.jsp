@@ -329,7 +329,8 @@ function advanceStep(lat, lng) {
 }
 
 function formatDist(m) {
-  return m >= 1000 ? (m/1000).toFixed(1)+' km' : Math.round(m)+' m';
+  const km = m / 1000;
+  return km < 0.1 ? km.toFixed(3)+' km' : km < 1 ? km.toFixed(2)+' km' : km.toFixed(1)+' km';
 }
 
 function recenterMap() {
@@ -365,8 +366,8 @@ function updateStatus(status) {
       function(pos) {
         const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, ROUTE_START_LAT, ROUTE_START_LNG);
         if (distKm > 0.5) {
-          alert('You are ' + Math.round(distKm * 1000) + ' m from the start location.\n' +
-                'Please be within 500 m of ' + START_LOCATION + ' before starting the trip.');
+          alert('You are ' + distKm.toFixed(2) + ' km from the start location.\n' +
+                'Please be within 0.5 km of ' + START_LOCATION + ' before starting the trip.');
           return;
         }
         _doUpdateStatus(status);

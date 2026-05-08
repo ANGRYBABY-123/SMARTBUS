@@ -56,6 +56,73 @@
     </div>
     </c:if>
 
+    <%-- ── Pending Removal Queue ── --%>
+    <c:if test="${not empty pendingRemovalUsers}">
+    <div class="card mb-4 border-danger">
+        <div class="card-header d-flex align-items-center gap-2" style="background:#fff5f5; border-bottom:1px solid #fca5a5;">
+            <i class="bi bi-hourglass-split" style="color:#dc2626; font-size:1.2rem;"></i>
+            <span class="fw-bold" style="color:#7f1d1d;">Pending Removal</span>
+            <span class="badge rounded-pill ms-1" style="background:#dc2626;">${fn:length(pendingRemovalUsers)}</span>
+            <span class="ms-auto text-muted" style="font-size:0.78rem;">Re-admit within 30 min or account is permanently deleted</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="font-size:0.82rem; background:#fff5f5;">
+                    <tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Time Remaining</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                <c:forEach var="u" items="${pendingRemovalUsers}" varStatus="s">
+                    <tr>
+                        <td>${s.count}</td>
+                        <td><i class="bi bi-person-x-fill me-1 text-danger"></i>${u.name}</td>
+                        <td style="color:#94a3b8">${u.email}</td>
+                        <td>
+                            <c:choose>
+                                <c:when test="${u.role == 'ADMIN'}"><span class="badge" style="background:#7c3aed">Admin</span></c:when>
+                                <c:when test="${u.role == 'DRIVER'}"><span class="badge" style="background:#0369a1">Driver</span></c:when>
+                                <c:otherwise><span class="badge" style="background:#059669">Passenger</span></c:otherwise>
+                            </c:choose>
+                        </td>
+                        <td>
+                            <span id="countdown-${u.userId}"
+                                  class="badge bg-danger"
+                                  data-deadline="${u.removalDeadlineEpochMillis}">–</span>
+                        </td>
+                        <td>
+                            <a href="${pageContext.request.contextPath}/users/readmit?id=${u.userId}"
+                               class="btn btn-success btn-sm"
+                               onclick="return confirm('Re-admit ${u.name} and restore their account?')">
+                                <i class="bi bi-person-check-fill me-1"></i>Re-admit
+                            </a>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+    (function () {
+        document.querySelectorAll('[data-deadline]').forEach(function (el) {
+            var deadline = parseInt(el.getAttribute('data-deadline'), 10);
+            function tick() {
+                var remaining = deadline - Date.now();
+                if (remaining <= 0) {
+                    el.textContent = 'Expiring\u2026';
+                    el.classList.replace('bg-danger', 'bg-secondary');
+                    return;
+                }
+                var mins = Math.floor(remaining / 60000);
+                var secs = Math.floor((remaining % 60000) / 1000);
+                el.textContent = mins + 'm ' + (secs < 10 ? '0' : '') + secs + 's';
+                setTimeout(tick, 1000);
+            }
+            tick();
+        });
+    })();
+    </script>
+    </c:if>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0">
             <i class="bi bi-people-fill me-2" style="color:#3b82f6"></i>Personnel Directory

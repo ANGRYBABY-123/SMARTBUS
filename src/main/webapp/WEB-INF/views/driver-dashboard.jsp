@@ -146,35 +146,6 @@
             <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Upcoming</div></div>
             <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Done</div></div>
         </div>
-        <%-- My Schedule This Week --%>
-        <c:if test="${not empty weekSchedule}">
-        <div class="section-lbl" style="margin-bottom:8px">
-            <i class="bi bi-calendar-week" style="color:#3b82f6"></i> My Schedule &mdash; Week of ${weekStart}
-        </div>
-        <c:forEach var="ds" items="${weekSchedule}">
-        <div class="week-sched-card">
-            <div class="week-sched-route">${ds.route.routeName}</div>
-            <div class="week-sched-sub">
-                <i class="bi bi-geo-alt"></i> ${ds.route.startLocation} &rarr; ${ds.route.endLocation}
-            </div>
-            <div class="week-sched-meta">
-                <span class="shift-pill shift-${ds.shiftType}">${ds.shiftType}</span>
-                <span style="font-size:.75rem;color:#94a3b8">
-                    <i class="bi bi-bus-front"></i> ${ds.bus.registrationNumber}
-                </span>
-                <span style="font-size:.75rem;font-family:monospace">
-                    <span style="color:#34d399">${ds.shiftStart}</span>&ndash;<span style="color:#f87171">${ds.shiftEnd}</span>
-                </span>
-            </div>
-        </div>
-        </c:forEach>
-        </c:if>
-        <c:if test="${empty weekSchedule}">
-        <div style="background:#0f172a;border:1px dashed #1e293b;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.78rem;color:#475569">
-            <i class="bi bi-calendar-x me-1"></i>No schedule posted for this week yet.
-        </div>
-        </c:if>
-
         <div class="section-lbl">My Trips</div>
         <c:choose>
             <c:when test="${not empty trips}">
@@ -327,8 +298,8 @@ function startTripCheck(tripId, startLat, startLng, locationName) {
         function(pos) {
             const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, startLat, startLng);
             if (distKm > 0.5) {
-                alert('You are ' + Math.round(distKm * 1000) + ' m from the start location.\n' +
-                      'Please be within 500 m of ' + locationName + ' before starting the trip.');
+                alert('You are ' + distKm.toFixed(2) + ' km from the start location.\n' +
+                      'Please be within 0.5 km of ' + locationName + ' before starting the trip.');
                 return;
             }
             if (confirm('Start this trip now?')) doStart();
