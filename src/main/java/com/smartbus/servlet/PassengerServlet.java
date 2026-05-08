@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @WebServlet("/passenger/*")
@@ -41,10 +43,11 @@ public class PassengerServlet extends HttpServlet {
 
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        List<Trip> activeTrips = tripDAO.findByStatus("IN_PROGRESS");
-        List<Trip> scheduledTrips = tripDAO.findByStatus("SCHEDULED");
-        req.setAttribute("activeTrips", activeTrips);
+        List<Trip> activeTrips    = tripDAO.findByStatus("IN_PROGRESS");
+        List<Trip> scheduledTrips = tripDAO.findTodayByStatus("SCHEDULED");
+        req.setAttribute("activeTrips",    activeTrips);
         req.setAttribute("scheduledTrips", scheduledTrips);
+        req.setAttribute("today", LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")));
         req.getRequestDispatcher("/WEB-INF/views/passenger-dashboard.jsp").forward(req, resp);
     }
 }

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c"  uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,11 +131,11 @@
             <c:when test="${not empty activeTrips}">
                 <c:forEach var="t" items="${activeTrips}">
                     <div class="trip-card live" data-live-trip="${t.tripId}" data-trip-name="${t.route.routeName}" data-driver="${t.driver.name}">
-                        <div class="card-icon live">??</div>
+                        <div class="card-icon live"><i class="bi bi-geo-alt-fill" style="font-size:1.3rem;color:#00c853"></i></div>
                         <div class="card-body">
                             <div class="card-title">${t.route.routeName}</div>
-                            <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;�&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
-                            <span class="card-badge live">? Live</span>
+                            <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;&middot;&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
+                            <span class="card-badge live"><i class="bi bi-broadcast"></i> Live</span>
                         </div>
                         <a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="track-btn"><i class="bi bi-geo-alt-fill"></i> Track</a>
                     </div>
@@ -145,19 +146,25 @@
             </c:otherwise>
         </c:choose>
 
-        <!-- Upcoming -->
-        <div class="section-lbl" style="margin-top:16px"><i class="bi bi-calendar3" style="color:#6366f1"></i> Upcoming</div>
+        <!-- Upcoming Today -->
+        <div class="section-lbl" style="margin-top:16px">
+            <i class="bi bi-calendar3" style="color:#6366f1"></i>
+            Today's Trips &nbsp;<span style="font-size:.65rem;color:#aaa;font-weight:400;text-transform:none;letter-spacing:0">${today}</span>
+        </div>
         <c:choose>
             <c:when test="${not empty scheduledTrips}">
                 <c:forEach var="t" items="${scheduledTrips}">
                     <div class="trip-card scheduled">
-                        <div class="card-icon scheduled">??</div>
+                        <div class="card-icon scheduled"><i class="bi bi-bus-front-fill" style="font-size:1.3rem;color:#6366f1"></i></div>
                         <div class="card-body">
                             <div class="card-title">${t.route.routeName}</div>
                             <div class="card-sub">
                                 <i class="bi bi-person-fill"></i> ${t.driver.name}
-                                &nbsp;�&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                <c:if test="${t.startTime != null}">&nbsp;�&nbsp; <i class="bi bi-clock"></i> ${t.startTime}</c:if>
+                                &nbsp;&middot;&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
+                                <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp; <i class="bi bi-clock"></i>
+                                    <%-- LocalDateTime.toString() = 2026-05-08T07:30 — take only HH:mm --%>
+                                    ${fn:substring(t.startTime.toString(), 11, 16)}
+                                </c:if>
                             </div>
                             <span class="card-badge sched">Scheduled</span>
                         </div>
@@ -166,7 +173,7 @@
                 </c:forEach>
             </c:when>
             <c:otherwise>
-                <div class="empty-state" style="padding:20px 16px"><i class="bi bi-calendar-x" style="font-size:1.8rem"></i>No upcoming trips</div>
+                <div class="empty-state" style="padding:20px 16px"><i class="bi bi-calendar-check" style="font-size:1.8rem"></i>No trips scheduled for today</div>
             </c:otherwise>
         </c:choose>
 

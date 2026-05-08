@@ -3,6 +3,8 @@ package com.smartbus.dao;
 import com.smartbus.entity.Trip;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class TripDAO extends GenericDAO<Trip> {
@@ -76,6 +78,26 @@ public class TripDAO extends GenericDAO<Trip> {
                 .setParameter("id", tripId)
                 .getResultList();
             return result.isEmpty() ? null : result.get(0);
+        } finally {
+            em.close();
+        }
+    }
+
+    // JPQL: find trips by status whose startTime falls on today
+    public List<Trip> findTodayByStatus(String status) {
+        EntityManager em = getEntityManager();
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay   = startOfDay.plusDays(1);
+        try {
+            return em.createQuery(
+                "SELECT t FROM Trip t JOIN FETCH t.driver JOIN FETCH t.bus JOIN FETCH t.route " +
+                "WHERE t.status = :status " +
+                "AND t.startTime >= :startOfDay AND t.startTime < :endOfDay " +
+                "ORDER BY t.startTime ASC", Trip.class)
+                .setParameter("status", status)
+                .setParameter("startOfDay", startOfDay)
+                .setParameter("endOfDay",   endOfDay)
+                .getResultList();
         } finally {
             em.close();
         }

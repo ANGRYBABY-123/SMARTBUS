@@ -131,7 +131,20 @@ CREATE TABLE IF NOT EXISTS notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
--- 10. remember_me_tokens
+-- 10. password_reset_tokens
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id      BIGINT      NOT NULL AUTO_INCREMENT,
+    user_id BIGINT      NOT NULL,
+    token   VARCHAR(64) NOT NULL,
+    expiry  DATETIME    NOT NULL,
+    CONSTRAINT pk_prt       PRIMARY KEY (id),
+    CONSTRAINT uq_prt_token UNIQUE (token),
+    CONSTRAINT fk_prt_user  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- 11. remember_me_tokens
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS remember_me_tokens (
     token      VARCHAR(64) NOT NULL,
@@ -142,7 +155,7 @@ CREATE TABLE IF NOT EXISTS remember_me_tokens (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
--- 11. driver_schedules  (weekly recurring driver assignments)
+-- 12. driver_schedules  (weekly recurring driver assignments)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS driver_schedules (
     ds_id          BIGINT      NOT NULL AUTO_INCREMENT,

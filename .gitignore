@@ -16,3 +16,6 @@ Thumbs.db
 # Local env overrides
 *.env
 .env
+
+# Local JDK copies — not part of the project source
+database/oracleJdk-26/
