@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c"  uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
@@ -141,41 +141,65 @@
             <c:if test="${t.status == 'IN_PROGRESS'}"><c:set var="active" value="${active + 1}"/></c:if>
             <c:if test="${t.status == 'COMPLETED'}"><c:set var="done" value="${done + 1}"/></c:if>
         </c:forEach>
+        <%-- Today's assigned shift from the weekly schedule --%>
+        <c:choose>
+            <c:when test="${not empty todaySchedule}">
+                <c:forEach var="ds" items="${todaySchedule}">
+                <div style="background:#0f172a;border:1.5px solid #1e3a5f;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:1px;color:#475569;font-weight:700;margin-bottom:8px;">
+                        <i class="bi bi-calendar-day" style="color:#3b82f6"></i>&nbsp;Today's Shift
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span class="shift-pill shift-${ds.shiftType}">${ds.shiftType}</span>
+                        <span style="color:#e2e8f0;font-weight:700;font-size:.9rem;">${ds.route.routeName}</span>
+                    </div>
+                    <div style="margin-top:8px;font-size:.78rem;color:#64748b;display:flex;flex-wrap:wrap;gap:12px;">
+                        <span><i class="bi bi-clock"></i> ${ds.shiftStart} &ndash; ${ds.shiftEnd}</span>
+                        <span><i class="bi bi-bus-front-fill"></i> ${ds.bus.registrationNumber}</span>
+                        <span><i class="bi bi-geo-alt"></i> ${ds.route.startLocation} &rarr; ${ds.route.endLocation}</span>
+                    </div>
+                </div>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <div style="background:#1e1a07;border:1.5px solid #713f12;border-radius:14px;padding:11px 14px;margin-bottom:14px;font-size:.8rem;color:#fbbf24;">
+                    <i class="bi bi-calendar-x"></i>&nbsp;No schedule published for this week yet. Check back after Sunday.
+                </div>
+            </c:otherwise>
+        </c:choose>
+
         <div class="stats-bar">
             <div class="stat-chip"><div class="stat-num green">${active}</div><div class="stat-lbl">Active</div></div>
             <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Upcoming</div></div>
             <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Done</div></div>
         </div>
-        <div class="section-lbl">My Trips</div>
+
+        <div class="section-lbl">Today's Trips</div>
         <c:choose>
             <c:when test="${not empty trips}">
                 <c:forEach var="t" items="${trips}">
                     <c:set var="cardCls" value="done"/>
-                    <c:set var="iconCls" value="done"/>
-                    <c:set var="iconEmoji" value="??"/>
-                    <c:if test="${t.status == 'IN_PROGRESS'}">
-                        <c:set var="cardCls" value="live"/>
-                        <c:set var="iconCls" value="live"/>
-                        <c:set var="iconEmoji" value="??"/>
-                    </c:if>
-                    <c:if test="${t.status == 'SCHEDULED'}">
-                        <c:set var="cardCls" value="scheduled"/>
-                        <c:set var="iconCls" value="scheduled"/>
-                        <c:set var="iconEmoji" value="??"/>
-                    </c:if>
+                    <c:if test="${t.status == 'IN_PROGRESS'}"><c:set var="cardCls" value="live"/></c:if>
+                    <c:if test="${t.status == 'SCHEDULED'}"><c:set var="cardCls" value="scheduled"/></c:if>
                     <div class="trip-card ${cardCls}" data-trip-id="${t.tripId}" data-status="${t.status}">
                         <div class="card-top">
-                            <div class="card-icon ${iconCls}">${iconEmoji}</div>
+                            <div class="card-icon ${cardCls}">
+                                <c:choose>
+                                    <c:when test="${t.status == 'IN_PROGRESS'}"><i class="bi bi-broadcast-pin" style="color:#16a34a"></i></c:when>
+                                    <c:when test="${t.status == 'SCHEDULED'}"><i class="bi bi-bus-front-fill" style="color:#7c3aed"></i></c:when>
+                                    <c:otherwise><i class="bi bi-check-circle-fill" style="color:#6b7280"></i></c:otherwise>
+                                </c:choose>
+                            </div>
                             <div>
                                 <div class="card-title">${t.route.routeName}</div>
                                 <div class="card-sub">
                                     <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                    &nbsp;�&nbsp;Trip #${t.tripId}
-                                    <c:if test="${t.startTime != null}">&nbsp;�&nbsp;<i class="bi bi-clock"></i> ${t.startTime}</c:if>
+                                    &nbsp;&middot;&nbsp;Trip #${t.tripId}
+                                    <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp;<i class="bi bi-clock"></i> ${t.startTime}</c:if>
                                 </div>
                             </div>
                             <c:choose>
-                                <c:when test="${t.status == 'IN_PROGRESS'}"><span class="card-badge live">? Live</span></c:when>
+                                <c:when test="${t.status == 'IN_PROGRESS'}"><span class="card-badge live"><i class="bi bi-broadcast-pin"></i> Live</span></c:when>
                                 <c:when test="${t.status == 'SCHEDULED'}"><span class="card-badge scheduled">Scheduled</span></c:when>
                                 <c:otherwise><span class="card-badge done">Done</span></c:otherwise>
                             </c:choose>
@@ -200,7 +224,7 @@
                 </c:forEach>
             </c:when>
             <c:otherwise>
-                <div class="empty-state"><i class="bi bi-bus-front"></i>No trips assigned yet.</div>
+                <div class="empty-state"><i class="bi bi-bus-front"></i><br>No trips scheduled for today.</div>
             </c:otherwise>
         </c:choose>
     </div>
@@ -209,14 +233,14 @@
 <div id="dd-overlay">
     <div id="dd-modal">
         <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Report a Delay</h5>
-        <p>Select a reason � all passengers on this trip will be notified instantly.</p>
-        <button class="dd-reason" onclick="ddSelectReason(this,'Heavy traffic')">?? Heavy traffic</button>
-        <button class="dd-reason" onclick="ddSelectReason(this,'Road accident ahead')">?? Road accident ahead</button>
-        <button class="dd-reason" onclick="ddSelectReason(this,'Bus mechanical issue')">?? Bus mechanical issue</button>
-        <button class="dd-reason" onclick="ddSelectReason(this,'Weather conditions')">??? Weather conditions</button>
-        <button class="dd-reason" onclick="ddSelectReason(this,'Passenger boarding delay')">?? Boarding delay</button>
-        <input id="dd-custom" type="text" placeholder="Or type a custom reason�" maxlength="200" oninput="ddCustomReason(this)"/>
-        <div id="dd-done">? Passengers have been notified!</div>
+        <p>Select a reason &mdash; all passengers on this trip will be notified instantly.</p>
+        <button class="dd-reason" onclick="ddSelectReason(this,'Heavy traffic')"><i class="bi bi-car-front-fill"></i> Heavy traffic</button>
+        <button class="dd-reason" onclick="ddSelectReason(this,'Road accident ahead')"><i class="bi bi-exclamation-octagon-fill"></i> Road accident ahead</button>
+        <button class="dd-reason" onclick="ddSelectReason(this,'Bus mechanical issue')"><i class="bi bi-tools"></i> Bus mechanical issue</button>
+        <button class="dd-reason" onclick="ddSelectReason(this,'Weather conditions')"><i class="bi bi-cloud-rain-fill"></i> Weather conditions</button>
+        <button class="dd-reason" onclick="ddSelectReason(this,'Passenger boarding delay')"><i class="bi bi-people-fill"></i> Boarding delay</button>
+        <input id="dd-custom" type="text" placeholder="Or type a custom reason..." maxlength="200" oninput="ddCustomReason(this)"/>
+        <div id="dd-done"><i class="bi bi-check-circle-fill"></i> Passengers have been notified!</div>
         <button id="dd-submit" onclick="submitDashDelay()">Send Alert</button>
         <button id="dd-cancel" onclick="closeDelayModal()">Cancel</button>
     </div>

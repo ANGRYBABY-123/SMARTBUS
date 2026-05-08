@@ -334,7 +334,7 @@ public class UserServlet extends HttpServlet {
         }
 
         if ("DRIVER".equals(role) && (licenseNumber == null || licenseNumber.trim().isEmpty())) {
-            req.setAttribute("error", "Please provide your driver licence number.");
+            req.setAttribute("error", "Please provide your driver license number.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;

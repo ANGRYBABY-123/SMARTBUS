@@ -103,6 +103,26 @@ public class TripDAO extends GenericDAO<Trip> {
         }
     }
 
+    // JPQL: find trips for a specific driver on today's date, ordered by start time
+    public List<Trip> findByDriverAndDate(Long driverId, LocalDate date) {
+        EntityManager em = getEntityManager();
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay   = startOfDay.plusDays(1);
+        try {
+            return em.createQuery(
+                "SELECT t FROM Trip t JOIN FETCH t.driver d JOIN FETCH t.bus JOIN FETCH t.route " +
+                "WHERE d.userId = :driverId " +
+                "AND t.startTime >= :startOfDay AND t.startTime < :endOfDay " +
+                "ORDER BY t.startTime ASC", Trip.class)
+                .setParameter("driverId", driverId)
+                .setParameter("startOfDay", startOfDay)
+                .setParameter("endOfDay",   endOfDay)
+                .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
     // JPQL: find all trips with JOIN FETCH for display
     public List<Trip> findAllWithDetails() {
         EntityManager em = getEntityManager();

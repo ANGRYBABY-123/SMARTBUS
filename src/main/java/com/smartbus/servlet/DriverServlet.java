@@ -53,20 +53,21 @@ public class DriverServlet extends HttpServlet {
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User user = (User) req.getSession().getAttribute("loggedUser");
+        LocalDate today = LocalDate.now();
 
-        // Trips assigned to this driver
-        List<Trip> trips = tripDAO.findByDriver(user.getUserId());
+        // Only today's trips for this driver
+        List<Trip> trips = tripDAO.findByDriverAndDate(user.getUserId(), today);
 
-        // Current week's schedule (Monday of today's week)
-        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
-        List<DriverSchedule> weekSchedule = dsDAO.findByDriverAndWeek(user.getUserId(), weekStart);
+        // Today's schedule entry (from the weekly schedule the admin published)
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+        List<DriverSchedule> todaySchedule = dsDAO.findByDriverAndWeek(user.getUserId(), weekStart);
 
         // Unread SCHEDULE notifications for this driver
         List<Notification> scheduleNotifs = notifDAO.findScheduleNotificationsByUser(user.getUserId());
 
         req.setAttribute("trips",          trips);
-        req.setAttribute("weekSchedule",   weekSchedule);
-        req.setAttribute("weekStart",      weekStart);
+        req.setAttribute("todaySchedule",  todaySchedule);
+        req.setAttribute("today",          today);
         req.setAttribute("scheduleNotifs", scheduleNotifs);
         req.getRequestDispatcher("/WEB-INF/views/driver-dashboard.jsp").forward(req, resp);
     }
