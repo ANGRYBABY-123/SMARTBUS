@@ -26,9 +26,9 @@
             <!-- ===== DATABASE CONNECTION ===== -->
             <!-- Override any value at startup with env vars: DB_HOST, DB_PORT, DB_USER, DB_PASS -->
             <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver"/>
-            <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/smartbus?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
+            <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://trolley.proxy.rlwy.net:31694/railway?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
             <property name="jakarta.persistence.jdbc.user"     value="root"/>
-            <property name="jakarta.persistence.jdbc.password" value="M@sydo123"/>
+            <property name="jakarta.persistence.jdbc.password" value="ZbuqEpkmhsZkPQNLqPazHWPSLNBAIlOX"/>
 
             <!-- ===== HIBERNATE SETTINGS ===== -->
             <property name="hibernate.dialect"          value="org.hibernate.dialect.MySQLDialect"/>
