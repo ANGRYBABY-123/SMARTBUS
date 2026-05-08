@@ -105,6 +105,16 @@
     </a>
 </div>
 
+<%-- Trip-start error banner (set by DriverServlet when start is blocked) --%>
+<c:if test="${not empty sessionScope.tripStartError}">
+<div id="trip-start-error" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:#fff;font-size:.85rem;font-weight:600;padding:10px 16px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    ${sessionScope.tripStartError}
+    <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;margin-left:8px">&times;</button>
+</div>
+<c:remove var="tripStartError" scope="session"/>
+</c:if>
+
 <%-- Schedule notification banner (shown when a new schedule has been posted) --%>
 <c:if test="${not empty scheduleNotifs}">
 <div class="sched-banner" id="sched-banner">
@@ -201,7 +211,13 @@
                         </div>
                         <div class="card-actions">
                             <c:if test="${t.status == 'SCHEDULED'}">
-                                <a href="${pageContext.request.contextPath}/driver/start?id=${t.tripId}" class="btn-action btn-go" onclick="return confirm('Start this trip now?')"><i class="bi bi-play-fill"></i> Start Trip</a>
+                                <a href="javascript:void(0)" class="btn-action btn-go"
+                                   onclick="startTripCheck('${t.tripId}',
+                                       ${not empty t.route.startLat ? t.route.startLat : 'null'},
+                                       ${not empty t.route.startLng ? t.route.startLng : 'null'},
+                                       '${fn:escapeXml(t.route.startLocation)}')">
+                                    <i class="bi bi-play-fill"></i> Start Trip
+                                </a>
                             </c:if>
                             <c:if test="${t.status == 'IN_PROGRESS'}">
                                 <a href="${pageContext.request.contextPath}/tracking/drive?tripId=${t.tripId}" class="btn-action btn-map"><i class="bi bi-geo-alt-fill"></i> Share Location</a>
@@ -291,7 +307,40 @@ function submitDashDelay() {
         }).catch(() => alert('Network error'));
 }
 
-// ── Auto-refresh: swap sheet content (trips + schedule) every 10s ──
+// ── Trip start: GPS location check ────────────────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371, toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function startTripCheck(tripId, startLat, startLng, locationName) {
+    const doStart = () => { location.href = DD_CTX + '/driver/start?id=' + tripId; };
+
+    if (!startLat || !startLng || isNaN(startLat) || isNaN(startLng)) {
+        if (confirm('Start this trip now?')) doStart();
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, startLat, startLng);
+            if (distKm > 0.5) {
+                alert('You are ' + Math.round(distKm * 1000) + ' m from the start location.\n' +
+                      'Please be within 500 m of ' + locationName + ' before starting the trip.');
+                return;
+            }
+            if (confirm('Start this trip now?')) doStart();
+        },
+        function() {
+            // GPS unavailable — warn and let server decide
+            if (confirm('Could not verify your location.\nStart trip anyway?')) doStart();
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+}
+
 (function() {
     const mapMarkers = [];
     async function autoRefresh() {

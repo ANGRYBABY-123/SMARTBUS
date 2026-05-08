@@ -200,6 +200,7 @@ const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.rou
 const ROUTE_START_LNG = '${trip.route.startLng}' !== '' ? parseFloat('${trip.route.startLng}') : null;
 const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.route.endLat}')   : null;
 const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.route.endLng}')   : null;
+const START_LOCATION  = '${trip.route.startLocation}';
 
 let map, driverMarker, routeLayer, historyLayer;
 let lastLat = null, lastLng = null;
@@ -340,12 +341,42 @@ function toggleSheet() {
   document.getElementById('bottom-sheet').style.maxHeight = sheetExpanded ? '55vh' : '110px';
 }
 
-function updateStatus(status) {
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function _doUpdateStatus(status) {
   fetch(CTX+'/trips/update-status', {
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'tripId='+TRIP_ID+'&status='+status
-  }).then(()=>location.reload()).catch(()=>{});
+  }).then(r=>r.json()).then(d=>{
+    if (d.error) { alert(d.error); return; }
+    location.reload();
+  }).catch(()=>location.reload());
+}
+
+function updateStatus(status) {
+  if (status === 'IN_PROGRESS' && ROUTE_START_LAT && ROUTE_START_LNG) {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, ROUTE_START_LAT, ROUTE_START_LNG);
+        if (distKm > 0.5) {
+          alert('You are ' + Math.round(distKm * 1000) + ' m from the start location.\n' +
+                'Please be within 500 m of ' + START_LOCATION + ' before starting the trip.');
+          return;
+        }
+        _doUpdateStatus(status);
+      },
+      function() { _doUpdateStatus(status); }, // GPS unavailable — fall through to server check
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  } else {
+    _doUpdateStatus(status);
+  }
 }
 
 function openDelay()  { document.getElementById('delay-modal').classList.add('open'); }
