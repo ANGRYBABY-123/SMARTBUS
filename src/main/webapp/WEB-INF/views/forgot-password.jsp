@@ -53,7 +53,7 @@
 </head>
 <body>
 <div class="auth-card">
-    <div class="icon">🔒</div>
+    <div class="icon"><i class="bi bi-lock-fill" style="color:#000"></i></div>
     <h2>Forgot password?</h2>
     <p class="subtitle">
         No worries, we will send you instructions on how to<br>

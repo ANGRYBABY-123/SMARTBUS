@@ -71,8 +71,8 @@ public class ForgotPasswordServlet extends HttpServlet {
             } catch (Exception mailEx) {
                 getServletContext().log("Password reset email failed for: " + normalised, mailEx);
                 req.setAttribute("forgotError",
-                        "Your account was found but the email could not be sent. "
-                        + "Please contact the administrator.");
+                        "Your account was found but the reset email could not be sent. "
+                        + "Please check your email address and try again.");
                 req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
                 return;
             }

@@ -56,7 +56,7 @@
 </head>
 <body>
 <div class="auth-card">
-    <div class="icon">📬</div>
+    <div class="icon"><i class="bi bi-envelope-check-fill" style="color:#000"></i></div>
     <h2>Check your email</h2>
     <%
         String sentTo = (String) request.getAttribute("sentTo");
