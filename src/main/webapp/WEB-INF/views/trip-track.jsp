@@ -182,7 +182,7 @@
       <div class="bus-icon-wrap"><i class="bi bi-bus-front-fill"></i></div>
       <div>
         <div id="bus-status-text">Locating bus…</div>
-        <div id="bus-status-sub">Updating every 2 seconds</div>
+        <div id="bus-status-sub">Locating…</div>
       </div>
     </div>    <!-- AI Speed / Traffic Chips -->
     <div class="ai-eta-row">
@@ -208,19 +208,36 @@ let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
 
-// Smooth marker animation
-function animateMarker(marker, targetLat, targetLng, durationMs) {
-  const start = marker.getLatLng();
-  const dLat = targetLat - start.lat;
-  const dLng = targetLng - start.lng;
-  const startTime = performance.now();
-  function step(now) {
-    const t = Math.min((now - startTime) / durationMs, 1);
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease-in-out quad
-    marker.setLatLng([start.lat + dLat * ease, start.lng + dLng * ease]);
-    if (t < 1) requestAnimationFrame(step);
+// ── Dead-reckoning state ────────────────────────────────────────────────────
+// prevGps: last confirmed GPS fix {lat, lng, ts (ms)}
+// velLat/velLng: velocity in degrees/ms from two consecutive fixes
+// drRafId: requestAnimationFrame handle for the DR loop
+let prevGps = null, velLat = 0, velLng = 0, drRafId = null;
+
+// Haversine distance in km between two lat/lng points
+function haversineKm(a, b) {
+  const R = 6371, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(h));
+}
+
+// Start/restart the dead-reckoning RAF loop
+function startDeadReckoning() {
+  if (drRafId) cancelAnimationFrame(drRafId);
+  function dr() {
+    if (busMarker && prevGps && (velLat !== 0 || velLng !== 0)) {
+      const elapsed = performance.now() - prevGps.ts;
+      // Don't extrapolate beyond 10 s (bus might have stopped)
+      const clamp = Math.min(elapsed, 10000);
+      const lat = prevGps.lat + velLat * clamp;
+      const lng = prevGps.lng + velLng * clamp;
+      busMarker.setLatLng([lat, lng]);
+      busLat = lat; busLng = lng;
+    }
+    drRafId = requestAnimationFrame(dr);
   }
-  requestAnimationFrame(step);
+  drRafId = requestAnimationFrame(dr);
 }
 
 function initMap() {
@@ -228,9 +245,10 @@ function initMap() {
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
   map.setView([3.1390, 101.6869], 13);
   pollBus();
-  setInterval(pollBus, 2000);
+  setInterval(pollBus, 3000);
   setInterval(pollDelay, 15000);
   pollDelay();
+  startDeadReckoning();
 }
 
 function busIcon(live) {
@@ -252,21 +270,48 @@ function pollBus() {
         document.getElementById('status-chip').style.background='#fee2e2';
         document.getElementById('status-chip').style.color='#b91c1c';
         document.getElementById('bus-status-text').textContent='Bus is offline';
+        velLat = 0; velLng = 0; // stop extrapolating
         if (busMarker) busMarker.setIcon(busIcon(false));
         return;
       }
-      busLat=d.lat; busLng=d.lng;
+      const nowMs = performance.now();
+      const newFix = { lat: d.lat, lng: d.lng, ts: nowMs };
+
+      // Calculate velocity from two consecutive fixes
+      if (prevGps) {
+        const dtMs = nowMs - prevGps.ts;
+        if (dtMs > 100) { // ignore duplicate/too-fast responses
+          const dLat = d.lat - prevGps.lat;
+          const dLng = d.lng - prevGps.lng;
+          const distKm = haversineKm(prevGps, newFix);
+          const speedKmh = (distKm / dtMs) * 3600000;
+          // Only extrapolate when actually moving (>1 km/h); if stopped, zero velocity
+          if (speedKmh > 1) {
+            velLat = dLat / dtMs;
+            velLng = dLng / dtMs;
+          } else {
+            velLat = 0; velLng = 0;
+          }
+          // Show live speed in status
+          document.getElementById('bus-status-sub').textContent =
+            speedKmh > 1 ? speedKmh.toFixed(0) + ' km/h · Live' : 'Stopped · Live';
+        }
+      } else {
+        document.getElementById('bus-status-sub').textContent = 'Live';
+      }
+      prevGps = newFix;
+
       document.getElementById('live-label').textContent='Live';
       document.getElementById('status-chip').style.background='#dcfce7';
       document.getElementById('status-chip').style.color='#15803d';
       document.getElementById('bus-status-text').textContent='Bus is live';
-      document.getElementById('bus-status-sub').textContent='Last update: just now';
       if (!busMarker) {
         busMarker = L.marker([d.lat,d.lng], {icon:busIcon(true)}).addTo(map);
         map.setView([d.lat,d.lng], 15);
       } else {
-        animateMarker(busMarker, d.lat, d.lng, 1800);
         busMarker.setIcon(busIcon(true));
+        // Snap to real GPS fix (DR loop will extrapolate from here)
+        busMarker.setLatLng([d.lat, d.lng]);
       }
     }).catch(()=>{});
 }
