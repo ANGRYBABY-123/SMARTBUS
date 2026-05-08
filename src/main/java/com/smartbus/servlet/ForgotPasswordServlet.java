@@ -50,7 +50,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             if (user == null) {
                 req.setAttribute("forgotError",
                         "No account found for \"" + normalised + "\". "
-                        + "Please check the email you registered with, or create a new account.");
+                        + "Please check the email you registered with.");
                 req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
                 return;
             }
