@@ -182,7 +182,7 @@
       <div class="bus-icon-wrap"><i class="bi bi-bus-front-fill"></i></div>
       <div>
         <div id="bus-status-text">Locating bus…</div>
-        <div id="bus-status-sub">Polling every 5 seconds</div>
+        <div id="bus-status-sub">Updating every 2 seconds</div>
       </div>
     </div>    <!-- AI Speed / Traffic Chips -->
     <div class="ai-eta-row">
@@ -208,12 +208,27 @@ let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
 
+// Smooth marker animation
+function animateMarker(marker, targetLat, targetLng, durationMs) {
+  const start = marker.getLatLng();
+  const dLat = targetLat - start.lat;
+  const dLng = targetLng - start.lng;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min((now - startTime) / durationMs, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease-in-out quad
+    marker.setLatLng([start.lat + dLat * ease, start.lng + dLng * ease]);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function initMap() {
   map = L.map('map', { zoomControl:false, attributionControl:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
   map.setView([3.1390, 101.6869], 13);
   pollBus();
-  setInterval(pollBus, 5000);
+  setInterval(pollBus, 2000);
   setInterval(pollDelay, 15000);
   pollDelay();
 }
@@ -250,7 +265,8 @@ function pollBus() {
         busMarker = L.marker([d.lat,d.lng], {icon:busIcon(true)}).addTo(map);
         map.setView([d.lat,d.lng], 15);
       } else {
-        busMarker.setLatLng([d.lat,d.lng]).setIcon(busIcon(true));
+        animateMarker(busMarker, d.lat, d.lng, 1800);
+        busMarker.setIcon(busIcon(true));
       }
     }).catch(()=>{});
 }
