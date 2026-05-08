@@ -136,7 +136,7 @@
                             <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;�&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
                             <span class="card-badge live">? Live</span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="track-btn" target="_blank"><i class="bi bi-geo-alt-fill"></i> Track</a>
+                        <a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="track-btn"><i class="bi bi-geo-alt-fill"></i> Track</a>
                     </div>
                 </c:forEach>
             </c:when>

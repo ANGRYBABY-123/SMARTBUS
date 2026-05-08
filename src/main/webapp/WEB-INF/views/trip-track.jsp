@@ -131,7 +131,7 @@
 <body>
 <div id="map"></div>
 <div id="topbar">
-  <button class="back-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
+  <button class="back-btn" onclick="if(history.length>1&&document.referrer)history.back();else location.href='${pageContext.request.contextPath}/passenger/dashboard';"><i class="bi bi-arrow-left"></i></button>
   <div class="route-pill"><i class="bi bi-bus-front-fill" style="color:#22c55e"></i> ${trip.route.routeName}</div>
   <div id="status-chip">
     <div class="live-dot"></div>
