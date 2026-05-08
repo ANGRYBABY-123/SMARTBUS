@@ -144,9 +144,9 @@ public class GoogleAuthServlet extends HttpServlet {
             }
 
             if (user == null) {
-                // First-time Google sign-in → auto-create ACTIVE Passenger
+                // First-time Google sign-in → create PENDING Passenger (requires admin approval)
                 Passenger p = new Passenger(name, email, "GOOGLE:" + UUID.randomUUID());
-                p.setStatus("ACTIVE");
+                p.setStatus("PENDING");
                 p.setGoogleId(googleId);
                 user = userDAO.save(p);
             } else if (user.getGoogleId() == null) {
@@ -156,7 +156,7 @@ public class GoogleAuthServlet extends HttpServlet {
             }
 
             if ("PENDING".equals(user.getStatus())) {
-                req.setAttribute("error", "Your account is pending admin approval.");
+                req.setAttribute("error", "Your account is pending admin approval. You will be able to sign in once an admin reviews and approves your account.");
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                 return;
             }
