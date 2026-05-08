@@ -34,10 +34,12 @@ public class AuthFilter implements Filter {
 
         String path = req.getRequestURI().substring(req.getContextPath().length());
 
-        // Always allow: login, register, Google OAuth flow, static resources
+        // Always allow: login, register, Google OAuth flow, password reset, static resources
         if (path.startsWith("/users/login")
                 || path.startsWith("/users/register")
                 || path.startsWith("/oauth/google/")
+                || path.startsWith("/forgot-password")
+                || path.startsWith("/reset-password")
                 || path.startsWith("/WEB-INF/")) {
             chain.doFilter(request, response);
             return;

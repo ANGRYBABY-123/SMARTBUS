@@ -20,6 +20,7 @@
         <class>com.smartbus.entity.DriverSchedule</class>
         <class>com.smartbus.entity.Notification</class>
         <class>com.smartbus.entity.RememberMeToken</class>
+        <class>com.smartbus.entity.PasswordResetToken</class>
 
         <properties>
             <!-- ===== DATABASE CONNECTION ===== -->

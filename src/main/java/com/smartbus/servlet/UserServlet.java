@@ -40,6 +40,11 @@ public class UserServlet extends HttpServlet {
         if ("/login".equals(path) || "/logout".equals(path) || "/register".equals(path)) {
             switch (path) {
                 case "/login":
+                    // Support ?msg= from redirects (e.g. password reset success)
+                    String msg = req.getParameter("msg");
+                    if (msg != null && !msg.isBlank()) {
+                        req.setAttribute("success", msg);
+                    }
                     req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                     return;
                 case "/logout":
