@@ -2,6 +2,7 @@ package com.smartbus.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,8 +35,11 @@ public class Trip {
     @Column(name = "status", length = 20)
     private String status;
 
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<GpsTracking> gpsTrackings;
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<GpsTracking> gpsTrackings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Notification> notifications = new ArrayList<>();
 
     public Trip() {}
 
@@ -63,4 +67,6 @@ public class Trip {
     public void setStatus(String status) { this.status = status; }
     public List<GpsTracking> getGpsTrackings() { return gpsTrackings; }
     public void setGpsTrackings(List<GpsTracking> gpsTrackings) { this.gpsTrackings = gpsTrackings; }
+    public List<Notification> getNotifications() { return notifications; }
+    public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
 }
