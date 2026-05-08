@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 1 – Build the WAR with Maven
 # ─────────────────────────────────────────────────────────────────────────────
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 WORKDIR /app
 
@@ -13,9 +13,9 @@ COPY src ./src
 RUN mvn package -DskipTests -q
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Stage 2 – Run on Tomcat 10.1 / JRE 21
+# Stage 2 – Run on Tomcat 10.1 / JDK 25
 # ─────────────────────────────────────────────────────────────────────────────
-FROM tomcat:10.1-jre21
+FROM tomcat:10.1-jdk25-temurin
 
 # Remove default Tomcat apps
 RUN rm -rf /usr/local/tomcat/webapps/*
