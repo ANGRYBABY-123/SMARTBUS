@@ -81,16 +81,18 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // DRIVER — own portal and tracking endpoints
+        // DRIVER — own portal, tracking endpoints and AI assistant
         if ("DRIVER".equals(role) &&
-                (path.startsWith("/driver/") || path.startsWith("/tracking/"))) {
+                (path.startsWith("/driver/") || path.startsWith("/tracking/") || path.startsWith("/ai/"))) {
             chain.doFilter(request, response);
             return;
         }
 
-        // PASSENGER — own portal and read-only tracking
+        // PASSENGER — own portal, read-only tracking and AI assistant
         if ("PASSENGER".equals(role) &&
-                (path.startsWith("/passenger/") || path.startsWith("/tracking/view") || path.startsWith("/tracking/latest"))) {
+                (path.startsWith("/passenger/") || path.startsWith("/tracking/view")
+                 || path.startsWith("/tracking/latest") || path.startsWith("/api/")
+                 || path.startsWith("/ai/"))) {
             chain.doFilter(request, response);
             return;
         }
