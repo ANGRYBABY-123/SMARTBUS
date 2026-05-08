@@ -70,12 +70,12 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Scheduled Departure</label>
-                    <input type="datetime-local" name="startTime" class="form-control"
+                    <input type="datetime-local" name="startTime" id="startTime" class="form-control"
                            value="${trip.startTime}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Actual / Expected Arrival</label>
-                    <input type="datetime-local" name="endTime" class="form-control"
+                    <input type="datetime-local" name="endTime" id="endTime" class="form-control"
                            value="${trip.endTime}">
                 </div>
             </div>
@@ -102,4 +102,24 @@
     </div>
 </div>
 </body>
+<script>
+    // For new trips only, prevent selecting past dates
+    <c:if test="${empty trip.tripId}">
+    (function () {
+        // Format local datetime as "YYYY-MM-DDThh:mm" (datetime-local value format)
+        var now = new Date();
+        var pad = function(n){ return n < 10 ? '0' + n : n; };
+        var today = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate())
+                  + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+        var startEl = document.getElementById('startTime');
+        var endEl   = document.getElementById('endTime');
+        startEl.min = today;
+        endEl.min   = today;
+        // Keep end min in sync with start selection
+        startEl.addEventListener('change', function() {
+            if (startEl.value) endEl.min = startEl.value;
+        });
+    })();
+    </c:if>
+</script>
 </html>
