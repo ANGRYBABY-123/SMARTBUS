@@ -37,7 +37,7 @@ public class AiServlet extends HttpServlet {
 
     private static final String GEMINI_KEY = "AIzaSyAMMxrYl49Xij4srs-sVjOmEv8Jq3BeJaw";
     private static final String GEMINI_URL =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_KEY;
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_KEY;
 
     private static final Pattern TEXT_PAT =
         Pattern.compile("\"text\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
@@ -124,14 +124,22 @@ public class AiServlet extends HttpServlet {
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setConnectTimeout(10000);
-            conn.setReadTimeout(15000);
+            conn.setReadTimeout(20000);
             conn.setDoOutput(true);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(body.getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
-            InputStream is = code < 400 ? conn.getInputStream() : conn.getErrorStream();
+            InputStream is = (conn.getErrorStream() != null) ? conn.getErrorStream() : conn.getInputStream();
             String response = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            if (code >= 400) {
+                // Surface a readable hint from the Gemini error body
+                java.util.regex.Matcher em = java.util.regex.Pattern
+                    .compile("\"message\":\\s*\"([^\"]{1,120})")
+                    .matcher(response);
+                String hint = em.find() ? em.group(1) : ("HTTP " + code);
+                return "AI unavailable: " + hint + ". Please try again later.";
+            }
             Matcher m = TEXT_PAT.matcher(response);
             if (m.find()) {
                 return m.group(1)
@@ -139,8 +147,10 @@ public class AiServlet extends HttpServlet {
                     .replace("\\\\", "\\").replace("\\t", " ");
             }
             return "I'm having trouble responding right now. Please try again shortly.";
+        } catch (java.net.SocketTimeoutException e) {
+            return "AI response timed out. Please try again.";
         } catch (Exception e) {
-            return "AI service is temporarily unavailable. Please try again later.";
+            return "AI service is temporarily unavailable (" + e.getClass().getSimpleName() + "). Please try again later.";
         }
     }
 
