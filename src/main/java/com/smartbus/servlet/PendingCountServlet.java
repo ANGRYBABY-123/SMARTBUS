@@ -34,6 +34,7 @@ public class PendingCountServlet extends HttpServlet {
         long count = userDAO.findPending().size();
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
+        resp.setHeader("Cache-Control", "no-store");
         resp.getWriter().write("{\"count\":" + count + "}");
     }
 }

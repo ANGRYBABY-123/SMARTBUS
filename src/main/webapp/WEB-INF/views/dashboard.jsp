@@ -141,6 +141,7 @@
 <script>
 // ── Auto-refresh: swap stats + active trips every 15s without reloading page ──
 (function() {
+    // Exclude pending-banner from the DOM swap — the dedicated poller manages it
     const SWAP_IDS = ['sb-stats-row', 'sb-schedule-panel', 'sb-active-trips'];
     async function autoRefresh() {
         try {
@@ -160,23 +161,24 @@
 // ── Live pending-approvals banner + 2-second beep ──
 (function () {
     var ctxPath = '${pageContext.request.contextPath}';
-    var lastCount = ${pendingUsersCount};
+    // Start at -1 so the very first poll always renders the banner and
+    // triggers a beep if there are already pending users on load.
+    var lastCount = -1;
 
     function beep() {
         try {
             var ac = new (window.AudioContext || window.webkitAudioContext)();
-            var osc = ac.createOscillator();
+            var osc  = ac.createOscillator();
             var gain = ac.createGain();
             osc.connect(gain);
             gain.connect(ac.destination);
             osc.type = 'sine';
             osc.frequency.setValueAtTime(880, ac.currentTime);
             gain.gain.setValueAtTime(0.6, ac.currentTime);
-            // Fade out gently at the end
             gain.gain.linearRampToValueAtTime(0, ac.currentTime + 2);
             osc.start(ac.currentTime);
             osc.stop(ac.currentTime + 2);
-        } catch (e) { /* AudioContext not available */ }
+        } catch (e) { /* AudioContext blocked until user gesture – silent */ }
     }
 
     function renderBanner(count) {
@@ -191,7 +193,8 @@
                 + '<div style="font-weight:700;color:#5d4037">'
                 + count + ' account' + (count === 1 ? '' : 's') + ' waiting for approval'
                 + '</div>'
-                + '<div style="font-size:.82rem;color:#795548">New users have registered and cannot sign in until you approve them.</div>'
+                + '<div style="font-size:.82rem;color:#795548">'
+                + 'New users have registered and cannot sign in until you approve them.</div>'
                 + '</div>'
                 + '<a href="' + ctxPath + '/users/list" class="btn btn-sm"'
                 + ' style="background:#f57c00;color:#fff;border:none;font-weight:600;white-space:nowrap">'
@@ -204,21 +207,26 @@
 
     async function pollPending() {
         try {
-            var res = await fetch(ctxPath + '/api/pending-count', { credentials: 'same-origin' });
+            var res = await fetch(ctxPath + '/api/pending-count', {
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
             if (!res.ok) return;
             var data = await res.json();
-            var count = data.count || 0;
-            if (count > lastCount) {
+            var count = typeof data.count === 'number' ? data.count : 0;
+            if (count > lastCount && lastCount !== -1) {
+                // New registrations arrived since last check
                 beep();
             }
-            if (count !== lastCount) {
-                lastCount = count;
-                renderBanner(count);
-            }
+            // Always re-render banner so it's always in sync (handles lastCount === -1 on first poll too)
+            renderBanner(count);
+            lastCount = count;
         } catch (e) { /* silent */ }
     }
 
-    setInterval(pollPending, 6000);
+    // Fire immediately on page load, then every 5 seconds
+    pollPending();
+    setInterval(pollPending, 5000);
 })();
 </script>
 </html>
