@@ -45,6 +45,52 @@
         </div>
     </div>
 
+    <!-- This week's schedule panel -->
+    <div class="card mb-4" id="sb-schedule-panel" style="border-color:${unpublishedThisWeek > 0 ? '#f59e0b' : '#334155'}!important">
+        <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom:1px solid #334155">
+            <div>
+                <span style="font-weight:600;font-size:.9rem">
+                    <i class="bi bi-calendar-week me-2" style="color:#f59e0b"></i>This Week's Schedule
+                </span>
+                <span style="font-size:.75rem;color:#64748b;margin-left:.5rem">${weekStart} (Mon–Fri)</span>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <c:choose>
+                    <c:when test="${unpublishedThisWeek > 0}">
+                        <span class="badge" style="background:#78350f;color:#fbbf24;font-size:.75rem">
+                            ${unpublishedThisWeek} unpublished entr${unpublishedThisWeek == 1 ? 'y' : 'ies'}
+                        </span>
+                        <form method="post" action="${pageContext.request.contextPath}/weekly-schedule/publish"
+                              onsubmit="return confirm('Publish this week\'s schedule? Trips (Mon–Fri) will be created and drivers notified.')">
+                            <input type="hidden" name="weekStartDate" value="${weekStart}">
+                            <button type="submit" class="btn btn-sm" style="background:#16a34a;color:#fff;border:none;font-weight:600">
+                                <i class="bi bi-send-fill me-1"></i>Publish Now
+                            </button>
+                        </form>
+                    </c:when>
+                    <c:when test="${totalThisWeek > 0}">
+                        <span class="badge" style="background:#064e3b;color:#34d399;font-size:.75rem">
+                            <i class="bi bi-check-circle-fill me-1"></i>All published
+                        </span>
+                    </c:when>
+                    <c:otherwise>
+                        <span style="font-size:.8rem;color:#64748b">No entries yet for this week.</span>
+                    </c:otherwise>
+                </c:choose>
+                <a href="${pageContext.request.contextPath}/weekly-schedule/list" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Edit Schedule
+                </a>
+            </div>
+        </div>
+        <c:if test="${totalThisWeek == 0}">
+        <div class="p-3" style="font-size:.84rem;color:#64748b">
+            <i class="bi bi-info-circle me-1"></i>
+            Add driver entries under <a href="${pageContext.request.contextPath}/weekly-schedule/new" style="color:#3b82f6">Weekly Schedule</a>
+            and hit <strong>Publish</strong> — trips for Mon–Fri will be auto-created and drivers notified instantly.
+        </div>
+        </c:if>
+    </div>
+
     <!-- Active trips table -->
     <div class="card" id="sb-active-trips">
         <div class="p-3 border-bottom" style="border-color:#334155!important">
@@ -77,7 +123,7 @@
 <script>
 // ── Auto-refresh: swap stats + active trips every 15s without reloading page ──
 (function() {
-    const SWAP_IDS = ['sb-stats-row', 'sb-active-trips'];
+    const SWAP_IDS = ['sb-stats-row', 'sb-schedule-panel', 'sb-active-trips'];
     async function autoRefresh() {
         try {
             const res = await fetch(location.href, { credentials: 'same-origin' });
