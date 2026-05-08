@@ -126,6 +126,18 @@
     font-size:0.78rem;color:#374151;border:1px solid #e5e7eb;
   }
   .info-chip .label { font-weight:700;margin-bottom:2px;color:#111; }
+  #eta-card {
+    background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:16px;
+    padding:16px 18px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;
+  }
+  #eta-card .eta-icon {
+    width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.12);
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;
+  }
+  #eta-mins { font-size:2rem;font-weight:900;line-height:1; }
+  #eta-label { font-size:0.72rem;color:rgba(255,255,255,0.65);margin-top:2px; }
+  #dest-name { font-size:0.88rem;font-weight:700;margin-top:4px; }
+  #dist-label { font-size:0.75rem;color:rgba(255,255,255,0.6);margin-top:1px; }
 </style>
 </head>
 <body>
@@ -168,6 +180,19 @@
 <div id="bottom-sheet">
   <div id="sheet-handle" onclick="toggleSheet()"><div class="handle-bar"></div></div>
   <div id="sheet-inner">
+    <!-- ETA Card -->
+    <div id="eta-card">
+      <div class="eta-icon"><i class="bi bi-clock-fill"></i></div>
+      <div>
+        <div style="display:flex;align-items:baseline;gap:5px;">
+          <span id="eta-mins">--</span>
+          <span style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.75)">min</span>
+        </div>
+        <div id="eta-label">Calculating ETA…</div>
+        <div id="dest-name"><i class="bi bi-geo-alt-fill" style="color:#f87171"></i> ${trip.route.endLocation}</div>
+        <div id="dist-label">-- km remaining</div>
+      </div>
+    </div>
     <div id="info-row">
       <div class="info-chip">
         <div class="label">${trip.driver.name}</div>
@@ -382,12 +407,35 @@ function pollAiEta() {
   fetch(CTX+'/ai/eta?tripId='+TRIP_ID)
     .then(r=>r.json())
     .then(d=>{
+      // Speed chip
       document.getElementById('ai-speed-val').textContent =
         d.speedKmh ? parseFloat(d.speedKmh).toFixed(0)+' km/h' : '-- km/h';
       document.getElementById('ai-traffic-val').textContent = d.label || '--';
+
+      // ETA card
+      if (d.etaMinutes > 0) {
+        const mins = Math.round(d.etaMinutes);
+        document.getElementById('eta-mins').textContent = mins < 1 ? '<1' : mins;
+        if (mins <= 2) {
+          document.getElementById('eta-label').textContent = 'Arriving soon';
+        } else {
+          const now = new Date();
+          now.setMinutes(now.getMinutes() + mins);
+          const hh = now.getHours().toString().padStart(2,'0');
+          const mm = now.getMinutes().toString().padStart(2,'0');
+          document.getElementById('eta-label').textContent = 'Est. arrival at ' + hh + ':' + mm;
+        }
+      } else {
+        document.getElementById('eta-mins').textContent = '--';
+        document.getElementById('eta-label').textContent = 'ETA unavailable';
+      }
+      if (d.distKm > 0) {
+        document.getElementById('dist-label').textContent =
+          parseFloat(d.distKm).toFixed(1) + ' km remaining';
+      }
     }).catch(()=>{});
 }
-setInterval(pollAiEta, 30000);
+setInterval(pollAiEta, 15000);
 pollAiEta();
 </script>
 </body>

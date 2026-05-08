@@ -162,7 +162,7 @@ public class AiServlet extends HttpServlet {
             long tripId = Long.parseLong(req.getParameter("tripId"));
             List<GpsTracking> pts = gpsDAO.findRecentByTrip(tripId, 10);
             if (pts.size() < 2) {
-                out.print("{\"speedKmh\":0,\"status\":\"waiting\",\"label\":\"Waiting for GPS…\"}");
+                out.print("{\"speedKmh\":0,\"status\":\"waiting\",\"label\":\"Waiting for GPS\",\"etaMinutes\":-1,\"distKm\":-1}");
                 return;
             }
             double totalDist = 0, totalSecs = 0;
@@ -173,14 +173,28 @@ public class AiServlet extends HttpServlet {
             }
             double speedKmh = (totalDist / totalSecs) * 3.6;
             String status, label;
-            if      (speedKmh < 2)  { status = "stalled"; label = "⚠️ Stalled"; }
-            else if (speedKmh < 12) { status = "slow";    label = "🟡 Slow traffic"; }
-            else if (speedKmh < 45) { status = "normal";  label = "🟢 Moving normally"; }
-            else                    { status = "fast";     label = "🔵 Moving fast"; }
-            out.print(String.format("{\"speedKmh\":%.1f,\"status\":\"%s\",\"label\":\"%s\"}",
-                speedKmh, status, label));
+            if      (speedKmh < 2)  { status = "stalled"; label = "Stalled"; }
+            else if (speedKmh < 12) { status = "slow";    label = "Slow traffic"; }
+            else if (speedKmh < 45) { status = "normal";  label = "Moving normally"; }
+            else                    { status = "fast";     label = "Moving fast"; }
+
+            // Distance remaining to route end and ETA
+            double distKm = -1;
+            double etaMinutes = -1;
+            Trip trip = tripDAO.findByIdWithDetails(tripId);
+            if (trip != null && trip.getRoute().getEndLat() != null && trip.getRoute().getEndLng() != null) {
+                GpsTracking lastPt = pts.get(pts.size() - 1);
+                distKm = haversine(lastPt.getLatitude(), lastPt.getLongitude(),
+                                   trip.getRoute().getEndLat(), trip.getRoute().getEndLng());
+                double effectiveSpeed = Math.max(speedKmh, 5); // avoid division by zero / huge ETA
+                etaMinutes = (distKm / effectiveSpeed) * 60;
+            }
+
+            out.print(String.format(
+                "{\"speedKmh\":%.1f,\"status\":\"%s\",\"label\":\"%s\",\"etaMinutes\":%.0f,\"distKm\":%.2f}",
+                speedKmh, status, label, etaMinutes, distKm));
         } catch (Exception e) {
-            out.print("{\"speedKmh\":0,\"status\":\"error\",\"label\":\"--\"}");
+            out.print("{\"speedKmh\":0,\"status\":\"error\",\"label\":\"--\",\"etaMinutes\":-1,\"distKm\":-1}");
         }
     }
 
