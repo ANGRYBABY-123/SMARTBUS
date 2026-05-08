@@ -68,6 +68,23 @@
         .track-btn.disabled { background: #e0e0e0; color: #999; pointer-events: none; }
         .empty-state { text-align: center; padding: 36px 16px; color: #bbb; }
         .empty-state i { font-size: 2.6rem; display: block; margin-bottom: 10px; }
+
+        /* Terminal recommendation card */
+        #terminal-rec {
+            border-radius: 16px; padding: 14px 16px; margin-bottom: 18px;
+            display: flex; align-items: center; gap: 14px;
+            border: 1.5px solid #e0e7ff; background: #f5f3ff;
+            transition: background .3s, border-color .3s;
+        }
+        #terminal-rec.out-of-range { background: #fff7ed; border-color: #fed7aa; }
+        #terminal-rec.loading { background: #f7f8fa; border-color: #e5e7eb; }
+        #terminal-rec.denied  { background: #fef2f2; border-color: #fecaca; }
+        .trec-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; background: #ede9fe; }
+        #terminal-rec.out-of-range .trec-icon { background: #ffedd5; }
+        #terminal-rec.loading      .trec-icon { background: #f0f0f0; }
+        #terminal-rec.denied       .trec-icon { background: #fee2e2; }
+        #trec-title { font-weight: 700; font-size: .93rem; color: #111; }
+        #trec-sub   { font-size: .76rem; color: #777; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -93,7 +110,14 @@
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" onclick="toggleSheet()"></div>
     <div class="sheet-content" id="pass-sheet-content">
-
+        <!-- Terminal recommendation -->
+        <div id="terminal-rec" class="loading">
+            <div class="trec-icon"><i class="bi bi-compass"></i></div>
+            <div>
+                <div id="trec-title">Finding your nearest terminal…</div>
+                <div id="trec-sub">Detecting your location</div>
+            </div>
+        </div>
         <!-- Where to bar -->
         <div class="where-to">
             <i class="bi bi-search"></i>
@@ -218,6 +242,106 @@ function pollNotifs() {
 }
 setInterval(pollNotifs, 15000);
 pollNotifs();
+
+// ── Nearest terminal recommendation ──────────────────────────────────
+(function () {
+    const CAMPUSES = [
+        { name: 'Soshanguve North Campus', lat: -25.5275, lng: 28.0952 },
+        { name: 'Soshanguve South Campus', lat: -25.5358, lng: 28.1065 },
+        { name: 'Pretoria Campus',         lat: -25.7313, lng: 28.1648 },
+        { name: 'Arcadia Campus',          lat: -25.7469, lng: 28.1961 },
+        { name: 'Ga-Rankuwa Campus',       lat: -25.6169, lng: 27.9964 }
+    ];
+    const MAX_KM = 100;
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2)
+            + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180)
+            * Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function compassDir(lat1, lng1, lat2, lng2) {
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2 * Math.PI/180);
+        const x = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180)
+            - Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos(dLng);
+        const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+        return dirs[Math.round(bearing / 45) % 8];
+    }
+
+    function setRec(cls, icon, title, sub) {
+        const el = document.getElementById('terminal-rec');
+        el.className = cls;
+        el.querySelector('.trec-icon').innerHTML = '<i class="bi bi-' + icon + '"></i>';
+        document.getElementById('trec-title').textContent = title;
+        document.getElementById('trec-sub').textContent   = sub;
+    }
+
+    function onPos(pos) {
+        const uLat = pos.coords.latitude, uLng = pos.coords.longitude;
+
+        // Add a small user location dot to the map
+        L.circleMarker([uLat, uLng], {
+            radius: 8, color: '#6366f1', fillColor: '#6366f1',
+            fillOpacity: 0.85, weight: 2
+        }).addTo(map).bindPopup('Your location');
+
+        // Find nearest campus
+        let nearest = null, minDist = Infinity;
+        CAMPUSES.forEach(c => {
+            const d = haversineKm(uLat, uLng, c.lat, c.lng);
+            if (d < minDist) { minDist = d; nearest = c; }
+        });
+
+        if (minDist > MAX_KM) {
+            setRec(
+                'out-of-range',
+                'exclamation-triangle-fill',
+                'Out of service area',
+                'You are ' + minDist.toFixed(0) + ' km from the nearest TUT campus (' + nearest.name + '). SmartBus only serves within 100 km.'
+            );
+        } else {
+            const dir = compassDir(uLat, uLng, nearest.lat, nearest.lng);
+            const distTxt = minDist < 1 ? (minDist * 1000).toFixed(0) + ' m' : minDist.toFixed(1) + ' km';
+            setRec(
+                '',
+                'geo-alt-fill',
+                'Nearest terminal: ' + nearest.name,
+                distTxt + ' away · head ' + dir + ' · Board here for your route'
+            );
+            // Pan map to show user + campus
+            map.fitBounds([[uLat, uLng], [nearest.lat, nearest.lng]], { padding: [60, 60] });
+            L.circleMarker([nearest.lat, nearest.lng], {
+                radius: 10, color: '#00c853', fillColor: '#00c853',
+                fillOpacity: 0.7, weight: 2
+            }).addTo(map).bindPopup('<b>' + nearest.name + '</b><br>Your recommended terminal').openPopup();
+        }
+    }
+
+    function onErr(err) {
+        if (err.code === 1) {
+            setRec('denied', 'geo-fill', 'Location access denied',
+                'Enable location permission to see your nearest terminal');
+        } else {
+            setRec('denied', 'wifi-off', 'Location unavailable',
+                'Could not detect your position — try again later');
+        }
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(onPos, onErr, {
+            enableHighAccuracy: true, timeout: 10000, maximumAge: 60000
+        });
+    } else {
+        setRec('denied', 'geo-fill', 'Geolocation not supported',
+            'Your browser does not support location detection');
+    }
+})();
 
 // ── Auto-refresh: swap trip cards (Live Now + Upcoming) every 10s ──
 (function() {
