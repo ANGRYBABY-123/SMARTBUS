@@ -30,7 +30,7 @@
 
             <%-- Week start date --%>
             <div class="mb-3">
-                <label class="form-label">Week (any day – auto-adjusted to Monday)</label>
+                <label class="form-label">Week Starting</label>
                 <input type="date" name="weekStartDate" class="form-control" required
                        value="${empty ds ? '' : ds.weekStartDate}">
                 <div style="color:#60a5fa;font-size:.72rem;margin-top:.3rem">
@@ -41,7 +41,7 @@
 
             <%-- Driver --%>
             <div class="mb-3">
-                <label class="form-label">Assigned Driver</label>
+                <label class="form-label">Driver</label>
                 <select name="driverId" class="form-select" required>
                     <option value="">-- Select Driver --</option>
                     <c:forEach var="d" items="${drivers}">
@@ -61,7 +61,7 @@
 
             <%-- Bus --%>
             <div class="mb-3">
-                <label class="form-label">Assigned Bus</label>
+                <label class="form-label">Vehicle</label>
                 <select name="busId" class="form-select" required>
                     <option value="">-- Select Bus --</option>
                     <c:forEach var="b" items="${buses}">
@@ -75,7 +75,7 @@
 
             <%-- Route --%>
             <div class="mb-3">
-                <label class="form-label">Service Route</label>
+                <label class="form-label">Route</label>
                 <select name="routeId" class="form-select" required>
                     <option value="">-- Select Route --</option>
                     <c:forEach var="r" items="${routes}">
@@ -89,7 +89,7 @@
 
             <%-- Shift type --%>
             <div class="mb-3">
-                <label class="form-label">Shift Type</label>
+                <label class="form-label">Schedule Type</label>
                 <select name="shiftType" class="form-select" required>
                     <option value="">-- Select Shift --</option>
                     <option value="Morning"   ${ds.shiftType == 'Morning'   ? 'selected' : ''}>Morning</option>
@@ -101,12 +101,12 @@
             <%-- Shift hours --%>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Shift Start</label>
+                    <label class="form-label">Start Time</label>
                     <input type="time" name="shiftStart" class="form-control" required
                            value="${ds.shiftStart}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Shift End</label>
+                    <label class="form-label">End Time</label>
                     <input type="time" name="shiftEnd" class="form-control" required
                            value="${ds.shiftEnd}">
                 </div>

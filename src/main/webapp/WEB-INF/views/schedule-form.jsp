@@ -45,7 +45,7 @@
         <form method="post" action="${pageContext.request.contextPath}/schedules/save" novalidate>
             <input type="hidden" name="scheduleId" value="${schedule.scheduleId}">
             <div class="mb-3">
-                <label class="form-label">Service Route</label>
+                <label class="form-label">Route</label>
                 <select name="routeId" class="form-select" required>
                     <option value="">-- Select Route --</option>
                     <c:forEach var="r" items="${routes}">
@@ -79,12 +79,12 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Shift Start</label>
+                    <label class="form-label">Departure Time</label>
                     <input type="time" name="departureTime" class="form-control"
                            value="${schedule.departureTime}" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Shift End</label>
+                    <label class="form-label">Arrival Time</label>
                     <input type="time" name="arrivalTime" class="form-control"
                            value="${schedule.arrivalTime}" required>
                 </div>

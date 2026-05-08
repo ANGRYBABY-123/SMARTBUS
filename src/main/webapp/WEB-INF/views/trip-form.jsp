@@ -26,7 +26,7 @@
             <input type="hidden" name="tripId" value="${trip.tripId}">
 
             <div class="mb-3">
-                <label class="form-label">Assigned Driver</label>
+                <label class="form-label">Driver</label>
                 <select name="driverId" class="form-select" required>
                     <option value="">-- Select Driver --</option>
                     <c:forEach var="d" items="${drivers}">
@@ -44,7 +44,7 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Assigned Vehicle</label>
+                <label class="form-label">Vehicle</label>
                 <select name="busId" class="form-select" required>
                     <option value="">-- Select Vehicle --</option>
                     <c:forEach var="b" items="${buses}">
@@ -56,7 +56,7 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Service Route</label>
+                <label class="form-label">Route</label>
                 <select name="routeId" class="form-select" required>
                     <option value="">-- Select Route --</option>
                     <c:forEach var="r" items="${routes}">

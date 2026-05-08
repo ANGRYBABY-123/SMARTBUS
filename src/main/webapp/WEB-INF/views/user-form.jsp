@@ -62,7 +62,7 @@
             </div>
 
             <div id="driverRegGroup" style="display:none" class="mb-3">
-                <label class="form-label">Driver Registration No.</label>
+                <label class="form-label">Licence Number</label>
                 <input type="text" name="registrationNumber" class="form-control"
                        value="${user.registrationNumber}"
                        placeholder="e.g. DRV-0042"
