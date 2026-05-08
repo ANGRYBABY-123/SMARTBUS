@@ -44,9 +44,6 @@
             </small>
         </h5>
         <div class="d-flex gap-2">
-            <a href="${pageContext.request.contextPath}/weekly-schedule/new" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Add Entry
-            </a>
             <c:if test="${unpublished > 0}">
                 <form method="post" action="${pageContext.request.contextPath}/weekly-schedule/publish"
                       onsubmit="return confirm('Publish this week\'s schedule? This will create Mon–Fri trips and notify each driver.')">
@@ -138,7 +135,6 @@
                     <th>Shift</th>
                     <th>Shift Hours</th>
                     <th>Status</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -182,26 +178,13 @@
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td>
-                        <a href="${pageContext.request.contextPath}/weekly-schedule/edit?id=${ds.id}"
-                           class="btn btn-sm btn-outline-primary me-1" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="${pageContext.request.contextPath}/weekly-schedule/delete?id=${ds.id}"
-                           class="btn btn-sm btn-outline-danger" title="Remove"
-                           onclick="return confirm('Remove this schedule entry?')">
-                            <i class="bi bi-trash"></i>
-                        </a>
-                    </td>
                 </tr>
             </c:forEach>
             <c:if test="${empty entries}">
                 <tr>
-                    <td colspan="7" class="text-center py-5" style="color:#64748b">
+                    <td colspan="6" class="text-center py-5" style="color:#64748b">
                         <i class="bi bi-calendar-x" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
                         No schedule entries for this week.
-                        <a href="${pageContext.request.contextPath}/weekly-schedule/new" class="d-block mt-2"
-                           style="color:#3b82f6">Add the first entry &rarr;</a>
                     </td>
                 </tr>
             </c:if>

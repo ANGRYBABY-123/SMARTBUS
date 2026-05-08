@@ -6,7 +6,7 @@ import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
-import com.smartbus.listener.ActiveSessionRegistry;
+import com.smartbus.util.EmailUtil;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.PasswordUtil;
 import jakarta.servlet.ServletException;
@@ -91,17 +91,11 @@ public class UserServlet extends HttpServlet {
             case "/edit":
                 editUser(req, resp);
                 break;
-            case "/delete":
-                deleteUser(req, resp);
-                break;
             case "/approve":
                 approveUser(req, resp);
                 break;
             case "/reject":
                 rejectUser(req, resp);
-                break;
-            case "/readmit":
-                readmitUser(req, resp);
                 break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/users/list");
@@ -164,7 +158,6 @@ public class UserServlet extends HttpServlet {
         }
         req.setAttribute("users", users);
         req.setAttribute("pendingUsers", userDAO.findPending());
-        req.setAttribute("pendingRemovalUsers", userDAO.findPendingRemoval());
         req.getRequestDispatcher("/WEB-INF/views/users.jsp").forward(req, resp);
     }
 
@@ -175,6 +168,13 @@ public class UserServlet extends HttpServlet {
         if (u != null) {
             u.setStatus("ACTIVE");
             userDAO.save(u);
+            try {
+                EmailUtil.sendApprovalEmail(u.getEmail(), u.getName());
+            } catch (Exception mailEx) {
+                // Log failure but do not block the approval
+                System.err.println("[ApproveUser] Failed to send approval email to "
+                        + u.getEmail() + ": " + mailEx.getMessage());
+            }
         }
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
@@ -231,31 +231,6 @@ public class UserServlet extends HttpServlet {
                 userDAO.save(new User(name, email, PasswordUtil.hash(pwd), role));
             }
         }
-        resp.sendRedirect(req.getContextPath() + "/users/list");
-    }
-
-    private void deleteUser(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Long id = Long.parseLong(req.getParameter("id"));
-        // Prevent admin from deleting themselves
-        HttpSession session = req.getSession(false);
-        if (session != null) {
-            User loggedUser = (User) session.getAttribute("loggedUser");
-            if (loggedUser != null && loggedUser.getUserId().equals(id)) {
-                resp.sendRedirect(req.getContextPath() + "/users/list?error=Cannot+delete+your+own+account");
-                return;
-            }
-        }
-        // Soft-delete: kick session immediately, but keep account for 30 min so admin can re-admit
-        userDAO.softDelete(id);
-        ActiveSessionRegistry.invalidateSessionForUser(id);
-        resp.sendRedirect(req.getContextPath() + "/users/list");
-    }
-
-    private void readmitUser(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Long id = Long.parseLong(req.getParameter("id"));
-        userDAO.readmitUser(id);
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
 

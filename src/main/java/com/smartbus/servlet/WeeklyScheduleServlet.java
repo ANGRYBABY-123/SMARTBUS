@@ -12,19 +12,15 @@ import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @WebServlet("/weekly-schedule/*")
 public class WeeklyScheduleServlet extends HttpServlet {
 
-    private final DriverScheduleDAO dsDAO       = new DriverScheduleDAO();
-    private final DriverDAO         driverDAO   = new DriverDAO();
-    private final BusDAO            busDAO      = new BusDAO();
-    private final RouteDAO          routeDAO    = new RouteDAO();
-    private final TripDAO           tripDAO     = new TripDAO();
-    private final NotificationDAO   notifDAO    = new NotificationDAO();
+    private final DriverScheduleDAO dsDAO     = new DriverScheduleDAO();
+    private final TripDAO           tripDAO   = new TripDAO();
+    private final NotificationDAO   notifDAO  = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -35,16 +31,6 @@ public class WeeklyScheduleServlet extends HttpServlet {
 
         switch (path) {
             case "/list":   showList(req, resp);   break;
-            case "/new":    showForm(req, resp, null); break;
-            case "/edit": {
-                DriverSchedule ds = dsDAO.findById(Long.parseLong(req.getParameter("id")));
-                showForm(req, resp, ds);
-                break;
-            }
-            case "/delete":
-                dsDAO.delete(Long.parseLong(req.getParameter("id")));
-                resp.sendRedirect(req.getContextPath() + "/weekly-schedule/list");
-                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/weekly-schedule/list");
         }
@@ -58,7 +44,6 @@ public class WeeklyScheduleServlet extends HttpServlet {
         if (path == null) path = "/";
 
         switch (path) {
-            case "/save":    saveEntry(req, resp);    break;
             case "/publish": publishWeek(req, resp);  break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/weekly-schedule/list");
@@ -95,46 +80,6 @@ public class WeeklyScheduleServlet extends HttpServlet {
         req.setAttribute("weekStart",   weekStart);
         req.setAttribute("unpublished", unpublished);
         req.getRequestDispatcher("/WEB-INF/views/weekly-schedule.jsp").forward(req, resp);
-    }
-
-    private void showForm(HttpServletRequest req, HttpServletResponse resp, DriverSchedule ds)
-            throws ServletException, IOException {
-
-        req.setAttribute("ds",      ds);
-        req.setAttribute("drivers", driverDAO.findAll());
-        req.setAttribute("buses",   busDAO.findAll());
-        req.setAttribute("routes",  routeDAO.findAllOrdered());
-        req.getRequestDispatcher("/WEB-INF/views/weekly-schedule-form.jsp").forward(req, resp);
-    }
-
-    private void saveEntry(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String idParam = req.getParameter("dsId");
-        DriverSchedule ds = (idParam != null && !idParam.isEmpty())
-                ? dsDAO.findById(Long.parseLong(idParam))
-                : new DriverSchedule();
-
-        Driver driver = (Driver) driverDAO.findById(Long.parseLong(req.getParameter("driverId")));
-        Bus    bus    = busDAO.findById(Long.parseLong(req.getParameter("busId")));
-        Route  route  = routeDAO.findById(Long.parseLong(req.getParameter("routeId")));
-
-        // Always store the Monday of the given week
-        LocalDate weekStart = LocalDate.parse(req.getParameter("weekStartDate"))
-                                       .with(DayOfWeek.MONDAY);
-
-        ds.setDriver(driver);
-        ds.setBus(bus);
-        ds.setRoute(route);
-        ds.setShiftType(req.getParameter("shiftType"));
-        ds.setShiftStart(LocalTime.parse(req.getParameter("shiftStart")));
-        ds.setShiftEnd(LocalTime.parse(req.getParameter("shiftEnd")));
-        ds.setWeekStartDate(weekStart);
-        // Editing a published entry resets it so trips/notifications can be re-sent if needed
-        if (idParam == null || idParam.isEmpty()) {
-            ds.setPublished(false);
-        }
-
-        dsDAO.save(ds);
-        resp.sendRedirect(req.getContextPath() + "/weekly-schedule/list?week=" + weekStart);
     }
 
     private void publishWeek(HttpServletRequest req, HttpServletResponse resp) throws IOException {
