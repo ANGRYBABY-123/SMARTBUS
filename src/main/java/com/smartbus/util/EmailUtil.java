@@ -52,7 +52,11 @@ public final class EmailUtil {
         String resetLink = appUrl + "/reset-password?token=" + resetToken;
 
         Message msg = new MimeMessage(session);
-        msg.setFrom(new InternetAddress(user, "SmartBus", "UTF-8"));
+        try {
+            msg.setFrom(new InternetAddress(user, "SmartBus", "UTF-8"));
+        } catch (java.io.UnsupportedEncodingException e) {
+            msg.setFrom(new InternetAddress(user));
+        }
         msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
         msg.setSubject("SmartBus – Reset Your Password");
         msg.setContent(buildHtml(resetLink), "text/html; charset=UTF-8");
