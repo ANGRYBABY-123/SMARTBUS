@@ -122,7 +122,7 @@
 
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" onclick="toggleSheet()"></div>
-    <div class="sheet-content">
+    <div class="sheet-content" id="dd-sheet-content">
         <c:set var="active" value="0"/>
         <c:set var="done" value="0"/>
         <c:set var="total" value="0"/>
@@ -182,7 +182,7 @@
                         <c:set var="iconCls" value="scheduled"/>
                         <c:set var="iconEmoji" value="??"/>
                     </c:if>
-                    <div class="trip-card ${cardCls}">
+                    <div class="trip-card ${cardCls}" data-trip-id="${t.tripId}" data-status="${t.status}">
                         <div class="card-top">
                             <div class="card-icon ${iconCls}">${iconEmoji}</div>
                             <div>
@@ -290,6 +290,35 @@ function submitDashDelay() {
             else { alert('Error: ' + (data.error || 'unknown')); }
         }).catch(() => alert('Network error'));
 }
+
+// ── Auto-refresh: swap sheet content (trips + schedule) every 10s ──
+(function() {
+    const mapMarkers = [];
+    async function autoRefresh() {
+        try {
+            const res = await fetch(location.href, { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            const fresh = doc.getElementById('dd-sheet-content');
+            const curr  = document.getElementById('dd-sheet-content');
+            if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            // refresh map markers for in-progress trips
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers.length = 0;
+            doc.querySelectorAll('[data-trip-id][data-status="IN_PROGRESS"]').forEach(el => {
+                const tid = el.getAttribute('data-trip-id');
+                fetch(DD_CTX + '/tracking/latest?tripId=' + tid).then(r => r.json()).then(d => {
+                    if (d && d.lat && d.lng) {
+                        const ic = L.divIcon({ className: '', html: '<div style="background:#00c853;border-radius:50%;width:18px;height:18px;border:3px solid #fff;box-shadow:0 0 0 5px rgba(0,200,83,.3)"></div>', iconSize:[18,18], iconAnchor:[9,9] });
+                        const m = L.marker([d.lat, d.lng], { icon: ic }).addTo(map);
+                        mapMarkers.push(m);
+                    }
+                }).catch(() => {});
+            });
+        } catch (e) { /* silent */ }
+    }
+    setInterval(autoRefresh, 10000);
+})();
 </script>
 </body>
 </html>

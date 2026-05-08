@@ -92,12 +92,12 @@
 <!-- Bottom sheet -->
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" onclick="toggleSheet()"></div>
-    <div class="sheet-content">
+    <div class="sheet-content" id="pass-sheet-content">
 
         <!-- Where to bar -->
         <div class="where-to">
             <i class="bi bi-search"></i>
-            <span>Where to? &nbsp;·&nbsp; Track a bus</span>
+            <span>Where to? &nbsp;ï¿½&nbsp; Track a bus</span>
         </div>
 
         <!-- Live Now -->
@@ -105,11 +105,11 @@
         <c:choose>
             <c:when test="${not empty activeTrips}">
                 <c:forEach var="t" items="${activeTrips}">
-                    <div class="trip-card live">
+                    <div class="trip-card live" data-live-trip="${t.tripId}" data-trip-name="${t.route.routeName}" data-driver="${t.driver.name}">
                         <div class="card-icon live">??</div>
                         <div class="card-body">
                             <div class="card-title">${t.route.routeName}</div>
-                            <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;·&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
+                            <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;ï¿½&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
                             <span class="card-badge live">? Live</span>
                         </div>
                         <a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="track-btn" target="_blank"><i class="bi bi-geo-alt-fill"></i> Track</a>
@@ -132,8 +132,8 @@
                             <div class="card-title">${t.route.routeName}</div>
                             <div class="card-sub">
                                 <i class="bi bi-person-fill"></i> ${t.driver.name}
-                                &nbsp;·&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                <c:if test="${t.startTime != null}">&nbsp;·&nbsp; <i class="bi bi-clock"></i> ${t.startTime}</c:if>
+                                &nbsp;ï¿½&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
+                                <c:if test="${t.startTime != null}">&nbsp;ï¿½&nbsp; <i class="bi bi-clock"></i> ${t.startTime}</c:if>
                             </div>
                             <span class="card-badge sched">Scheduled</span>
                         </div>
@@ -218,6 +218,37 @@ function pollNotifs() {
 }
 setInterval(pollNotifs, 15000);
 pollNotifs();
+
+// â”€â”€ Auto-refresh: swap trip cards (Live Now + Upcoming) every 10s â”€â”€
+(function() {
+    const busMarkers = [];
+    async function autoRefreshPassenger() {
+        try {
+            const res = await fetch(location.href, { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            const fresh = doc.getElementById('pass-sheet-content');
+            const curr  = document.getElementById('pass-sheet-content');
+            if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            // refresh bus markers on map
+            busMarkers.forEach(m => map.removeLayer(m));
+            busMarkers.length = 0;
+            doc.querySelectorAll('[data-live-trip]').forEach(el => {
+                const tid = el.getAttribute('data-live-trip');
+                const name = el.getAttribute('data-trip-name') || '';
+                const driver = el.getAttribute('data-driver') || '';
+                fetch(CTX_DASH + '/tracking/latest?tripId=' + tid).then(r => r.json()).then(d => {
+                    if (d && d.lat && d.lng) {
+                        const m = L.marker([d.lat, d.lng], { icon: busIcon })
+                            .addTo(map).bindPopup('<b>' + name + '</b><br>Driver: ' + driver);
+                        busMarkers.push(m);
+                    }
+                }).catch(() => {});
+            });
+        } catch (e) { /* silent */ }
+    }
+    setInterval(autoRefreshPassenger, 10000);
+})();
 </script>
 </body>
 </html>

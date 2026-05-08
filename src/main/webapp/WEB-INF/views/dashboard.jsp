@@ -14,7 +14,7 @@
     <h5 class="fw-bold mb-4"><i class="bi bi-speedometer2 me-2" style="color:#3b82f6"></i>Dashboard</h5>
 
     <!-- Stat cards -->
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4" id="sb-stats-row">
         <div class="col-6 col-md-3">
             <div class="card p-3 text-center">
                 <div style="font-size:2rem;color:#3b82f6"><i class="bi bi-bus-front-fill"></i></div>
@@ -46,7 +46,7 @@
     </div>
 
     <!-- Active trips table -->
-    <div class="card">
+    <div class="card" id="sb-active-trips">
         <div class="p-3 border-bottom" style="border-color:#334155!important">
             <span style="font-weight:600;font-size:.9rem"><i class="bi bi-activity me-2" style="color:#22c55e"></i>Active Trips</span>
         </div>
@@ -74,4 +74,23 @@
 
 </div>
 </body>
+<script>
+// ── Auto-refresh: swap stats + active trips every 15s without reloading page ──
+(function() {
+    const SWAP_IDS = ['sb-stats-row', 'sb-active-trips'];
+    async function autoRefresh() {
+        try {
+            const res = await fetch(location.href, { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            SWAP_IDS.forEach(id => {
+                const fresh = doc.getElementById(id);
+                const curr  = document.getElementById(id);
+                if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            });
+        } catch (e) { /* silent */ }
+    }
+    setInterval(autoRefresh, 15000);
+})();
+</script>
 </html>
