@@ -301,7 +301,7 @@ public class UserServlet extends HttpServlet {
                 || !InputValidator.isValidEmail(email)
                 || !InputValidator.isValidPassword(password)
                 || !InputValidator.isValidName(name)) {
-            req.setAttribute("error", "Please fill in all fields correctly. Password must be at least 6 characters.");
+            req.setAttribute("error", "Please fill in all fields correctly. Email must be a valid address (e.g. name@example.com). Password must be at least 6 characters.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;
@@ -346,7 +346,7 @@ public class UserServlet extends HttpServlet {
         userDAO.save(pending);
 
         // Redirect to login with success message
-        req.setAttribute("success", "Account registered! Please wait for admin approval before signing in.");
+        req.setAttribute("success", "Account created! Your request is pending admin approval. You will be able to sign in once an admin reviews and approves your account.");
         req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
     }
 }

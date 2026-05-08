@@ -45,6 +45,22 @@
         </div>
     </div>
 
+    <!-- Pending Approvals notice -->
+    <c:if test="${pendingUsersCount > 0}">
+    <div class="alert d-flex align-items-center gap-3 mb-4" style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px">
+        <i class="bi bi-clock-history" style="font-size:1.5rem;color:#f57c00;flex-shrink:0"></i>
+        <div style="flex:1">
+            <div style="font-weight:700;color:#5d4037">
+                ${pendingUsersCount} account${pendingUsersCount == 1 ? '' : 's'} waiting for approval
+            </div>
+            <div style="font-size:.82rem;color:#795548">New users have registered and cannot sign in until you approve them.</div>
+        </div>
+        <a href="${pageContext.request.contextPath}/users/list" class="btn btn-sm" style="background:#f57c00;color:#fff;border:none;font-weight:600;white-space:nowrap">
+            <i class="bi bi-person-check-fill me-1"></i>Review Now
+        </a>
+    </div>
+    </c:if>
+
     <!-- This week's schedule panel -->
     <div class="card mb-4" id="sb-schedule-panel" style="border-color:${unpublishedThisWeek > 0 ? '#f59e0b' : '#334155'}!important">
         <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom:1px solid #334155">

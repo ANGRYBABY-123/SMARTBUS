@@ -42,6 +42,7 @@ public class DashboardServlet extends HttpServlet {
         req.setAttribute("weekStart",   weekStart);
         req.setAttribute("unpublishedThisWeek", unpublishedThisWeek);
         req.setAttribute("totalThisWeek", totalThisWeek);
+        req.setAttribute("pendingUsersCount", (long) userDAO.findPending().size());
         req.getRequestDispatcher("/WEB-INF/views/dashboard.jsp").forward(req, resp);
     }
 }
