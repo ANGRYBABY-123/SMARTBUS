@@ -101,6 +101,13 @@
                     <td>
                         <a href="${pageContext.request.contextPath}/users/edit?id=${u.userId}"
                            class="btn btn-sm btn-outline-primary" title="Edit record"><i class="bi bi-pencil"></i></a>
+                        <c:if test="${u.role != 'ADMIN'}">
+                        <a href="${pageContext.request.contextPath}/users/delete?id=${u.userId}"
+                           class="btn btn-sm btn-outline-danger ms-1" title="Delete user"
+                           onclick="return confirm('Permanently delete ${u.name}? This cannot be undone.')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        </c:if>
                     </td>
                 </tr>
             </c:forEach>

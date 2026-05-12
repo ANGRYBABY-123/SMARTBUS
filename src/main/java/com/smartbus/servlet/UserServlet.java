@@ -97,6 +97,9 @@ public class UserServlet extends HttpServlet {
             case "/reject":
                 rejectUser(req, resp);
                 break;
+            case "/delete":
+                deleteUser(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/users/list");
         }
@@ -183,6 +186,22 @@ public class UserServlet extends HttpServlet {
             throws IOException {
         Long id = Long.parseLong(req.getParameter("id"));
         userDAO.delete(id);
+        resp.sendRedirect(req.getContextPath() + "/users/list");
+    }
+
+    private void deleteUser(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        String idParam = req.getParameter("id");
+        if (idParam == null || idParam.isBlank()) {
+            resp.sendRedirect(req.getContextPath() + "/users/list");
+            return;
+        }
+        User target = userDAO.findById(Long.parseLong(idParam));
+        // Prevent deleting own account or other admins
+        User me = (User) req.getSession(false).getAttribute("loggedUser");
+        if (target != null && !target.getUserId().equals(me.getUserId()) && !"ADMIN".equals(target.getRole())) {
+            userDAO.delete(target.getUserId());
+        }
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
 
