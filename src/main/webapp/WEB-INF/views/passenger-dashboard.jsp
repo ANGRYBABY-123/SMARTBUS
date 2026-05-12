@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SmartBus</title>
+    <title>CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
@@ -17,7 +17,7 @@
         /* Top bar */
         .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; padding: 12px 16px; gap: 10px; pointer-events: none; }
         .topbar > * { pointer-events: all; }
-        .brand-pill { background: #fff; border-radius: 50px; padding: 8px 18px; font-weight: 800; font-size: 1rem; letter-spacing: -.3px; box-shadow: 0 2px 14px rgba(0,0,0,.2); }
+        .brand-pill { background: #fff; border-radius: 50px; padding: 7px 16px 7px 10px; font-weight: 800; font-size: 1rem; letter-spacing: -.3px; box-shadow: 0 2px 14px rgba(0,0,0,.2); display:flex; align-items:center; }
         .brand-pill span { color: #00c853; }
         .icon-btn { width: 44px; height: 44px; background: #fff; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 2px 14px rgba(0,0,0,.2); text-decoration: none; color: #333; transition: background .2s; }
         .icon-btn:hover { background: #f0f0f0; }
@@ -93,7 +93,19 @@
 
 <!-- Top bar -->
 <div class="topbar">
-    <div class="brand-pill">Smart<span>Bus</span></div>
+    <div class="brand-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0;margin-right:5px" aria-hidden="true">
+          <path d="M12 1.5L21 5.5L21 12.5C21 18.5 17 22.5 12 23.5C7 22.5 3 18.5 3 12.5L3 5.5Z" fill="#00c853"/>
+          <path d="M12 4.5L19.5 8L19.5 12.5C19.5 17.5 16 21 12 22C8 21 4.5 17.5 4.5 12.5L4.5 8Z" fill="rgba(0,0,0,0.1)"/>
+          <rect x="6.5" y="11" width="11" height="7.5" rx="1.8" fill="white"/>
+          <rect x="7" y="8.5" width="10" height="3.5" rx="1.5" fill="rgba(255,255,255,0.93)"/>
+          <rect x="7.5" y="12" width="2.8" height="2.5" rx="0.5" fill="#009c3b"/>
+          <rect x="11.5" y="12" width="2.8" height="2.5" rx="0.5" fill="#009c3b"/>
+          <circle cx="9" cy="18.8" r="1.6" fill="#009c3b"/>
+          <circle cx="15" cy="18.8" r="1.6" fill="#009c3b"/>
+        </svg>
+        Commute<span>Safe</span>
+    </div>
     <div class="notif-wrap" style="margin-left:auto">
         <button class="icon-btn" onclick="toggleNotif()" title="Notifications">
             <i class="bi bi-bell-fill"></i>

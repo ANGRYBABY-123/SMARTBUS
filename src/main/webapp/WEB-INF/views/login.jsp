@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SmartBus - Sign In</title>
+<title>CommuteSafe – Sign In</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -49,9 +49,20 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
 </style></head><body>
 <div class="card">
   <div class="card-hdr">
-    <div class="brand-icon"><i class="bi bi-bus-front-fill"></i></div>
-    <div class="brand-name">Smart<span>Bus</span></div>
-    <div class="brand-tag">Real-time bus tracking &amp; AI assistant</div>
+    <div class="brand-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
+        <path d="M24 3L41 10.5L41 24C41 34.5 33.5 42.5 24 44.5C14.5 42.5 7 34.5 7 24L7 10.5Z" fill="#00c853"/>
+        <path d="M24 8L38 14.5L38 24C38 32.5 32 39.5 24 41.5C16 39.5 10 32.5 10 24L10 14.5Z" fill="rgba(0,0,0,0.1)"/>
+        <rect x="13.5" y="22" width="21" height="13" rx="3" fill="white"/>
+        <rect x="15" y="17.5" width="18" height="5.5" rx="2.5" fill="rgba(255,255,255,0.93)"/>
+        <rect x="15.5" y="23.5" width="5.5" height="4.5" rx="1" fill="#009c3b"/>
+        <rect x="23" y="23.5" width="5.5" height="4.5" rx="1" fill="#009c3b"/>
+        <circle cx="18" cy="35.5" r="3" fill="#009c3b"/>
+        <circle cx="30" cy="35.5" r="3" fill="#009c3b"/>
+      </svg>
+    </div>
+    <div class="brand-name">Commute<span>Safe</span></div>
+    <div class="brand-tag">Safe, real-time commuting — powered by live GPS</div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" id="tab-login" onclick="showTab('login')"><i class="bi bi-box-arrow-in-right"></i> Sign In</button>

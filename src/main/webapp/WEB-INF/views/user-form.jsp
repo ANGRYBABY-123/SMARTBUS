@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>${empty user ? 'Register User' : 'Edit User'} – SmartBus</title>
+    <title>${empty user ? 'Register User' : 'Edit User'} – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </head>
@@ -34,7 +34,7 @@
             <div class="mb-3">
                 <label class="form-label">Email Address</label>
                 <input type="email" name="email" class="form-control"
-                       value="${user.email}" placeholder="user@smartbus.com" required>
+                       value="${user.email}" placeholder="user@commutesafe.com" required>
             </div>
 
             <div class="mb-3">

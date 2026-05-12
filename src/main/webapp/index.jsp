@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SmartBus – Know where your bus is. Get to work on time.</title>
+    <title>CommuteSafe – Know your bus is safe. Get to work on time.</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -152,7 +152,19 @@
 
 <!-- NAV -->
 <nav class="top-nav">
-    <a href="${pageContext.request.contextPath}/" class="nav-brand">Smart<span>Bus</span></a>
+    <a href="${pageContext.request.contextPath}/" class="nav-brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="26" height="26" style="margin-right:7px;vertical-align:middle;flex-shrink:0" aria-hidden="true">
+          <path d="M18 2.5L32 8.5L32 20C32 29 26 35 18 37C10 35 4 29 4 20L4 8.5Z" fill="#00c853"/>
+          <path d="M18 7L29 12L29 20C29 27 24.2 32.5 18 34C11.8 32.5 7 27 7 20L7 12Z" fill="rgba(0,0,0,0.13)"/>
+          <rect x="10.5" y="16.5" width="15" height="9.5" rx="2.2" fill="white"/>
+          <rect x="11.5" y="13.5" width="13" height="4" rx="1.8" fill="rgba(255,255,255,0.92)"/>
+          <rect x="12" y="17.8" width="3.5" height="3" rx="0.7" fill="#009c3b"/>
+          <rect x="17.5" y="17.8" width="3.5" height="3" rx="0.7" fill="#009c3b"/>
+          <circle cx="13.5" cy="26.2" r="2" fill="#009c3b"/>
+          <circle cx="22.5" cy="26.2" r="2" fill="#009c3b"/>
+        </svg>
+        Commute<span>Safe</span>
+    </a>
     <div class="nav-links">
         <a href="#about" class="nav-link-item">About</a>
         <a href="#problem" class="nav-link-item">Problem</a>
@@ -168,7 +180,7 @@
     <div class="hero-inner">
         <div class="hero-badge"><i class="bi bi-broadcast-pin"></i> Real-Time Bus Tracking</div>
         <h1>Know where your bus is.<br><span>Get to work on time.</span></h1>
-        <p>SmartBus helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts — so you never waste time waiting at the wrong place.</p>
+        <p>CommuteSafe helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts — so you never waste time waiting at the wrong place.</p>
         <div class="hero-btns">
             <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-primary">
                 <i class="bi bi-arrow-right-circle me-2"></i>Get Started
@@ -183,13 +195,13 @@
     <div class="container">
         <div class="text-center mb-5">
             <div class="section-label">System Proposal</div>
-            <h2 class="section-title">About BusTrack</h2>
+            <h2 class="section-title">About CommuteSafe</h2>
             <p class="section-sub mx-auto">Understanding the problem we set out to solve.</p>
         </div>
         <div class="about-card">
-            <p>BusTrack is a proposed smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
-            <p>The purpose of the BusTrack system is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services — giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
-            <p>BusTrack is intended to be affordable and accessible for low-income commuters, built to run on entry-level smartphones with minimal data usage, so that the cost of the app is never a barrier to a better commuting experience.</p>
+            <p>CommuteSafe is a smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
+            <p>The purpose of CommuteSafe is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services — giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
+            <p>CommuteSafe is intended to be affordable and accessible for low-income commuters, built to run on entry-level smartphones with minimal data usage, so that the cost of the app is never a barrier to a better commuting experience.</p>
             <p>The expected impact of the system includes reduced waiting times, lower transport expenses, improved commuter safety, reduced stress, and better overall trip planning for the millions of people who rely on public buses every single day.</p>
         </div>
     </div>
@@ -243,7 +255,7 @@
             <div class="col-lg-5">
                 <div class="section-label">Our Solution</div>
                 <h2 class="section-title">Simple Bus Tracking for Workers</h2>
-                <p class="section-sub mt-3">SmartBus removes the uncertainty from your daily commute — giving you the information you need, when you need it.</p>
+                <p class="section-sub mt-3">CommuteSafe removes the uncertainty from your daily commute — giving you the information you need, when you need it.</p>
             </div>
             <div class="col-lg-7">
                 <div class="sol-item">
@@ -383,7 +395,7 @@
         <div class="text-center mb-5">
             <div class="section-label">Impact</div>
             <h2 class="section-title">Real Benefits for Daily Users</h2>
-            <p class="section-sub mx-auto">SmartBus directly improves the lives of commuters who can't afford to be late or waste money.</p>
+            <p class="section-sub mx-auto">CommuteSafe directly improves the lives of commuters who can't afford to be late or waste money.</p>
         </div>
         <div class="row g-4">
             <div class="col-sm-6 col-lg-3">
@@ -433,8 +445,20 @@
 <!-- FOOTER -->
 <footer class="site-footer">
     <div>
-        <div class="brand" style="font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:4px;">Smart<span style="color:#00c853;">Bus</span></div>
-        <div style="font-size:0.78rem;">Real-time bus tracking for daily commuters.</div>
+        <div class="brand" style="font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:7px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+              <path d="M14 2L25 7L25 15.5C25 22.5 20 27 14 28.5C8 27 3 22.5 3 15.5L3 7Z" fill="#00c853"/>
+              <path d="M14 5.5L23 9.5L23 15.5C23 21.5 18.8 25.5 14 27C9.2 25.5 5 21.5 5 15.5L5 9.5Z" fill="rgba(0,0,0,0.12)"/>
+              <rect x="8" y="13" width="12" height="8" rx="1.8" fill="white"/>
+              <rect x="9" y="10.5" width="10" height="3.5" rx="1.4" fill="rgba(255,255,255,0.9)"/>
+              <rect x="9.5" y="14" width="3" height="2.5" rx="0.6" fill="#009c3b"/>
+              <rect x="14" y="14" width="3" height="2.5" rx="0.6" fill="#009c3b"/>
+              <circle cx="10.5" cy="21.5" r="1.8" fill="#009c3b"/>
+              <circle cx="17.5" cy="21.5" r="1.8" fill="#009c3b"/>
+            </svg>
+            Commute<span style="color:#00c853;">Safe</span>
+        </div>
+        <div style="font-size:0.78rem;">Safe, real-time commuting for everyone.</div>
     </div>
     <div style="display:flex;gap:24px;font-size:0.82rem;">
         <a href="#about" style="color:#475569;text-decoration:none;">About</a>
@@ -443,7 +467,7 @@
         <a href="#impact" style="color:#475569;text-decoration:none;">Impact</a>
         <a href="${pageContext.request.contextPath}/users/login" style="color:#00c853;text-decoration:none;font-weight:700;">Sign In</a>
     </div>
-    <div style="font-size:0.78rem;">&copy; 2026 SmartBus. All rights reserved.</div>
+    <div style="font-size:0.78rem;">&copy; 2026 CommuteSafe. All rights reserved.</div>
 </footer>
 
 </body>
@@ -559,7 +583,7 @@
         <div class="page-header">
             <div>
                 <div class="page-title">Fleet Command Center</div>
-                <div class="page-subtitle">Real-time overview of your SmartBus operations</div>
+                <div class="page-subtitle">Real-time overview of your CommuteSafe operations</div>
             </div>
             <div class="admin-chip"><i class="bi bi-shield-fill-check"></i> Admin</div>
         </div>

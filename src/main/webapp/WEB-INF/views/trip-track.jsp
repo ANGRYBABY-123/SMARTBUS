@@ -169,11 +169,11 @@
 <!-- AI Chat Panel -->
 <div id="ai-panel">
   <div class="ai-header">
-    <div class="ai-title"><i class="bi bi-robot"></i> SmartBus AI</div>
+    <div class="ai-title"><i class="bi bi-robot"></i> CommuteSafe AI</div>
     <button class="ai-close" onclick="toggleAiPanel()"><i class="bi bi-x-lg"></i></button>
   </div>
   <div id="ai-messages">
-    <div class="ai-msg ai-sys">👋 Hi! I'm your SmartBus AI. Ask me anything about your journey — ETA, delays, stops, or anything else.</div>
+    <div class="ai-msg ai-sys">👋 Hi! I'm your CommuteSafe AI. Ask me anything about your journey — ETA, delays, stops, or anything else.</div>
   </div>
   <div id="ai-input-row">
     <input type="text" id="ai-input" placeholder="Ask about your bus…" onkeydown="if(event.key==='Enter')sendAiMsg()">

@@ -6,7 +6,7 @@
     }
 %><style>
 /* ============================================================
-   SmartBus Admin – Global Dark Theme  (injected by navbar.jsp)
+   CommuteSafe Admin – Global Dark Theme  (injected by navbar.jsp)
    ============================================================ */
 :root{--sb-bg:#0a0f1e;--sb-surface:#0f172a;--sb-elevated:#1e293b;--sb-raised:#263248;--sb-border:#334155;--sb-text:#e2e8f0;--sb-muted:#94a3b8;--sb-accent:#3b82f6;--sb-accent-h:#2563eb;--sb-danger:#ef4444;}
 html,body{background:var(--sb-bg)!important;color:var(--sb-text)!important;min-height:100vh;}
@@ -57,7 +57,17 @@ String _sa=_u.contains("/stops")?"active":"";
 String _wa=_u.contains("/weekly-schedule")?"active":"";
 %><nav class="sb-topnav">
     <a href="${pageContext.request.contextPath}/dashboard" class="sb-brand">
-        <i class="bi bi-bus-front-fill"></i><span>SmartBus</span><span class="sub">ADMIN</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="26" height="26" style="flex-shrink:0;margin-right:2px" aria-hidden="true">
+          <path d="M18 2.5L32 8.5L32 20C32 29 26 35 18 37C10 35 4 29 4 20L4 8.5Z" fill="#00c853"/>
+          <path d="M18 7L29 12L29 20C29 27 24.2 32.5 18 34C11.8 32.5 7 27 7 20L7 12Z" fill="rgba(0,0,0,0.11)"/>
+          <rect x="10.5" y="16.5" width="15" height="9.5" rx="2.2" fill="white"/>
+          <rect x="11.5" y="13.5" width="13" height="4" rx="1.8" fill="rgba(255,255,255,0.92)"/>
+          <rect x="12" y="17.8" width="3.5" height="3" rx="0.7" fill="#009c3b"/>
+          <rect x="17.5" y="17.8" width="3.5" height="3" rx="0.7" fill="#009c3b"/>
+          <circle cx="13.5" cy="26.2" r="2" fill="#009c3b"/>
+          <circle cx="22.5" cy="26.2" r="2" fill="#009c3b"/>
+        </svg>
+        <span>CommuteSafe</span><span class="sub">ADMIN</span>
     </a>
     <div class="sb-div"></div>
     <a href="${pageContext.request.contextPath}/users/list"     class="sb-lnk <%=_ua%>"><i class="bi bi-people-fill"></i>Users<% if (_pendingCount > 0) { %><span style="background:#f57c00;color:#fff;border-radius:10px;font-size:.65rem;font-weight:700;padding:1px 6px;margin-left:4px;"><%=_pendingCount%></span><% } %></a>
