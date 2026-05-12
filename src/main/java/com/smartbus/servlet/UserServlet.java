@@ -221,34 +221,67 @@ public class UserServlet extends HttpServlet {
         String email   = req.getParameter("email");
         String pwd     = req.getParameter("password");
 
-        if (idParam != null && !idParam.isEmpty()) {
-            // Edit existing — update base fields only
-            User user = userDAO.findById(Long.parseLong(idParam));
-            user.setName(name);
-            user.setEmail(email);
-            user.setRole(role);
-            if (pwd != null && !pwd.trim().isEmpty()) {
-                user.setPassword(PasswordUtil.hash(pwd));
-            }
-            userDAO.save(user);
-        } else {
-            // New user — persist the correct JPA subtype
-            if ("DRIVER".equals(role)) {
-                Driver driver = new Driver();
-                driver.setName(name);
-                driver.setEmail(email);
-                driver.setPassword(PasswordUtil.hash(pwd));
-                String regNum = req.getParameter("registrationNumber");
-                if (regNum == null || regNum.trim().isEmpty()) {
-                    regNum = "DRV-" + System.currentTimeMillis() % 100000L;
+        // Basic validation
+        if (name == null || name.trim().isEmpty() || email == null || email.trim().isEmpty()) {
+            req.setAttribute("error", "Name and email are required.");
+            req.setAttribute("user", idParam != null && !idParam.isEmpty() ? userDAO.findById(Long.parseLong(idParam)) : null);
+            req.getRequestDispatcher("/WEB-INF/views/user-form.jsp").forward(req, resp);
+            return;
+        }
+
+        try {
+            if (idParam != null && !idParam.isEmpty()) {
+                // Edit existing — update base fields only
+                User user = userDAO.findById(Long.parseLong(idParam));
+                if (user == null) {
+                    resp.sendRedirect(req.getContextPath() + "/users/list");
+                    return;
                 }
-                driver.setRegistrationNumber(regNum.trim().toUpperCase());
-                userDAO.save(driver);
-            } else if ("PASSENGER".equals(role)) {
-                userDAO.save(new Passenger(name, email, PasswordUtil.hash(pwd)));
+                user.setName(name.trim());
+                user.setEmail(email.trim());
+                user.setRole(role);
+                if (pwd != null && !pwd.trim().isEmpty()) {
+                    user.setPassword(PasswordUtil.hash(pwd));
+                }
+                userDAO.save(user);
             } else {
-                userDAO.save(new User(name, email, PasswordUtil.hash(pwd), role));
+                // New user — must have password
+                if (pwd == null || pwd.trim().isEmpty()) {
+                    req.setAttribute("error", "Password is required for new users.");
+                    req.getRequestDispatcher("/WEB-INF/views/user-form.jsp").forward(req, resp);
+                    return;
+                }
+                // Check for duplicate email
+                if (userDAO.findByEmail(email.trim()) != null) {
+                    req.setAttribute("error", "A user with that email address already exists.");
+                    req.getRequestDispatcher("/WEB-INF/views/user-form.jsp").forward(req, resp);
+                    return;
+                }
+                if ("DRIVER".equals(role)) {
+                    Driver driver = new Driver();
+                    driver.setName(name.trim());
+                    driver.setEmail(email.trim());
+                    driver.setPassword(PasswordUtil.hash(pwd));
+                    String regNum = req.getParameter("registrationNumber");
+                    if (regNum == null || regNum.trim().isEmpty()) {
+                        regNum = "DRV-" + System.currentTimeMillis() % 100000L;
+                    }
+                    driver.setRegistrationNumber(regNum.trim().toUpperCase());
+                    userDAO.save(driver);
+                } else if ("PASSENGER".equals(role)) {
+                    userDAO.save(new Passenger(name.trim(), email.trim(), PasswordUtil.hash(pwd)));
+                } else {
+                    userDAO.save(new User(name.trim(), email.trim(), PasswordUtil.hash(pwd), role));
+                }
             }
+        } catch (Exception ex) {
+            String msg = ex.getMessage() != null && ex.getMessage().toLowerCase().contains("duplicate")
+                    ? "A user with that email address (or licence number) already exists."
+                    : "Could not save user: " + ex.getMessage();
+            req.setAttribute("error", msg);
+            req.setAttribute("user", idParam != null && !idParam.isEmpty() ? userDAO.findById(Long.parseLong(idParam)) : null);
+            req.getRequestDispatcher("/WEB-INF/views/user-form.jsp").forward(req, resp);
+            return;
         }
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }

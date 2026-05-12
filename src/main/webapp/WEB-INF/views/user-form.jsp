@@ -22,6 +22,11 @@
         ${empty user ? 'Register New User' : 'Edit User Record'}
     </h5>
     <div class="card p-4">
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" style="border-radius:10px">
+                <i class="bi bi-exclamation-triangle-fill"></i> ${error}
+            </div>
+        </c:if>
         <form method="post" action="${pageContext.request.contextPath}/users/save" novalidate>
             <input type="hidden" name="userId" value="${user.userId}">
 
