@@ -1,7 +1,13 @@
 package com.smartbus.servlet;
 
+import com.smartbus.dao.BusDAO;
+import com.smartbus.dao.DriverDAO;
+import com.smartbus.dao.RouteDAO;
 import com.smartbus.dao.ScheduleDAO;
 import com.smartbus.dao.TripDAO;
+import com.smartbus.entity.Bus;
+import com.smartbus.entity.Driver;
+import com.smartbus.entity.Route;
 import com.smartbus.entity.Schedule;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
@@ -21,6 +27,9 @@ public class TripServlet extends HttpServlet {
 
     private final TripDAO     tripDAO     = new TripDAO();
     private final ScheduleDAO scheduleDAO = new ScheduleDAO();
+    private final DriverDAO   driverDAO   = new DriverDAO();
+    private final BusDAO      busDAO      = new BusDAO();
+    private final RouteDAO    routeDAO    = new RouteDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -32,6 +41,9 @@ public class TripServlet extends HttpServlet {
         switch (path) {
             case "/list":
                 listTrips(req, resp);
+                break;
+            case "/autogenerate":
+                showAutoGenerateForm(req, resp);
                 break;
             case "/delete":
                 tripDAO.delete(Long.parseLong(req.getParameter("id")));
@@ -61,9 +73,65 @@ public class TripServlet extends HttpServlet {
         String path = req.getPathInfo();
         if ("/update-status".equals(path)) {
             updateTripStatus(req, resp);
+        } else if ("/autogenerate".equals(path)) {
+            autoGenerateTrips(req, resp);
         } else {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
+    }
+
+    private void showAutoGenerateForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setAttribute("drivers", driverDAO.findAllDrivers());
+        req.setAttribute("buses",   busDAO.findAll());
+        req.setAttribute("routes",  routeDAO.findAll());
+        req.getRequestDispatcher("/WEB-INF/views/trip-autogenerate.jsp").forward(req, resp);
+    }
+
+    private void autoGenerateTrips(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        String driverIdParam  = req.getParameter("driverId");
+        String busIdParam     = req.getParameter("busId");
+        String routeIdParam   = req.getParameter("routeId");
+        String dateParam      = req.getParameter("tripDate");
+        String startHourParam = req.getParameter("startHour");
+        String endHourParam   = req.getParameter("endHour");
+
+        if (driverIdParam == null || busIdParam == null || routeIdParam == null
+                || dateParam == null || startHourParam == null || endHourParam == null) {
+            resp.sendRedirect(req.getContextPath() + "/trips/autogenerate");
+            return;
+        }
+
+        int startHour, endHour;
+        try {
+            startHour = Integer.parseInt(startHourParam);
+            endHour   = Integer.parseInt(endHourParam);
+        } catch (NumberFormatException e) {
+            resp.sendRedirect(req.getContextPath() + "/trips/autogenerate");
+            return;
+        }
+
+        Driver driver = (Driver) driverDAO.findById(Long.parseLong(driverIdParam));
+        Bus    bus    = busDAO.findById(Long.parseLong(busIdParam));
+        Route  route  = routeDAO.findById(Long.parseLong(routeIdParam));
+        LocalDate date = LocalDate.parse(dateParam);
+
+        if (driver == null || bus == null || route == null
+                || startHour >= endHour || endHour > 17 || startHour < 0) {
+            resp.sendRedirect(req.getContextPath() + "/trips/autogenerate");
+            return;
+        }
+
+        for (int hour = startHour; hour < endHour; hour++) {
+            LocalDateTime start = date.atTime(hour, 0);
+            LocalDateTime end   = date.atTime(hour + 1, 0);
+            Trip trip = new Trip(driver, bus, route, start, "SCHEDULED");
+            trip.setEndTime(end);
+            tripDAO.save(trip);
+        }
+
+        resp.sendRedirect(req.getContextPath() + "/trips/list");
     }
 
     private void updateTripStatus(HttpServletRequest req, HttpServletResponse resp)

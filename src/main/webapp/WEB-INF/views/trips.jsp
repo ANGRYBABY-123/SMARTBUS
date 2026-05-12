@@ -17,9 +17,14 @@
             </h5>
             <small style="color:#64748b">Auto-generated when a Weekly Schedule is published.</small>
         </div>
-        <a href="${pageContext.request.contextPath}/weekly-schedule/list" class="btn btn-primary btn-sm">
-            <i class="bi bi-calendar-week me-1"></i>Manage Weekly Schedule
-        </a>
+        <div class="d-flex gap-2">
+            <a href="${pageContext.request.contextPath}/trips/autogenerate" class="btn btn-warning btn-sm fw-bold">
+                <i class="bi bi-lightning-charge-fill me-1"></i>Auto-Generate Hourly
+            </a>
+            <a href="${pageContext.request.contextPath}/weekly-schedule/list" class="btn btn-primary btn-sm">
+                <i class="bi bi-calendar-week me-1"></i>Manage Weekly Schedule
+            </a>
+        </div>
     </div>
     <form class="d-flex gap-2 mb-3" method="get" action="${pageContext.request.contextPath}/trips/list">
         <select name="status" class="form-select form-select-sm" style="max-width:210px">
