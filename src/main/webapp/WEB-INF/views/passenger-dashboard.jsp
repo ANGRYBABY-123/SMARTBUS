@@ -376,6 +376,20 @@ pollNotifs();
 // ── Auto-refresh: swap trip cards (Live Now + Upcoming) every 10s ──
 (function() {
     const busMarkers = [];
+
+    // Track which trip IDs were live on the last refresh
+    let knownLiveIds = new Set(
+        Array.from(document.querySelectorAll('[data-live-trip]'))
+             .map(el => el.getAttribute('data-live-trip'))
+    );
+
+    function vibrateDevice() {
+        if ('vibrate' in navigator) {
+            // Two short pulses: buzz-pause-buzz
+            navigator.vibrate([200, 100, 200]);
+        }
+    }
+
     async function autoRefreshPassenger() {
         try {
             const res = await fetch(location.href, { credentials: 'same-origin' });
@@ -386,6 +400,17 @@ pollNotifs();
             if (fresh && curr) curr.outerHTML = fresh.outerHTML;
             lastRefreshTime = Date.now();
             updateLastRefreshLabel();
+
+            // Check for newly started trips → vibrate
+            const freshLiveIds = new Set(
+                Array.from(doc.querySelectorAll('[data-live-trip]'))
+                     .map(el => el.getAttribute('data-live-trip'))
+            );
+            const newlyStarted = [...freshLiveIds].filter(id => !knownLiveIds.has(id));
+            if (newlyStarted.length > 0) {
+                vibrateDevice();
+            }
+            knownLiveIds = freshLiveIds;
             // refresh bus markers on map
             busMarkers.forEach(m => map.removeLayer(m));
             busMarkers.length = 0;

@@ -368,7 +368,10 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 }
 
 function startTripCheck(tripId, startLat, startLng, locationName) {
-    const doStart = () => { location.href = DD_CTX + '/driver/start?id=' + tripId; };
+    const doStart = () => {
+        if ('vibrate' in navigator) navigator.vibrate([150, 80, 150, 80, 300]);
+        location.href = DD_CTX + '/driver/start?id=' + tripId;
+    };
 
     if (!startLat || !startLng || isNaN(startLat) || isNaN(startLng)) {
         if (confirm('Are you ready to start this trip?')) doStart();
