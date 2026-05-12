@@ -99,7 +99,8 @@ public class AuthFilter implements Filter {
         if ("PASSENGER".equals(role) &&
                 (path.startsWith("/passenger/") || path.startsWith("/tracking/view")
                  || path.startsWith("/tracking/latest") || path.startsWith("/notifications/")
-                 || path.startsWith("/api/") || path.startsWith("/ai/"))) {
+                 || path.startsWith("/api/") || path.startsWith("/ai/")
+                 || path.equals("/stops/nearest"))) {
             chain.doFilter(request, response);
             return;
         }

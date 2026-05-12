@@ -1,0 +1,19 @@
+{
+  "name": "CommuteSafe",
+  "short_name": "CommuteSafe",
+  "description": "Safe, real-time commuting — powered by live GPS",
+  "start_url": "/passenger/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#00c853",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjM2IiBmaWxsPSIjMDBjODUzIi8+PHBhdGggZD0iTTk2IDIwTDE3MiA1NkwxNzIgMTAwQzE3MiAxNDQgMTM4IDE3NiA5NiAxODRDNTQgMTc2IDIwIDE0NCAyMCAxMDBMMjAgNTZaIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjM2IiB5PSI5MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjE0IiBmaWxsPSIjMDBjODUzIi8+PHJlY3QgeD0iNDIiIHk9IjY2IiB3aWR0aD0iMTA4IiBoZWlnaHQ9IjM2IiByeD0iMTIiIGZpbGw9IiMwMGM4NTMiLz48cmVjdCB4PSI0OCIgeT0iOTYiIHdpZHRoPSIyOCIgaGVpZ2h0PSIyNCIgcng9IjQiIGZpbGw9IndoaXRlIi8+PHJlY3QgeD0iMTE2IiB5PSI5NiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0id2hpdGUiLz48Y2lyY2xlIGN4PSI2NCIgY3k9IjE1MiIgcj0iMTQiIGZpbGw9IndoaXRlIi8+PGNpcmNsZSBjeD0iMTI4IiBjeT0iMTUyIiByPSIxNCIgZmlsbD0id2hpdGUiLz48L3N2Zz4=",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
