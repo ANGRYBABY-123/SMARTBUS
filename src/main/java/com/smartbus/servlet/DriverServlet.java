@@ -2,11 +2,8 @@ package com.smartbus.servlet;
 
 import com.smartbus.dao.DriverScheduleDAO;
 import com.smartbus.dao.NotificationDAO;
-import com.smartbus.dao.ScheduleDAO;
 import com.smartbus.dao.TripDAO;
-import com.smartbus.entity.DriverSchedule;
 import com.smartbus.entity.Notification;
-import com.smartbus.entity.Schedule;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
 import jakarta.servlet.ServletException;
@@ -18,7 +15,6 @@ import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 @WebServlet("/driver/*")
@@ -27,7 +23,6 @@ public class DriverServlet extends HttpServlet {
     private final TripDAO             tripDAO     = new TripDAO();
     private final DriverScheduleDAO   dsDAO       = new DriverScheduleDAO();
     private final NotificationDAO     notifDAO    = new NotificationDAO();
-    private final ScheduleDAO         scheduleDAO = new ScheduleDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -80,28 +75,6 @@ public class DriverServlet extends HttpServlet {
         }
 
         if ("IN_PROGRESS".equals(newStatus)) {
-            // Time validation: find any schedule for today's day on this route
-            String todayAbbrev = LocalDate.now().getDayOfWeek().name().substring(0, 3); // MON, TUE…
-            List<Schedule> schedules = scheduleDAO.findByRoute(trip.getRoute().getRouteId());
-            boolean hasScheduleToday = false;
-            boolean timeAllowed = false;
-            for (Schedule s : schedules) {
-                if (s.getDaysOfWeek() != null && s.getDaysOfWeek().contains(todayAbbrev)) {
-                    hasScheduleToday = true;
-                    // Allow up to 30 min before the scheduled departure
-                    LocalTime earliest = s.getDepartureTime().minusMinutes(30);
-                    if (!LocalTime.now().isBefore(earliest)) {
-                        timeAllowed = true;
-                        break;
-                    }
-                }
-            }
-            if (hasScheduleToday && !timeAllowed) {
-                req.getSession().setAttribute("tripStartError",
-                    "Cannot start trip yet — too early. Check the schedule for the departure time.");
-                resp.sendRedirect(req.getContextPath() + "/driver/dashboard");
-                return;
-            }
             trip.setStartTime(LocalDateTime.now());
         } else if ("COMPLETED".equals(newStatus)) {
             trip.setEndTime(LocalDateTime.now());

@@ -243,14 +243,17 @@ const DD_CTX = '${pageContext.request.contextPath}';
 let ddTripId = null, ddReason = '', sheetCollapsed = false;
 const DD_SHEET = () => document.getElementById('bottom-sheet');
 
-// Format ISO datetimes in trip cards (e.g. "2026-05-12T12:01" → "Tue 12 May at 12:01")
-document.querySelectorAll('time.fmt-dt').forEach(el => {
-    const raw = el.dataset.dt; // "2026-05-12T12:01:00" or "2026-05-12T12:01"
-    if (!raw) return;
-    const d = new Date(raw.replace('T', ' ')); // Safari-safe parse
-    if (isNaN(d)) { el.textContent = raw; return; }
-    el.textContent = d.toLocaleString('en-ZA', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false });
-});
+// Format ISO datetimes in trip cards (e.g. "2026-05-12T12:01" → "Tue 12 May, 12:01")
+function formatDtElements(root) {
+    (root || document).querySelectorAll('time.fmt-dt').forEach(el => {
+        const raw = el.dataset.dt;
+        if (!raw) return;
+        const d = new Date(raw.replace('T', ' '));
+        if (isNaN(d)) { el.textContent = raw; return; }
+        el.textContent = d.toLocaleString('en-ZA', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false });
+    });
+}
+formatDtElements();
 
 // -- MAP --
 const map = L.map('map', { zoomControl: false, attributionControl: false });
@@ -342,38 +345,12 @@ function submitDashDelay() {
         }).catch(() => alert('Network error'));
 }
 
-// ── Trip start: time-lock logic ─────────────────────────────────────────
-function parseDepartMin(raw) {
-    // handles LocalTime "14:00" / "14:00:00" and LocalDateTime "2026-05-12T14:00"
-    if (!raw || raw === 'null') return null;
-    const timePart = raw.includes('T') ? raw.split('T')[1] : raw;
-    const parts = timePart.split(':');
-    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-}
-
 function refreshStartButtons() {
-    const now = new Date();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    const pad = n => String(n).padStart(2, '0');
+    // No time lock — drivers can start any SCHEDULED trip immediately
     document.querySelectorAll('button[data-depart-time]').forEach(btn => {
-        const tripMin = parseDepartMin(btn.getAttribute('data-depart-time'));
-        if (tripMin === null) { btn.disabled = false; return; }
-        const diff = tripMin - nowMin; // positive = still in future
-        const h = Math.floor(tripMin / 60), m = tripMin % 60;
-        if (diff > 15) {
-            // Too early — locked
-            btn.disabled = true;
-            btn.classList.remove('window-passed');
-            btn.innerHTML = `<i class="bi bi-lock-fill"></i> Available at ${pad(h)}:${pad(m)}`;
-        } else if (diff < -60) {
-            // Grace period expired
-            btn.disabled = true;
-            btn.classList.add('window-passed');
-            btn.innerHTML = '<i class="bi bi-clock-history"></i> Window passed';
-        } else {
-            // It\'s time
-            btn.disabled = false;
-            btn.classList.remove('window-passed');
+        btn.disabled = false;
+        btn.classList.remove('window-passed');
+        if (!btn.innerHTML.includes('Start My Trip')) {
             btn.innerHTML = '<i class="bi bi-play-fill"></i> Start My Trip';
         }
     });
@@ -381,47 +358,9 @@ function refreshStartButtons() {
 
 function handleStartBtn(btn) {
     if (btn.disabled) return;
-    startTripCheck(
-        btn.getAttribute('data-trip-id'),
-        parseFloat(btn.getAttribute('data-start-lat')) || null,
-        parseFloat(btn.getAttribute('data-start-lng')) || null,
-        btn.getAttribute('data-start-loc')
-    );
-}
-
-// ── Trip start: GPS location check ────────────────────────────────────────
-function haversineKm(lat1, lng1, lat2, lng2) {
-    const R = 6371, toRad = x => x * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function startTripCheck(tripId, startLat, startLng, locationName) {
-    const doStart = () => {
-        if ('vibrate' in navigator) navigator.vibrate([150, 80, 150, 80, 300]);
-        location.href = DD_CTX + '/driver/start?id=' + tripId;
-    };
-
-    if (!startLat || !startLng || isNaN(startLat) || isNaN(startLng)) {
-        if (confirm('Are you ready to start this trip?')) doStart();
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        function(pos) {
-            const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, startLat, startLng);
-            if (distKm > 0.5) {
-                alert('You are ' + distKm.toFixed(2) + ' km away from the departure point (\'' + locationName + '\').\n\nPlease drive to the departure point first, then start the trip.');
-                return;
-            }
-            if (confirm('You are at the departure point. Ready to start this trip?')) doStart();
-        },
-        function() {
-            if (confirm('We could not detect your location.\nStart the trip anyway?')) doStart();
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-    );
+    const tripId = btn.getAttribute('data-trip-id');
+    if ('vibrate' in navigator) navigator.vibrate([150, 80, 150, 80, 300]);
+    location.href = DD_CTX + '/driver/start?id=' + tripId;
 }
 
 (function() {
@@ -433,7 +372,11 @@ function startTripCheck(tripId, startLat, startLng, locationName) {
             const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
             const fresh = doc.getElementById('dd-sheet-content');
             const curr  = document.getElementById('dd-sheet-content');
-            if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            if (fresh && curr) {
+                curr.outerHTML = fresh.outerHTML;
+                formatDtElements();
+                refreshStartButtons();
+            }
             // refresh map markers for in-progress trips
             mapMarkers.forEach(m => map.removeLayer(m));
             mapMarkers.length = 0;
