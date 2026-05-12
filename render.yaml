@@ -34,6 +34,16 @@ services:
       - key: DB_PASS
         sync: false
 
+      # ── Email (JavaMail / SMTP) ───────────────────────────────────────────
+      - key: SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false     # set manually in Render dashboard (sender Gmail address)
+      - key: SMTP_PASS
+        sync: false     # set manually in Render dashboard (Gmail App Password)
+
       # ── Optional JVM tuning ───────────────────────────────────────────────
       - key: JAVA_OPTS
         value: "-Xms128m -Xmx400m -XX:+UseContainerSupport"
