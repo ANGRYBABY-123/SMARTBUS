@@ -37,8 +37,6 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
 .link-row a:hover{text-decoration:underline}
 .forgot{font-size:.8rem;color:#9ca3af;text-decoration:none;display:block;text-align:center;margin-top:10px}
 .forgot:hover{color:#374151}
-.forgot-panel{display:none;margin-top:14px;background:#f8fafc;border-radius:12px;padding:14px;font-size:.82rem;color:#555;border:1px solid #e5e7eb}
-.forgot-panel.show{display:block}
 .role-toggle{display:flex;border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:16px}
 .role-btn{flex:1;padding:11px 8px;border:none;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .18s}
 .role-btn.on{background:#0d1f38;color:#fff}
@@ -87,12 +85,8 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         <div class="field"><label>Password</label><input type="password" name="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
         <label class="remember"><input type="checkbox" name="rememberMe" value="true"> Remember me for 30 days</label>
         <button type="submit" class="btn-main">Sign In</button>
-        <a href="#" class="forgot" onclick="toggleForgot(event)">Forgot password?</a>
+        <a href="${pageContext.request.contextPath}/forgot-password" class="forgot">Forgot password?</a>
       </form>
-      <div class="forgot-panel" id="forgot-panel">
-        <p style="margin-bottom:10px"><i class="bi bi-info-circle"></i> Contact your admin to reset your password, or register a new account.</p>
-        <button class="btn-main" style="font-size:.82rem" onclick="showTab('register')"><i class="bi bi-person-plus"></i> Create New Account</button>
-      </div>
       <div class="link-row">Don&apos;t have an account? <a href="#" onclick="showTab('register');return false;">Register</a></div>
     </div>
     <!-- REGISTER -->
@@ -121,9 +115,8 @@ function showTab(tab){
   document.getElementById('tab-register').classList.toggle('active',tab==='register');
   document.getElementById('section-login').classList.toggle('active',tab==='login');
   document.getElementById('section-register').classList.toggle('active',tab==='register');
-  if(tab==='login')document.getElementById('forgot-panel').classList.remove('show');
 }
-function toggleForgot(e){e.preventDefault();document.getElementById('forgot-panel').classList.toggle('show');}
+
 function selectRole(role){
   document.getElementById('registerRole').value=role;
   document.getElementById('role-passenger').className='role-btn '+(role==='PASSENGER'?'on':'off');
