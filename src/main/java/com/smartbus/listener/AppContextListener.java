@@ -50,9 +50,6 @@ public class AppContextListener implements ServletContextListener {
     private void seedBusStopsAndRoutes() {
         EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager();
         try {
-            Long stopCount = em.createQuery("SELECT COUNT(s) FROM BusStop s", Long.class).getSingleResult();
-            if (stopCount > 0) return; // already seeded
-
             em.getTransaction().begin();
 
             // ── Routes ──────────────────────────────────────────────────────
@@ -115,12 +112,20 @@ public class AppContextListener implements ServletContextListener {
             };
 
             for (Object[] s : stops) {
-                em.createNativeQuery(
-                    "INSERT INTO bus_stops (stop_name, latitude, longitude) VALUES (?,?,?)")
-                    .setParameter(1, s[0]).setParameter(2, s[1]).setParameter(3, s[2])
-                    .executeUpdate();
-                long stopId = ((Number) em.createNativeQuery(
-                    "SELECT LAST_INSERT_ID()").getSingleResult()).longValue();
+                Long existingStop = (Long) em.createNativeQuery(
+                    "SELECT stop_id FROM bus_stops WHERE stop_name = ? LIMIT 1")
+                    .setParameter(1, s[0]).getSingleResultOrNull();
+                long stopId;
+                if (existingStop != null) {
+                    stopId = existingStop;
+                } else {
+                    em.createNativeQuery(
+                        "INSERT INTO bus_stops (stop_name, latitude, longitude) VALUES (?,?,?)")
+                        .setParameter(1, s[0]).setParameter(2, s[1]).setParameter(3, s[2])
+                        .executeUpdate();
+                    stopId = ((Number) em.createNativeQuery(
+                        "SELECT LAST_INSERT_ID()").getSingleResult()).longValue();
+                }
                 for (int ri : (int[]) s[3]) {
                     em.createNativeQuery(
                         "INSERT IGNORE INTO stop_routes (stop_id, route_id) VALUES (?,?)")
