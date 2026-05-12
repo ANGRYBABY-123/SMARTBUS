@@ -33,9 +33,11 @@
         .notif-time { font-size: .7rem; color: #aaa; margin-top: 3px; }
         .notif-empty { padding: 24px; text-align: center; color: #bbb; font-size: .85rem; }
 
-        /* Bottom sheet */
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,.16); transition: transform .35s cubic-bezier(.32,.72,0,1); max-height: 80vh; overflow-y: auto; }
-        .sheet-handle { display: flex; justify-content: center; padding: 14px 0 6px; cursor: grab; }
+        /* Bottom sheet — starts partial so map is visible, expands/collapses on tap */
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,.16); height: 42vh; overflow-y: auto; transition: height .35s cubic-bezier(.32,.72,0,1); }
+        .bottom-sheet.expanded { height: 78vh; }
+        .bottom-sheet.collapsed { height: 52px; overflow: hidden; }
+        .sheet-handle { display: flex; justify-content: center; padding: 14px 0 6px; cursor: grab; flex-shrink: 0; }
         .sheet-handle::after { content: ""; width: 40px; height: 4px; background: #e0e0e0; border-radius: 4px; }
         .sheet-content { padding: 0 18px 32px; }
 
@@ -116,7 +118,7 @@
 <!-- Bottom sheet -->
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" onclick="toggleSheet()" title="Tap to expand or collapse">
-        <span style="position:absolute;font-size:.62rem;color:#bbb;margin-top:20px;font-weight:600;letter-spacing:.5px">SWIPE UP FOR TRIPS</span>
+        <span id="sheet-hint" style="position:absolute;font-size:.62rem;color:#bbb;margin-top:20px;font-weight:600;letter-spacing:.5px">SWIPE UP FOR MORE</span>
     </div>
     <div class="sheet-content" id="pass-sheet-content">
         <!-- Greeting -->
@@ -202,7 +204,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const CTX_DASH = '${pageContext.request.contextPath}';
-let sheetCollapsed = false;
+let sheetState = 'partial'; // partial | expanded | collapsed
 let notifOpen = false;
 let dashNotifs = [];
 
@@ -252,8 +254,21 @@ liveTrips.forEach(t => {
 
 // -- SHEET --
 function toggleSheet() {
-    sheetCollapsed = !sheetCollapsed;
-    document.getElementById('bottom-sheet').style.transform = sheetCollapsed ? 'translateY(calc(100% - 68px))' : '';
+    const sheet = document.getElementById('bottom-sheet');
+    const hint  = document.getElementById('sheet-hint');
+    if (sheetState === 'partial') {
+        sheetState = 'expanded';
+        sheet.classList.add('expanded'); sheet.classList.remove('collapsed');
+        hint.textContent = 'SWIPE DOWN TO SEE MAP';
+    } else if (sheetState === 'expanded') {
+        sheetState = 'collapsed';
+        sheet.classList.add('collapsed'); sheet.classList.remove('expanded');
+        hint.textContent = 'SWIPE UP FOR TRIPS';
+    } else {
+        sheetState = 'partial';
+        sheet.classList.remove('collapsed', 'expanded');
+        hint.textContent = 'SWIPE UP FOR MORE';
+    }
 }
 
 // -- NOTIFICATIONS --
