@@ -69,10 +69,10 @@ public class ForgotPasswordServlet extends HttpServlet {
             try {
                 EmailUtil.sendPasswordResetCode(user.getEmail(), code);
             } catch (Exception mailEx) {
-                String detail = mailEx.getClass().getSimpleName() + ": " + mailEx.getMessage();
-                getServletContext().log("[ForgotPassword] SMTP failure for " + normalised + " | " + detail, mailEx);
+                getServletContext().log("[ForgotPassword] SMTP failure for " + normalised, mailEx);
                 req.setAttribute("forgotError",
-                        "Email could not be sent. Error: " + detail);
+                        "Your account was found but the reset email could not be sent. "
+                        + "Please try again in a moment.");
                 req.getRequestDispatcher("/WEB-INF/views/forgot-password.jsp").forward(req, resp);
                 return;
             }
