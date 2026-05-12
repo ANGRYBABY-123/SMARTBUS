@@ -131,7 +131,9 @@
 </c:if>
 
 <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle" onclick="toggleSheet()"></div>
+    <div class="sheet-handle" onclick="toggleSheet()" title="Tap to expand or collapse">
+        <span style="position:absolute;font-size:.6rem;color:#475569;margin-top:20px;font-weight:700;letter-spacing:.5px">SWIPE UP FOR DETAILS</span>
+    </div>
     <div class="sheet-content" id="dd-sheet-content">
         <c:set var="active" value="0"/>
         <c:set var="done" value="0"/>
@@ -169,12 +171,12 @@
         </c:choose>
 
         <div class="stats-bar">
-            <div class="stat-chip"><div class="stat-num green">${active}</div><div class="stat-lbl">Active</div></div>
-            <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Upcoming</div></div>
-            <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Done</div></div>
+            <div class="stat-chip"><div class="stat-num green">${active}</div><div class="stat-lbl">On the Road</div></div>
+            <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Coming Up</div></div>
+            <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
         </div>
 
-        <div class="section-lbl">Today's Trips</div>
+        <div class="section-lbl">Your Trips Today</div>
         <c:choose>
             <c:when test="${not empty trips}">
                 <c:forEach var="t" items="${trips}">
@@ -193,15 +195,15 @@
                             <div>
                                 <div class="card-title">${t.route.routeName}</div>
                                 <div class="card-sub">
-                                    <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                    &nbsp;&middot;&nbsp;Trip #${t.tripId}
-                                    <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp;<i class="bi bi-clock"></i> ${t.startTime}</c:if>
+                                    Bus: ${t.bus.registrationNumber}
+                                    &nbsp;&middot;&nbsp; Trip #${t.tripId}
+                                    <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp;<i class="bi bi-clock"></i> Departs at ${t.startTime}</c:if>
                                 </div>
                             </div>
                             <c:choose>
-                                <c:when test="${t.status == 'IN_PROGRESS'}"><span class="card-badge live"><i class="bi bi-broadcast-pin"></i> Live</span></c:when>
-                                <c:when test="${t.status == 'SCHEDULED'}"><span class="card-badge scheduled">Scheduled</span></c:when>
-                                <c:otherwise><span class="card-badge done">Done</span></c:otherwise>
+                                <c:when test="${t.status == 'IN_PROGRESS'}"><span class="card-badge live"><i class="bi bi-broadcast-pin"></i> On the road</span></c:when>
+                                <c:when test="${t.status == 'SCHEDULED'}"><span class="card-badge scheduled">Ready to start</span></c:when>
+                                <c:otherwise><span class="card-badge done">Completed</span></c:otherwise>
                             </c:choose>
                         </div>
                         <div class="card-actions">
@@ -211,20 +213,24 @@
                                        ${not empty t.route.startLat ? t.route.startLat : 'null'},
                                        ${not empty t.route.startLng ? t.route.startLng : 'null'},
                                        '${fn:escapeXml(t.route.startLocation)}')">
-                                    <i class="bi bi-play-fill"></i> Start Trip
+                                    <i class="bi bi-play-fill"></i> Start My Trip
                                 </a>
                             </c:if>
                             <c:if test="${t.status == 'IN_PROGRESS'}">
-                                <a href="${pageContext.request.contextPath}/tracking/drive?tripId=${t.tripId}" class="btn-action btn-map"><i class="bi bi-geo-alt-fill"></i> Share Location</a>
-                                <button class="btn-action btn-delay" onclick="openDelayModal(${t.tripId})"><i class="bi bi-exclamation-triangle-fill"></i> Delay</button>
-                                <a href="${pageContext.request.contextPath}/driver/end?id=${t.tripId}" class="btn-action btn-end" onclick="return confirm('End this trip?')"><i class="bi bi-stop-fill"></i> End</a>
+                                <a href="${pageContext.request.contextPath}/tracking/drive?tripId=${t.tripId}" class="btn-action btn-map"><i class="bi bi-geo-alt-fill"></i> Share My Location</a>
+                                <button class="btn-action btn-delay" onclick="openDelayModal(${t.tripId})"><i class="bi bi-exclamation-triangle-fill"></i> Report a Delay</button>
+                                <a href="${pageContext.request.contextPath}/driver/end?id=${t.tripId}" class="btn-action btn-end" onclick="return confirm('Are you sure you want to end this trip?')"><i class="bi bi-stop-fill"></i> End Trip</a>
                             </c:if>
                         </div>
                     </div>
                 </c:forEach>
             </c:when>
             <c:otherwise>
-                <div class="empty-state"><i class="bi bi-bus-front"></i><br>No trips scheduled for today.</div>
+                <div class="empty-state">
+                    <i class="bi bi-bus-front"></i><br>
+                    <b>No trips assigned for today.</b><br>
+                    <span style="font-size:.78rem;color:#64748b">Your supervisor will post the schedule before your shift starts.</span>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>
@@ -232,15 +238,15 @@
 
 <div id="dd-overlay">
     <div id="dd-modal">
-        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Report a Delay</h5>
-        <p>Select a reason &mdash; all passengers on this trip will be notified instantly.</p>
+        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Report a Delay to Passengers</h5>
+        <p>Choose what's causing the delay &mdash; passengers on this trip will be notified immediately so they can plan ahead.</p>
         <button class="dd-reason" onclick="ddSelectReason(this,'Heavy traffic')"><i class="bi bi-car-front-fill"></i> Heavy traffic</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Road accident ahead')"><i class="bi bi-exclamation-octagon-fill"></i> Road accident ahead</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Bus mechanical issue')"><i class="bi bi-tools"></i> Bus mechanical issue</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Weather conditions')"><i class="bi bi-cloud-rain-fill"></i> Weather conditions</button>
         <button class="dd-reason" onclick="ddSelectReason(this,'Passenger boarding delay')"><i class="bi bi-people-fill"></i> Boarding delay</button>
         <input id="dd-custom" type="text" placeholder="Or type a custom reason..." maxlength="200" oninput="ddCustomReason(this)"/>
-        <div id="dd-done"><i class="bi bi-check-circle-fill"></i> Passengers have been notified!</div>
+        <div id="dd-done"><i class="bi bi-check-circle-fill"></i> Passengers have been notified! They can now plan a different route if needed.</div>
         <button id="dd-submit" onclick="submitDashDelay()">Send Alert</button>
         <button id="dd-cancel" onclick="closeDelayModal()">Cancel</button>
     </div>
@@ -314,7 +320,7 @@ function startTripCheck(tripId, startLat, startLng, locationName) {
     const doStart = () => { location.href = DD_CTX + '/driver/start?id=' + tripId; };
 
     if (!startLat || !startLng || isNaN(startLat) || isNaN(startLng)) {
-        if (confirm('Start this trip now?')) doStart();
+        if (confirm('Are you ready to start this trip?')) doStart();
         return;
     }
 
@@ -322,15 +328,13 @@ function startTripCheck(tripId, startLat, startLng, locationName) {
         function(pos) {
             const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, startLat, startLng);
             if (distKm > 0.5) {
-                alert('You are ' + distKm.toFixed(2) + ' km from the start location.\n' +
-                      'Please be within 0.5 km of ' + locationName + ' before starting the trip.');
+                alert('You are ' + distKm.toFixed(2) + ' km away from the departure point (\'' + locationName + '\').\n\nPlease drive to the departure point first, then start the trip.');
                 return;
             }
-            if (confirm('Start this trip now?')) doStart();
+            if (confirm('You are at the departure point. Ready to start this trip?')) doStart();
         },
         function() {
-            // GPS unavailable — warn and let server decide
-            if (confirm('Could not verify your location.\nStart trip anyway?')) doStart();
+            if (confirm('We could not detect your location.\nStart the trip anyway?')) doStart();
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );

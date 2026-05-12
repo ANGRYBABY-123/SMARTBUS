@@ -100,8 +100,8 @@
             <span class="notif-badge" id="notif-badge">0</span>
         </button>
         <div class="notif-dropdown" id="notif-dropdown">
-            <div class="notif-drop-header">?? Notifications</div>
-            <div id="notif-list"><div class="notif-empty">No notifications yet</div></div>
+            <div class="notif-drop-header"><i class="bi bi-bell-fill" style="color:#f59e0b"></i> Your Notifications</div>
+            <div id="notif-list"><div class="notif-empty">You're all caught up! No alerts yet.</div></div>
         </div>
     </div>
     <a href="${pageContext.request.contextPath}/users/logout" class="icon-btn" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
@@ -109,24 +109,39 @@
 
 <!-- Bottom sheet -->
 <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle" onclick="toggleSheet()"></div>
+    <div class="sheet-handle" onclick="toggleSheet()" title="Tap to expand or collapse">
+        <span style="position:absolute;font-size:.62rem;color:#bbb;margin-top:20px;font-weight:600;letter-spacing:.5px">SWIPE UP FOR TRIPS</span>
+    </div>
     <div class="sheet-content" id="pass-sheet-content">
+        <!-- Greeting -->
+        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+                <div style="font-size:1.05rem;font-weight:800;color:#111">Good <span id="time-greeting">day</span>, <c:out value="${sessionScope.loggedUser.name}"/>! 👋</div>
+                <div style="font-size:.75rem;color:#aaa;margin-top:1px">Here are today's buses — tap <b>Track</b> to follow one live</div>
+            </div>
+            <div id="last-updated" style="font-size:.65rem;color:#bbb;text-align:right">Updated just now</div>
+        </div>
         <!-- Terminal recommendation -->
         <div id="terminal-rec" class="loading">
             <div class="trec-icon"><i class="bi bi-compass"></i></div>
             <div>
-                <div id="trec-title">Finding your nearest terminal…</div>
-                <div id="trec-sub">Detecting your location</div>
+                <div id="trec-title">Finding your nearest bus stop…</div>
+                <div id="trec-sub">Allow location access when asked</div>
             </div>
         </div>
-        <!-- Where to bar -->
-        <div class="where-to">
+        <!-- Route search / filter -->
+        <div class="where-to" onclick="toggleRouteFilter()" title="Search routes">
             <i class="bi bi-search"></i>
-            <span>Where to? &nbsp;�&nbsp; Track a bus</span>
+            <span id="where-label">Search routes or destinations…</span>
+        </div>
+        <div id="route-filter-box" style="display:none;margin:-12px 0 16px">
+            <input id="route-search" type="text" placeholder="e.g. Soshanguve, Pretoria CBD…"
+                   style="width:100%;border-radius:12px;border:1.5px solid #e0e0e0;padding:11px 14px;font-size:.9rem;outline:none"
+                   oninput="filterTrips(this.value)" autofocus>
         </div>
 
         <!-- Live Now -->
-        <div class="section-lbl"><span class="live-dot"></span> Live Now</div>
+        <div class="section-lbl"><span class="live-dot"></span> Buses Running Now</div>
         <c:choose>
             <c:when test="${not empty activeTrips}">
                 <c:forEach var="t" items="${activeTrips}">
@@ -134,22 +149,26 @@
                         <div class="card-icon live"><i class="bi bi-geo-alt-fill" style="font-size:1.3rem;color:#00c853"></i></div>
                         <div class="card-body">
                             <div class="card-title">${t.route.routeName}</div>
-                            <div class="card-sub"><i class="bi bi-person-fill"></i> ${t.driver.name} &nbsp;&middot;&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}</div>
-                            <span class="card-badge live"><i class="bi bi-broadcast"></i> Live</span>
+                            <div class="card-sub">Driver: ${t.driver.name} &nbsp;&middot;&nbsp; Bus: ${t.bus.registrationNumber}</div>
+                            <span class="card-badge live"><i class="bi bi-broadcast"></i> On the road now</span>
                         </div>
                         <a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="track-btn"><i class="bi bi-geo-alt-fill"></i> Track</a>
                     </div>
                 </c:forEach>
             </c:when>
             <c:otherwise>
-                <div class="empty-state"><i class="bi bi-bus-front"></i>No buses active right now</div>
+                <div class="empty-state">
+                    <i class="bi bi-bus-front"></i>
+                    <div style="font-weight:700;color:#555;margin-bottom:4px">No buses on the road yet</div>
+                    <div style="font-size:.78rem">Check back shortly — buses typically depart from <b>05:30</b></div>
+                </div>
             </c:otherwise>
         </c:choose>
 
         <!-- Upcoming Today -->
         <div class="section-lbl" style="margin-top:16px">
             <i class="bi bi-calendar3" style="color:#6366f1"></i>
-            Today's Trips &nbsp;<span style="font-size:.65rem;color:#aaa;font-weight:400;text-transform:none;letter-spacing:0">${today}</span>
+            Coming Up Today &nbsp;<span style="font-size:.65rem;color:#aaa;font-weight:400;text-transform:none;letter-spacing:0">${today}</span>
         </div>
         <c:choose>
             <c:when test="${not empty scheduledTrips}">
@@ -159,21 +178,24 @@
                         <div class="card-body">
                             <div class="card-title">${t.route.routeName}</div>
                             <div class="card-sub">
-                                <i class="bi bi-person-fill"></i> ${t.driver.name}
-                                &nbsp;&middot;&nbsp; <i class="bi bi-bus-front-fill"></i> ${t.bus.registrationNumber}
-                                <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp; <i class="bi bi-clock"></i>
-                                    <%-- LocalDateTime.toString() = 2026-05-08T07:30 — take only HH:mm --%>
-                                    ${fn:substring(t.startTime.toString(), 11, 16)}
+                                Driver: ${t.driver.name}
+                                &nbsp;&middot;&nbsp; Bus: ${t.bus.registrationNumber}
+                                <c:if test="${t.startTime != null}">
+                                    &nbsp;&middot;&nbsp; <i class="bi bi-clock"></i> Departs at ${fn:substring(t.startTime.toString(), 11, 16)}
                                 </c:if>
                             </div>
-                            <span class="card-badge sched">Scheduled</span>
+                            <span class="card-badge sched">Arriving soon — not yet trackable</span>
                         </div>
-                        <span class="track-btn disabled"><i class="bi bi-clock"></i> Soon</span>
+                        <span class="track-btn disabled" title="Tracking starts when the bus departs"><i class="bi bi-clock"></i> Not yet</span>
                     </div>
                 </c:forEach>
             </c:when>
             <c:otherwise>
-                <div class="empty-state" style="padding:20px 16px"><i class="bi bi-calendar-check" style="font-size:1.8rem"></i>No trips scheduled for today</div>
+                <div class="empty-state" style="padding:20px 16px">
+                    <i class="bi bi-calendar-check" style="font-size:1.8rem"></i>
+                    <div style="font-weight:700;color:#555;margin-bottom:4px">No more trips today</div>
+                    <div style="font-size:.78rem">All scheduled buses for today have been shown above</div>
+                </div>
             </c:otherwise>
         </c:choose>
 
@@ -186,6 +208,40 @@ const CTX_DASH = '${pageContext.request.contextPath}';
 let sheetCollapsed = false;
 let notifOpen = false;
 let dashNotifs = [];
+
+// -- GREETING --
+(function() {
+    const h = new Date().getHours();
+    const g = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+    document.getElementById('time-greeting').textContent = g;
+})();
+
+// -- LAST UPDATED TICKER --
+let lastRefreshTime = Date.now();
+function updateLastRefreshLabel() {
+    const el = document.getElementById('last-updated');
+    if (!el) return;
+    const secs = Math.floor((Date.now() - lastRefreshTime) / 1000);
+    el.textContent = secs < 10 ? 'Updated just now' : 'Updated ' + secs + 's ago';
+}
+setInterval(updateLastRefreshLabel, 5000);
+
+// -- ROUTE SEARCH FILTER --
+let filterOpen = false;
+function toggleRouteFilter() {
+    filterOpen = !filterOpen;
+    document.getElementById('route-filter-box').style.display = filterOpen ? 'block' : 'none';
+    document.getElementById('where-label').textContent = filterOpen ? 'Tap here to close search' : 'Search routes or destinations\u2026';
+    if (filterOpen) document.getElementById('route-search').focus();
+    else { document.getElementById('route-search').value = ''; filterTrips(''); }
+}
+function filterTrips(q) {
+    q = q.toLowerCase().trim();
+    document.querySelectorAll('.trip-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+}
 
 // -- MAP --
 const map = L.map('map', { zoomControl: false, attributionControl: false });
@@ -239,9 +295,11 @@ function pollNotifs() {
         const list = document.getElementById('notif-list');
         list.innerHTML = notifs.map(n => {
             const d = document.createElement('div'); d.textContent = n.message;
+            const icon = n.type === 'DELAY' ? '\u26a0\ufe0f' : '\ud83d\udce3';
+            const label = n.type === 'DELAY' ? 'Delay Alert' : 'Announcement';
             return '<div class="notif-item' + (n.type==='DELAY'?' delay':'') + '">'
-                + '<div style="font-size:1.2rem">' + (n.type==='DELAY'?'??':'??') + '</div>'
-                + '<div class="notif-msg">' + d.innerHTML + '<div class="notif-time">' + n.time + '</div></div></div>';
+                + '<div style="font-size:1.2rem">' + icon + '</div>'
+                + '<div class="notif-msg"><b style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#f59e0b">' + label + '</b><br>' + d.innerHTML + '<div class="notif-time">' + n.time + '</div></div></div>';
         }).join('');
         document.getElementById('notif-badge').textContent = notifs.length;
         document.getElementById('notif-badge').classList.add('visible');
@@ -331,6 +389,8 @@ pollNotifs();
             const fresh = doc.getElementById('pass-sheet-content');
             const curr  = document.getElementById('pass-sheet-content');
             if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            lastRefreshTime = Date.now();
+            updateLastRefreshLabel();
             // refresh bus markers on map
             busMarkers.forEach(m => map.removeLayer(m));
             busMarkers.length = 0;
