@@ -159,4 +159,22 @@ public class TripDAO extends GenericDAO<Trip> {
             em.close();
         }
     }
+
+    // JPQL: all trips whose startTime falls within a given week (Mon–Sun)
+    public List<Trip> findByWeek(LocalDate weekStart) {
+        EntityManager em = getEntityManager();
+        LocalDateTime from = weekStart.atStartOfDay();
+        LocalDateTime to   = from.plusDays(7);
+        try {
+            return em.createQuery(
+                "SELECT t FROM Trip t JOIN FETCH t.driver JOIN FETCH t.bus JOIN FETCH t.route " +
+                "WHERE t.startTime >= :from AND t.startTime < :to " +
+                "ORDER BY t.startTime ASC", Trip.class)
+                .setParameter("from", from)
+                .setParameter("to",   to)
+                .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 }

@@ -67,6 +67,7 @@ public class WeeklyScheduleServlet extends HttpServlet {
         List<DriverSchedule> entries  = dsDAO.findByWeek(weekStart);
         List<LocalDate>      weeks    = dsDAO.findDistinctWeeks();
         long                 unpublished = dsDAO.countUnpublished(weekStart);
+        List<Trip>           weekTrips   = tripDAO.findByWeek(weekStart);
 
         // Carry flash message from previous action (publish confirmation)
         String flash = (String) req.getSession().getAttribute("flashMsg");
@@ -79,6 +80,7 @@ public class WeeklyScheduleServlet extends HttpServlet {
         req.setAttribute("weeks",       weeks);
         req.setAttribute("weekStart",   weekStart);
         req.setAttribute("unpublished", unpublished);
+        req.setAttribute("weekTrips",   weekTrips);
         req.getRequestDispatcher("/WEB-INF/views/weekly-schedule.jsp").forward(req, resp);
     }
 

@@ -161,6 +161,80 @@
         Clicking <strong>Publish Week</strong> creates 5 SCHEDULED trips (Mon–Fri) for each pending entry
         and sends a notification to each assigned driver. Published entries are locked.
     </p>
+
+    <%-- Actual trips for this week (from Trips table) --%>
+    <div class="card mt-4">
+        <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2"
+             style="border-bottom:1px solid var(--sb-border)">
+            <span style="font-size:.78rem;font-weight:700;color:#94a3b8">
+                <i class="bi bi-calendar-check me-1" style="color:#3b82f6"></i>
+                ACTUAL TRIPS THIS WEEK &nbsp;–&nbsp;
+                <strong style="color:#e2e8f0">${fn:length(weekTrips)}</strong> trip${fn:length(weekTrips) == 1 ? '' : 's'}
+            </span>
+            <a href="${pageContext.request.contextPath}/trips" class="btn btn-sm btn-outline-secondary" style="font-size:.72rem">
+                <i class="bi bi-arrow-right me-1"></i>View All Trips
+            </a>
+        </div>
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Driver</th>
+                    <th>Route</th>
+                    <th>Bus</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            <c:forEach var="t" items="${weekTrips}">
+                <tr>
+                    <td style="font-family:monospace;font-size:.82rem;white-space:nowrap">
+                        ${t.startTime}
+                    </td>
+                    <td style="font-weight:600">
+                        <i class="bi bi-person-fill me-1" style="color:#60a5fa"></i>${t.driver.name}
+                    </td>
+                    <td>
+                        <div style="font-weight:500">${t.route.routeName}</div>
+                        <div style="font-size:.72rem;color:#64748b">
+                            ${t.route.startLocation} &rarr; ${t.route.endLocation}
+                        </div>
+                    </td>
+                    <td>
+                        <i class="bi bi-bus-front me-1" style="color:#94a3b8"></i>${t.bus.registrationNumber}
+                    </td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${t.status == 'IN_PROGRESS'}">
+                                <span class="badge" style="background:#064e3b;color:#34d399;border-radius:20px">
+                                    <i class="bi bi-broadcast-pin me-1"></i>In Progress
+                                </span>
+                            </c:when>
+                            <c:when test="${t.status == 'SCHEDULED'}">
+                                <span class="badge" style="background:#1e1b4b;color:#818cf8;border-radius:20px">
+                                    <i class="bi bi-clock me-1"></i>Scheduled
+                                </span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge" style="background:#1c1c1c;color:#6b7280;border-radius:20px">
+                                    <i class="bi bi-check2 me-1"></i>Completed
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </c:forEach>
+            <c:if test="${empty weekTrips}">
+                <tr>
+                    <td colspan="5" class="text-center py-4" style="color:#64748b">
+                        <i class="bi bi-calendar-x" style="display:block;font-size:1.6rem;margin-bottom:.4rem"></i>
+                        No trips generated for this week yet.
+                    </td>
+                </tr>
+            </c:if>
+            </tbody>
+        </table>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
