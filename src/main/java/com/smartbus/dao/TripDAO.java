@@ -134,4 +134,29 @@ public class TripDAO extends GenericDAO<Trip> {
             em.close();
         }
     }
+
+    /**
+     * Find active or scheduled trips on OTHER routes (not the given routeId),
+     * whose start time is within the next 3 hours — used for "alternative bus" suggestions
+     * when a delay is reported on the current trip's route.
+     */
+    public List<Trip> findAlternatives(Long excludeRouteId) {
+        EntityManager em = getEntityManager();
+        LocalDateTime now    = LocalDateTime.now();
+        LocalDateTime cutoff = now.plusHours(3);
+        try {
+            return em.createQuery(
+                "SELECT t FROM Trip t JOIN FETCH t.driver JOIN FETCH t.bus JOIN FETCH t.route " +
+                "WHERE t.route.routeId <> :rid " +
+                "AND (t.status = 'IN_PROGRESS' OR (t.status = 'SCHEDULED' AND t.startTime >= :now AND t.startTime <= :cutoff)) " +
+                "ORDER BY t.startTime ASC", Trip.class)
+                .setParameter("rid",    excludeRouteId)
+                .setParameter("now",    now)
+                .setParameter("cutoff", cutoff)
+                .setMaxResults(4)
+                .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 }

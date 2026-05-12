@@ -21,6 +21,7 @@
         <class>com.smartbus.entity.Notification</class>
         <class>com.smartbus.entity.RememberMeToken</class>
         <class>com.smartbus.entity.PasswordResetToken</class>
+        <class>com.smartbus.entity.BusStop</class>
 
         <properties>
             <!-- ===== DATABASE CONNECTION ===== -->

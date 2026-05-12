@@ -17,9 +17,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @WebServlet("/trips/*")
@@ -48,6 +50,9 @@ public class TripServlet extends HttpServlet {
             case "/delete":
                 tripDAO.delete(Long.parseLong(req.getParameter("id")));
                 resp.sendRedirect(req.getContextPath() + "/trips/list");
+                break;
+            case "/alternatives":
+                getAlternatives(req, resp);
                 break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/trips/list");
@@ -78,6 +83,45 @@ public class TripServlet extends HttpServlet {
         } else {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
+    }
+
+    // GET /trips/alternatives?tripId=X  → JSON array of alternative active/upcoming trips
+    private void getAlternatives(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        resp.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = resp.getWriter();
+        try {
+            Long tripId = Long.parseLong(req.getParameter("tripId"));
+            Trip current = tripDAO.findByIdWithDetails(tripId);
+            if (current == null) { out.print("[]"); return; }
+            List<Trip> alts = tripDAO.findAlternatives(current.getRoute().getRouteId());
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < alts.size(); i++) {
+                Trip t = alts.get(i);
+                if (i > 0) sb.append(",");
+                String time = t.getStartTime() != null ? t.getStartTime().format(fmt) : "--";
+                sb.append("{");
+                sb.append("\"tripId\":").append(t.getTripId()).append(",");
+                sb.append("\"route\":\"").append(esc(t.getRoute().getRouteName())).append("\",");
+                sb.append("\"from\":\"").append(esc(t.getRoute().getStartLocation())).append("\",");
+                sb.append("\"to\":\"").append(esc(t.getRoute().getEndLocation())).append("\",");
+                sb.append("\"driver\":\"").append(esc(t.getDriver().getName())).append("\",");
+                sb.append("\"bus\":\"").append(esc(t.getBus().getRegistrationNumber())).append("\",");
+                sb.append("\"status\":\"").append(esc(t.getStatus())).append("\",");
+                sb.append("\"startTime\":\"").append(time).append("\"");
+                sb.append("}");
+            }
+            sb.append("]");
+            out.print(sb.toString());
+        } catch (Exception e) {
+            out.print("[]");
+        }
+    }
+
+    private static String esc(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private void showAutoGenerateForm(HttpServletRequest req, HttpServletResponse resp)

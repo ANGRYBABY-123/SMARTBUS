@@ -250,16 +250,74 @@ function pollNotifs() {
 setInterval(pollNotifs, 15000);
 pollNotifs();
 
-// ── Nearest terminal recommendation ──────────────────────────────────
+// ── Nearest terminal recommendation (real bus stops from DB) ──────────────
 (function () {
-    const CAMPUSES = [
-        { name: 'Soshanguve North Campus', lat: -25.5275, lng: 28.0952 },
-        { name: 'Soshanguve South Campus', lat: -25.5358, lng: 28.1065 },
-        { name: 'Pretoria Campus',         lat: -25.7313, lng: 28.1648 },
-        { name: 'Arcadia Campus',          lat: -25.7469, lng: 28.1961 },
-        { name: 'Ga-Rankuwa Campus',       lat: -25.6169, lng: 27.9964 }
-    ];
-    const MAX_KM = 100;
+    function setRec(cls, icon, title, sub) {
+        const el = document.getElementById('terminal-rec');
+        el.className = cls;
+        el.querySelector('.trec-icon').innerHTML = '<i class="bi bi-' + icon + '"></i>';
+        document.getElementById('trec-title').textContent = title;
+        document.getElementById('trec-sub').textContent   = sub;
+    }
+
+    function onPos(pos) {
+        const uLat = pos.coords.latitude, uLng = pos.coords.longitude;
+        L.circleMarker([uLat, uLng], {
+            radius: 8, color: '#6366f1', fillColor: '#6366f1',
+            fillOpacity: 0.85, weight: 2
+        }).addTo(map).bindPopup('Your location');
+
+        setRec('loading', 'compass', 'Finding nearest bus stop…', 'Checking GPS');
+        fetch(CTX_DASH + '/stops/nearest?lat=' + uLat + '&lng=' + uLng)
+            .then(r => r.json()).then(stops => {
+                if (!stops.length) {
+                    setRec('out-of-range', 'exclamation-triangle-fill',
+                        'No stops nearby', 'No bus stops have been added to the system yet.');
+                    return;
+                }
+                const s = stops[0];
+                const routeNames = (s.routes && s.routes.length)
+                    ? s.routes.map(r => r.name).join(', ')
+                    : 'No routes assigned';
+                setRec('', 'geo-alt-fill',
+                    'Nearest stop: ' + s.name,
+                    s.distKm + ' km away · Routes: ' + routeNames);
+                map.setView([s.lat, s.lng], 14);
+                stops.forEach(st => {
+                    L.circleMarker([st.lat, st.lng], {
+                        radius: 10, color: '#00c853', fillColor: '#00c853',
+                        fillOpacity: 0.7, weight: 2
+                    }).addTo(map).bindPopup(
+                        '<b>' + st.name + '</b><br>' +
+                        (st.routes ? st.routes.map(r => r.name).join(', ') : '')
+                    );
+                });
+            }).catch(() => {
+                setRec('denied', 'wifi-off', 'Could not load stops',
+                    'Check your connection or try again later');
+            });
+    }
+
+    function onErr(err) {
+        const el = document.getElementById('terminal-rec');
+        if (err.code === 1) {
+            setRec('denied', 'geo-fill', 'Location access denied',
+                'Enable location permission to see your nearest bus stop');
+        } else {
+            setRec('denied', 'wifi-off', 'Location unavailable',
+                'Could not detect your position — try again later');
+        }
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(onPos, onErr, {
+            enableHighAccuracy: false, timeout: 5000, maximumAge: 300000
+        });
+    } else {
+        setRec('denied', 'geo-fill', 'Geolocation not supported',
+            'Your browser does not support location detection');
+    }
+})();
 
     function haversineKm(lat1, lng1, lat2, lng2) {
         const R = 6371;
@@ -352,15 +410,33 @@ pollNotifs();
 
 // ── Auto-refresh: swap trip cards (Live Now + Upcoming) every 10s ──
 (function() {
+    const CACHE_KEY = 'smartbus_cached_trips';
+    // Offline: show cached data banner
+    if (!navigator.onLine) {
+        try {
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+            if (cached.ts && Date.now() - cached.ts < 3600000) {
+                const whereToSpan = document.querySelector('.where-to span');
+                if (whereToSpan) whereToSpan.textContent = '⚠️ Offline — showing cached data';
+            }
+        } catch (e) {}
+    }
     const busMarkers = [];
     async function autoRefreshPassenger() {
         try {
             const res = await fetch(location.href, { credentials: 'same-origin' });
             if (!res.ok) return;
-            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
             const fresh = doc.getElementById('pass-sheet-content');
             const curr  = document.getElementById('pass-sheet-content');
             if (fresh && curr) curr.outerHTML = fresh.outerHTML;
+            // Cache trip data for offline use
+            try {
+                const liveCards  = document.querySelectorAll('[data-live-trip]');
+                const cacheData  = { ts: Date.now(), liveCount: liveCards.length };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+            } catch (ce) {}
             // refresh bus markers on map
             busMarkers.forEach(m => map.removeLayer(m));
             busMarkers.length = 0;
