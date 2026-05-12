@@ -423,7 +423,7 @@ pollNotifs();
     setInterval(autoRefreshPassenger, 10000);
 
     // ── Offline cache: save trip data to localStorage ──
-    const CACHE_KEY = 'smartbus_cached_trips';
+    const CACHE_KEY = 'commutesafe_cached_trips';
     (function initOfflineCache() {
         if (!navigator.onLine) {
             try {
