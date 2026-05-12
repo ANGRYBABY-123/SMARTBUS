@@ -51,8 +51,8 @@ hr{border-color:var(--sb-border)!important;}
 <%String _u=request.getRequestURI();
 String _ua=_u.contains("/users")?"active":"";
 String _ba=_u.contains("/buses")?"active":"";
-String _ra=_u.contains("/routes")?"active":"";
-String _ta=_u.contains("/trips")?"active":"";
+String _ra=_u.contains("/routes")&&!_u.contains("/stops")?"active":"";
+String _ta=_u.contains("/trips")&&!_u.contains("/weekly-schedule")?"active":"";
 String _sa=_u.contains("/stops")?"active":"";
 String _wa=_u.contains("/weekly-schedule")?"active":"";
 %><nav class="sb-topnav">

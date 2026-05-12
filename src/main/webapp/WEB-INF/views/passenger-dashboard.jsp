@@ -250,7 +250,7 @@ function pollNotifs() {
 setInterval(pollNotifs, 15000);
 pollNotifs();
 
-// ── Nearest terminal recommendation (real bus stops from DB) ──────────────
+// ── Nearest terminal recommendation ──────────────────────────────────
 (function () {
     function setRec(cls, icon, title, sub) {
         const el = document.getElementById('terminal-rec');
@@ -268,11 +268,12 @@ pollNotifs();
         }).addTo(map).bindPopup('Your location');
 
         setRec('loading', 'compass', 'Finding nearest bus stop…', 'Checking GPS');
+
         fetch(CTX_DASH + '/stops/nearest?lat=' + uLat + '&lng=' + uLng)
             .then(r => r.json()).then(stops => {
-                if (!stops.length) {
+                if (!stops || !stops.length) {
                     setRec('out-of-range', 'exclamation-triangle-fill',
-                        'No stops nearby', 'No bus stops have been added to the system yet.');
+                        'No stops found', 'No bus stops are registered in the system yet.');
                     return;
                 }
                 const s = stops[0];
@@ -294,98 +295,8 @@ pollNotifs();
                 });
             }).catch(() => {
                 setRec('denied', 'wifi-off', 'Could not load stops',
-                    'Check your connection or try again later');
+                    'Check your connection and try refreshing');
             });
-    }
-
-    function onErr(err) {
-        const el = document.getElementById('terminal-rec');
-        if (err.code === 1) {
-            setRec('denied', 'geo-fill', 'Location access denied',
-                'Enable location permission to see your nearest bus stop');
-        } else {
-            setRec('denied', 'wifi-off', 'Location unavailable',
-                'Could not detect your position — try again later');
-        }
-    }
-
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(onPos, onErr, {
-            enableHighAccuracy: false, timeout: 5000, maximumAge: 300000
-        });
-    } else {
-        setRec('denied', 'geo-fill', 'Geolocation not supported',
-            'Your browser does not support location detection');
-    }
-})();
-
-    function haversineKm(lat1, lng1, lat2, lng2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2)
-            + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180)
-            * Math.sin(dLng/2) * Math.sin(dLng/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function compassDir(lat1, lng1, lat2, lng2) {
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const y = Math.sin(dLng) * Math.cos(lat2 * Math.PI/180);
-        const x = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180)
-            - Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos(dLng);
-        const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        const dirs = ['N','NE','E','SE','S','SW','W','NW'];
-        return dirs[Math.round(bearing / 45) % 8];
-    }
-
-    function setRec(cls, icon, title, sub) {
-        const el = document.getElementById('terminal-rec');
-        el.className = cls;
-        el.querySelector('.trec-icon').innerHTML = '<i class="bi bi-' + icon + '"></i>';
-        document.getElementById('trec-title').textContent = title;
-        document.getElementById('trec-sub').textContent   = sub;
-    }
-
-    function onPos(pos) {
-        const uLat = pos.coords.latitude, uLng = pos.coords.longitude;
-
-        // Add a small user location dot to the map
-        L.circleMarker([uLat, uLng], {
-            radius: 8, color: '#6366f1', fillColor: '#6366f1',
-            fillOpacity: 0.85, weight: 2
-        }).addTo(map).bindPopup('Your location');
-
-        // Find nearest campus
-        let nearest = null, minDist = Infinity;
-        CAMPUSES.forEach(c => {
-            const d = haversineKm(uLat, uLng, c.lat, c.lng);
-            if (d < minDist) { minDist = d; nearest = c; }
-        });
-
-        if (minDist > MAX_KM) {
-            setRec(
-                'out-of-range',
-                'exclamation-triangle-fill',
-                'Out of service area',
-                'You are ' + minDist.toFixed(0) + ' km from the nearest TUT campus (' + nearest.name + '). SmartBus only serves within 100 km.'
-            );
-        } else {
-            const dir = compassDir(uLat, uLng, nearest.lat, nearest.lng);
-            const distTxt = minDist < 0.1 ? minDist.toFixed(3) + ' km' : minDist.toFixed(2) + ' km';
-            setRec(
-                '',
-                'geo-alt-fill',
-                'Nearest terminal: ' + nearest.name,
-                distTxt + ' away · head ' + dir + ' · Board here for your route'
-            );
-            // Pan map to show user + campus
-            map.fitBounds([[uLat, uLng], [nearest.lat, nearest.lng]], { padding: [60, 60] });
-            L.circleMarker([nearest.lat, nearest.lng], {
-                radius: 10, color: '#00c853', fillColor: '#00c853',
-                fillOpacity: 0.7, weight: 2
-            }).addTo(map).bindPopup('<b>' + nearest.name + '</b><br>Your recommended terminal').openPopup();
-        }
     }
 
     function onErr(err) {
@@ -406,37 +317,20 @@ pollNotifs();
         setRec('denied', 'geo-fill', 'Geolocation not supported',
             'Your browser does not support location detection');
     }
+})()
 })();
 
 // ── Auto-refresh: swap trip cards (Live Now + Upcoming) every 10s ──
 (function() {
-    const CACHE_KEY = 'smartbus_cached_trips';
-    // Offline: show cached data banner
-    if (!navigator.onLine) {
-        try {
-            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-            if (cached.ts && Date.now() - cached.ts < 3600000) {
-                const whereToSpan = document.querySelector('.where-to span');
-                if (whereToSpan) whereToSpan.textContent = '⚠️ Offline — showing cached data';
-            }
-        } catch (e) {}
-    }
     const busMarkers = [];
     async function autoRefreshPassenger() {
         try {
             const res = await fetch(location.href, { credentials: 'same-origin' });
             if (!res.ok) return;
-            const html = await res.text();
-            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
             const fresh = doc.getElementById('pass-sheet-content');
             const curr  = document.getElementById('pass-sheet-content');
             if (fresh && curr) curr.outerHTML = fresh.outerHTML;
-            // Cache trip data for offline use
-            try {
-                const liveCards  = document.querySelectorAll('[data-live-trip]');
-                const cacheData  = { ts: Date.now(), liveCount: liveCards.length };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-            } catch (ce) {}
             // refresh bus markers on map
             busMarkers.forEach(m => map.removeLayer(m));
             busMarkers.length = 0;
@@ -455,6 +349,32 @@ pollNotifs();
         } catch (e) { /* silent */ }
     }
     setInterval(autoRefreshPassenger, 10000);
+
+    // ── Offline cache: save trip data to localStorage ──
+    const CACHE_KEY = 'smartbus_cached_trips';
+    (function initOfflineCache() {
+        if (!navigator.onLine) {
+            try {
+                const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+                if (cached.ts && (Date.now() - cached.ts) < 3600000) {
+                    const banner = document.createElement('div');
+                    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#f59e0b;color:#000;text-align:center;padding:8px;font-size:.82rem;font-weight:700';
+                    banner.textContent = '\u26a1 Offline \u2014 showing cached data from ' + new Date(cached.ts).toLocaleTimeString();
+                    document.body.prepend(banner);
+                }
+            } catch(e) {}
+        } else {
+            // Save current trip data to cache
+            try {
+                const liveCards = document.querySelectorAll('[data-live-trip]');
+                const liveIds = Array.from(liveCards).map(el => ({
+                    tripId: el.getAttribute('data-live-trip'),
+                    name:   el.getAttribute('data-trip-name') || ''
+                }));
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), live: liveIds }));
+            } catch(e) {}
+        }
+    })();
 })();
 </script>
 </body>

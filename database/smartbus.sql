@@ -73,29 +73,7 @@ CREATE TABLE IF NOT EXISTS routes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
--- 6. bus_stops  (GPS-coordinates for physical boarding stops)
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bus_stops (
-    stop_id   BIGINT       NOT NULL AUTO_INCREMENT,
-    stop_name VARCHAR(150) NOT NULL,
-    latitude  DOUBLE,
-    longitude DOUBLE,
-    CONSTRAINT pk_bus_stops PRIMARY KEY (stop_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
--- 6a. stop_routes  (many-to-many: bus_stops <-> routes)
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS stop_routes (
-    stop_id  BIGINT NOT NULL,
-    route_id BIGINT NOT NULL,
-    CONSTRAINT pk_stop_routes PRIMARY KEY (stop_id, route_id),
-    CONSTRAINT fk_sr_stop  FOREIGN KEY (stop_id)  REFERENCES bus_stops(stop_id) ON DELETE CASCADE,
-    CONSTRAINT fk_sr_route FOREIGN KEY (route_id) REFERENCES routes(route_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
--- 7. trips
+-- 6. trips
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS trips (
     trip_id    BIGINT      NOT NULL AUTO_INCREMENT,
@@ -193,6 +171,22 @@ CREATE TABLE IF NOT EXISTS driver_schedules (
     CONSTRAINT fk_ds_driver FOREIGN KEY (driver_id) REFERENCES drivers(driver_id),
     CONSTRAINT fk_ds_bus    FOREIGN KEY (bus_id)    REFERENCES buses(bus_id),
     CONSTRAINT fk_ds_route  FOREIGN KEY (route_id)  REFERENCES routes(route_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS bus_stops (
+    stop_id   BIGINT       NOT NULL AUTO_INCREMENT,
+    stop_name VARCHAR(150) NOT NULL,
+    latitude  DOUBLE,
+    longitude DOUBLE,
+    CONSTRAINT pk_bus_stops PRIMARY KEY (stop_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS stop_routes (
+    stop_id  BIGINT NOT NULL,
+    route_id BIGINT NOT NULL,
+    CONSTRAINT pk_stop_routes PRIMARY KEY (stop_id, route_id),
+    CONSTRAINT fk_sr_stop  FOREIGN KEY (stop_id)  REFERENCES bus_stops(stop_id) ON DELETE CASCADE,
+    CONSTRAINT fk_sr_route FOREIGN KEY (route_id) REFERENCES routes(route_id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================

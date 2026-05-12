@@ -153,17 +153,16 @@
 <div id="delay-banner">
   <strong>⚠️ Delay Reported</strong>
   <div id="delay-msg-text">The driver has reported a delay on this route.</div>
-  <button onclick="document.getElementById('delay-banner').classList.remove('visible');document.getElementById('alt-panel').style.display='none'"
+  <button onclick="document.getElementById('delay-banner').classList.remove('visible');document.getElementById('alt-panel').style.display='none';"
     style="float:right;background:none;border:none;cursor:pointer;margin-top:-20px;color:#7d5a00;font-size:1rem">✕</button>
 </div>
-<!-- Alternative buses panel (shown on delay) -->
-<div id="alt-panel" style="display:none;position:fixed;top:120px;left:12px;right:12px;z-index:450;
+<!-- Alternative buses panel -->
+<div id="alt-panel" style="display:none;position:fixed;top:130px;left:12px;right:12px;z-index:450;
      background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);padding:16px;max-height:260px;overflow-y:auto;">
-  <div style="font-weight:700;font-size:.9rem;margin-bottom:12px;color:#111;display:flex;align-items:center;justify-content:space-between;">
-    <span><i class="bi bi-arrow-left-right me-1" style="color:#3b82f6"></i> Alternative Buses</span>
-    <button onclick="document.getElementById('alt-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:#888;font-size:1rem;">✕</button>
+  <div style="font-weight:700;font-size:.9rem;margin-bottom:12px;color:#111">
+    <i class="bi bi-arrow-left-right me-1" style="color:#3b82f6"></i> Alternative Buses
   </div>
-  <div id="alt-list"><div style="color:#aaa;font-size:.82rem;text-align:center;padding:10px 0;">Loading alternatives…</div></div>
+  <div id="alt-list"></div>
 </div>
 <!-- AI Chat floating button -->
 <button id="ai-fab" onclick="toggleAiPanel()" title="Ask AI assistant"><i class="bi bi-stars"></i></button>
@@ -373,30 +372,25 @@ var altsFetched=false;
 function fetchAlternatives() {
   if (altsFetched) return;
   altsFetched=true;
-  fetch(CTX+'/trips/alternatives?tripId='+TRIP_ID)
-    .then(r=>r.json()).then(alts=>{
-      const list=document.getElementById('alt-list');
-      if (!alts.length) {
-        list.innerHTML='<div style="color:#aaa;font-size:.82rem;text-align:center;padding:8px 0;">No alternative trips available right now.</div>';
-        document.getElementById('alt-panel').style.display='block';
-        return;
-      }
-      list.innerHTML=alts.map(t=>{
-        const isLive=t.status==='IN_PROGRESS';
-        const badge=isLive
-          ?'<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">LIVE</span>'
-          :'<span style="background:#ede9fe;color:#7c3aed;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">'+t.startTime+'</span>';
-        const link=isLive
-          ?'<a href="'+CTX+'/tracking/view?tripId='+t.tripId+'" style="background:#1a1a1a;color:#fff;border-radius:10px;padding:6px 13px;font-size:.78rem;font-weight:700;text-decoration:none">Track</a>'
-          :'<span style="background:#e5e7eb;color:#9ca3af;border-radius:10px;padding:6px 13px;font-size:.78rem;font-weight:700">Soon</span>';
-        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;">'
-          +'<div style="flex:1"><div style="font-weight:700;font-size:.88rem;color:#111">'+t.route+'</div>'
-          +'<div style="font-size:.75rem;color:#666;margin-top:1px">'+t.from+' → '+t.to+'</div>'
-          +'<div style="font-size:.72rem;color:#aaa;margin-top:2px">'+t.driver+' · '+t.bus+'</div></div>'
-          +badge+' '+link+'</div>';
-      }).join('');
-      document.getElementById('alt-panel').style.display='block';
-    }).catch(()=>{ altsFetched=false; });
+  fetch(CTX+'/trips/alternatives?tripId='+TRIP_ID).then(r=>r.json()).then(alts=>{
+    if (!alts||!alts.length) return;
+    const list=document.getElementById('alt-list');
+    list.innerHTML=alts.map(t=>{
+      const isLive=t.status==='IN_PROGRESS';
+      const badge=isLive
+        ?'<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">LIVE</span>'
+        :'<span style="background:#ede9fe;color:#7c3aed;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">'+t.startTime+'</span>';
+      const link=isLive
+        ?'<a href="'+CTX+'/tracking/view?tripId='+t.tripId+'" style="background:#1a1a1a;color:#fff;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700;text-decoration:none;white-space:nowrap">Track</a>'
+        :'<span style="background:#e5e7eb;color:#9ca3af;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700">Soon</span>';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:.88rem">'+t.route+'</div>'
+        +'<div style="font-size:.75rem;color:#888">'+t.from+' → '+t.to+'</div>'
+        +'<div style="font-size:.75rem;color:#aaa;margin-top:2px">'+t.driver+' · '+t.bus+'</div></div>'
+        +badge+' '+link+'</div>';
+    }).join('');
+    document.getElementById('alt-panel').style.display='block';
+  }).catch(()=>{});
 }
 
 window.addEventListener('load', initMap);
