@@ -27,6 +27,13 @@
             text-decoration: none; transition: background .2s;
         }
         .nav-cta:hover { background: #00a846; color: #000; }
+        .nav-links { display: flex; align-items: center; gap: 4px; }
+        .nav-link-item {
+            color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem;
+            font-weight: 600; padding: 7px 14px; border-radius: 8px; transition: all .2s;
+        }
+        .nav-link-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        @media (max-width: 640px) { .nav-links { display: none; } }
 
         /* HERO */
         .hero {
@@ -65,6 +72,19 @@
         .section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #3b82f6; margin-bottom: 10px; }
         .section-title { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 900; line-height: 1.15; }
         .section-sub { font-size: 1rem; color: #64748b; margin-top: 14px; max-width: 560px; }
+
+        /* ABOUT */
+        .about-section { background: #fff; padding: 90px 24px; }
+        .about-section .section-label { color: #3b82f6; }
+        .about-card {
+            background: #f8fafc; border-radius: 20px; border: 1.5px solid #e2e8f0;
+            padding: 48px 44px; max-width: 860px; margin: 0 auto;
+        }
+        .about-card p {
+            font-size: 1.02rem; color: #374151; line-height: 1.85;
+            margin-bottom: 20px;
+        }
+        .about-card p:last-child { margin-bottom: 0; }
 
         /* PROBLEM */
         .problem-bg { background: #f8fafc; }
@@ -133,6 +153,13 @@
 <!-- NAV -->
 <nav class="top-nav">
     <a href="${pageContext.request.contextPath}/" class="nav-brand">Smart<span>Bus</span></a>
+    <div class="nav-links">
+        <a href="#about" class="nav-link-item">About</a>
+        <a href="#problem" class="nav-link-item">Problem</a>
+        <a href="#solution" class="nav-link-item">Solution</a>
+        <a href="#features" class="nav-link-item">Features</a>
+        <a href="#impact" class="nav-link-item">Impact</a>
+    </div>
     <a href="${pageContext.request.contextPath}/users/login" class="nav-cta">Sign In</a>
 </nav>
 
@@ -146,7 +173,24 @@
             <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-primary">
                 <i class="bi bi-arrow-right-circle me-2"></i>Get Started
             </a>
-            <a href="#problem" class="btn-hero-outline">Learn More</a>
+            <a href="#about" class="btn-hero-outline">Learn More</a>
+        </div>
+    </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">System Proposal</div>
+            <h2 class="section-title">About BusTrack</h2>
+            <p class="section-sub mx-auto">Understanding the problem we set out to solve.</p>
+        </div>
+        <div class="about-card">
+            <p>BusTrack is a proposed smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
+            <p>The purpose of the BusTrack system is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services — giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
+            <p>BusTrack is intended to be affordable and accessible for low-income commuters, built to run on entry-level smartphones with minimal data usage, so that the cost of the app is never a barrier to a better commuting experience.</p>
+            <p>The expected impact of the system includes reduced waiting times, lower transport expenses, improved commuter safety, reduced stress, and better overall trip planning for the millions of people who rely on public buses every single day.</p>
         </div>
     </div>
 </section>
@@ -388,9 +432,18 @@
 
 <!-- FOOTER -->
 <footer class="site-footer">
-    <div class="brand">Smart<span>Bus</span></div>
-    <div>Know where your bus is. Get to work on time.</div>
-    <div>&copy; 2026 SmartBus. All rights reserved.</div>
+    <div>
+        <div class="brand" style="font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:4px;">Smart<span style="color:#00c853;">Bus</span></div>
+        <div style="font-size:0.78rem;">Real-time bus tracking for daily commuters.</div>
+    </div>
+    <div style="display:flex;gap:24px;font-size:0.82rem;">
+        <a href="#about" style="color:#475569;text-decoration:none;">About</a>
+        <a href="#problem" style="color:#475569;text-decoration:none;">Problem</a>
+        <a href="#features" style="color:#475569;text-decoration:none;">Features</a>
+        <a href="#impact" style="color:#475569;text-decoration:none;">Impact</a>
+        <a href="${pageContext.request.contextPath}/users/login" style="color:#00c853;text-decoration:none;font-weight:700;">Sign In</a>
+    </div>
+    <div style="font-size:0.78rem;">&copy; 2026 SmartBus. All rights reserved.</div>
 </footer>
 
 </body>
