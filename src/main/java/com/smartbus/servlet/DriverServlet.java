@@ -55,18 +55,13 @@ public class DriverServlet extends HttpServlet {
         User user = (User) req.getSession().getAttribute("loggedUser");
         LocalDate today = LocalDate.now();
 
-        // Only today's trips for this driver
-        List<Trip> trips = tripDAO.findByDriverAndDate(user.getUserId(), today);
-
-        // Today's schedule entry (from the weekly schedule the admin published)
+        // This week's trips for this driver (Mon–Sun)
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);
-        List<DriverSchedule> todaySchedule = dsDAO.findByDriverAndWeek(user.getUserId(), weekStart);
-
+        List<Trip> trips = tripDAO.findByDriverAndWeek(user.getUserId(), weekStart);
         // Unread SCHEDULE notifications for this driver
         List<Notification> scheduleNotifs = notifDAO.findScheduleNotificationsByUser(user.getUserId());
 
         req.setAttribute("trips",          trips);
-        req.setAttribute("todaySchedule",  todaySchedule);
         req.setAttribute("today",          today);
         req.setAttribute("scheduleNotifs", scheduleNotifs);
         req.getRequestDispatcher("/WEB-INF/views/driver-dashboard.jsp").forward(req, resp);

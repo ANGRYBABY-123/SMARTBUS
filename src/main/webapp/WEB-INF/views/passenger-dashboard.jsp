@@ -33,12 +33,13 @@
         .notif-time { font-size: .7rem; color: #aaa; margin-top: 3px; }
         .notif-empty { padding: 24px; text-align: center; color: #bbb; font-size: .85rem; }
 
-        /* Bottom sheet — starts partial so map is visible, expands/collapses on tap */
+        /* Bottom sheet — starts partial so map is visible, expands/collapses on drag/tap */
         .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,.16); height: 42vh; overflow-y: auto; transition: height .35s cubic-bezier(.32,.72,0,1); }
         .bottom-sheet.expanded { height: 78vh; }
         .bottom-sheet.collapsed { height: 52px; overflow: hidden; }
-        .sheet-handle { display: flex; justify-content: center; padding: 14px 0 6px; cursor: grab; flex-shrink: 0; }
-        .sheet-handle::after { content: ""; width: 40px; height: 4px; background: #e0e0e0; border-radius: 4px; }
+        .sheet-handle { display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px; gap: 5px; cursor: grab; flex-shrink: 0; touch-action: none; }
+        .sheet-bar { width: 40px; height: 4px; background: #e0e0e0; border-radius: 4px; }
+        .sheet-hint { font-size: .6rem; color: #bbb; font-weight: 600; letter-spacing: .5px; }
         .sheet-content { padding: 0 18px 32px; }
 
         /* Section */
@@ -117,8 +118,9 @@
 
 <!-- Bottom sheet -->
 <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle" onclick="toggleSheet()" title="Tap to expand or collapse">
-        <span id="sheet-hint" style="position:absolute;font-size:.62rem;color:#bbb;margin-top:20px;font-weight:600;letter-spacing:.5px">SWIPE UP FOR MORE</span>
+    <div class="sheet-handle" id="pass-handle">
+        <div class="sheet-bar"></div>
+        <span id="sheet-hint" class="sheet-hint">DRAG UP FOR MORE</span>
     </div>
     <div class="sheet-content" id="pass-sheet-content">
         <!-- Greeting -->
@@ -253,23 +255,62 @@ liveTrips.forEach(t => {
 });
 
 // -- SHEET --
-function toggleSheet() {
+function applyPassState(state) {
     const sheet = document.getElementById('bottom-sheet');
     const hint  = document.getElementById('sheet-hint');
-    if (sheetState === 'partial') {
-        sheetState = 'expanded';
+    sheetState = state;
+    sheet.style.transition = '';
+    if (state === 'expanded') {
         sheet.classList.add('expanded'); sheet.classList.remove('collapsed');
-        hint.textContent = 'SWIPE DOWN TO SEE MAP';
-    } else if (sheetState === 'expanded') {
-        sheetState = 'collapsed';
+        hint.textContent = 'DRAG DOWN TO SEE MAP';
+    } else if (state === 'collapsed') {
         sheet.classList.add('collapsed'); sheet.classList.remove('expanded');
-        hint.textContent = 'SWIPE UP FOR TRIPS';
+        hint.textContent = 'DRAG UP FOR TRIPS';
     } else {
-        sheetState = 'partial';
         sheet.classList.remove('collapsed', 'expanded');
-        hint.textContent = 'SWIPE UP FOR MORE';
+        hint.textContent = 'DRAG UP FOR MORE';
     }
 }
+function toggleSheet() {
+    if (sheetState === 'partial') applyPassState('expanded');
+    else if (sheetState === 'expanded') applyPassState('collapsed');
+    else applyPassState('partial');
+}
+(function() {
+    const handle = document.getElementById('pass-handle');
+    const sheet  = document.getElementById('bottom-sheet');
+    let startY = 0, startH = 0, dragging = false;
+    function onStart(e) {
+        dragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        startH = sheet.getBoundingClientRect().height;
+        sheet.style.transition = 'none';
+    }
+    function onMove(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        const newH = Math.max(52, Math.min(window.innerHeight * 0.85, startH + (startY - y)));
+        sheet.style.height = newH + 'px';
+    }
+    function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        const h = sheet.getBoundingClientRect().height;
+        const vh = window.innerHeight;
+        if (h < vh * 0.2)        applyPassState('collapsed');
+        else if (h > vh * 0.55)  applyPassState('expanded');
+        else                      applyPassState('partial');
+        sheet.style.height = '';
+    }
+    handle.addEventListener('touchstart', onStart, { passive: true });
+    handle.addEventListener('touchmove',  onMove,  { passive: false });
+    handle.addEventListener('touchend',   onEnd);
+    handle.addEventListener('mousedown',  onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onEnd);
+    handle.addEventListener('click', toggleSheet);
+})();
 
 // -- NOTIFICATIONS --
 function toggleNotif() {

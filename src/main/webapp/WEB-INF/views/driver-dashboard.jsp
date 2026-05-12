@@ -22,9 +22,11 @@
         @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,200,83,.5)} 50%{box-shadow:0 0 0 7px rgba(0,200,83,0)} }
         .logout-btn { width: 44px; height: 44px; background: #fff; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #555; cursor: pointer; box-shadow: 0 2px 14px rgba(0,0,0,0.22); text-decoration: none; transition: background .2s; }
         .logout-btn:hover { background: #fff1f2; color: #dc2626; }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,0.18); transition: transform .35s cubic-bezier(.32,.72,0,1); max-height: 78vh; overflow-y: auto; }
-        .sheet-handle { display: flex; justify-content: center; padding: 14px 0 6px; cursor: grab; }
-        .sheet-handle::after { content: ""; width: 40px; height: 4px; background: #e0e0e0; border-radius: 4px; }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,0.18); height: 58vh; overflow-y: auto; transition: height .35s cubic-bezier(.32,.72,0,1); }
+        .bottom-sheet.collapsed { height: 52px; overflow: hidden; }
+        .sheet-handle { display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px; gap: 5px; cursor: grab; touch-action: none; }
+        .sheet-bar { width: 40px; height: 4px; background: #4b5563; border-radius: 4px; }
+        .sheet-hint { font-size: .6rem; color: #475569; font-weight: 700; letter-spacing: .5px; }
         .sheet-content { padding: 4px 18px 32px; }
         .stats-bar { display: flex; gap: 10px; margin-bottom: 18px; }
         .stat-chip { flex: 1; background: #f7f8fa; border-radius: 14px; padding: 12px 8px; text-align: center; }
@@ -133,8 +135,9 @@
 </c:if>
 
 <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle" onclick="toggleSheet()" title="Tap to expand or collapse">
-        <span style="position:absolute;font-size:.6rem;color:#475569;margin-top:20px;font-weight:700;letter-spacing:.5px">SWIPE UP FOR DETAILS</span>
+    <div class="sheet-handle" id="drv-handle">
+        <div class="sheet-bar"></div>
+        <span id="drv-hint" class="sheet-hint">DRAG TO RESIZE</span>
     </div>
     <div class="sheet-content" id="dd-sheet-content">
         <c:set var="active" value="0"/>
@@ -145,40 +148,13 @@
             <c:if test="${t.status == 'IN_PROGRESS'}"><c:set var="active" value="${active + 1}"/></c:if>
             <c:if test="${t.status == 'COMPLETED'}"><c:set var="done" value="${done + 1}"/></c:if>
         </c:forEach>
-        <%-- Today's assigned shift from the weekly schedule --%>
-        <c:choose>
-            <c:when test="${not empty todaySchedule}">
-                <c:forEach var="ds" items="${todaySchedule}">
-                <div style="background:#0f172a;border:1.5px solid #1e3a5f;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
-                    <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:1px;color:#475569;font-weight:700;margin-bottom:8px;">
-                        <i class="bi bi-calendar-day" style="color:#3b82f6"></i>&nbsp;Today's Shift
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <span class="shift-pill shift-${ds.shiftType}">${ds.shiftType}</span>
-                        <span style="color:#e2e8f0;font-weight:700;font-size:.9rem;">${ds.route.routeName}</span>
-                    </div>
-                    <div style="margin-top:8px;font-size:.78rem;color:#64748b;display:flex;flex-wrap:wrap;gap:12px;">
-                        <span><i class="bi bi-clock"></i> ${ds.shiftStart} &ndash; ${ds.shiftEnd}</span>
-                        <span><i class="bi bi-bus-front-fill"></i> ${ds.bus.registrationNumber}</span>
-                        <span><i class="bi bi-geo-alt"></i> ${ds.route.startLocation} &rarr; ${ds.route.endLocation}</span>
-                    </div>
-                </div>
-                </c:forEach>
-            </c:when>
-            <c:otherwise>
-                <div style="background:#1e1a07;border:1.5px solid #713f12;border-radius:14px;padding:11px 14px;margin-bottom:14px;font-size:.8rem;color:#fbbf24;">
-                    <i class="bi bi-calendar-x"></i>&nbsp;No schedule published for this week yet. Check back after Sunday.
-                </div>
-            </c:otherwise>
-        </c:choose>
-
         <div class="stats-bar">
             <div class="stat-chip"><div class="stat-num green">${active}</div><div class="stat-lbl">On the Road</div></div>
             <div class="stat-chip"><div class="stat-num purple">${total - active - done}</div><div class="stat-lbl">Coming Up</div></div>
             <div class="stat-chip"><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
         </div>
 
-        <div class="section-lbl">Your Trips Today</div>
+        <div class="section-lbl">Your Trips This Week</div>
         <c:choose>
             <c:when test="${not empty trips}">
                 <c:forEach var="t" items="${trips}">
@@ -199,8 +175,13 @@
                                 <div class="card-sub">
                                     Bus: ${t.bus.registrationNumber}
                                     &nbsp;&middot;&nbsp; Trip #${t.tripId}
-                                    <c:if test="${t.startTime != null}">&nbsp;&middot;&nbsp;<i class="bi bi-clock"></i> Departs at ${t.startTime}</c:if>
                                 </div>
+                                <c:if test="${t.startTime != null}">
+                                <div class="card-sub" style="margin-top:2px;font-weight:600;color:#60a5fa">
+                                    <i class="bi bi-calendar3"></i>
+                                    <time class="fmt-dt" data-dt="${t.startTime}"></time>
+                                </div>
+                                </c:if>
                             </div>
                             <c:choose>
                                 <c:when test="${t.status == 'IN_PROGRESS'}"><span class="card-badge live"><i class="bi bi-broadcast-pin"></i> On the road</span></c:when>
@@ -232,8 +213,8 @@
             <c:otherwise>
                 <div class="empty-state">
                     <i class="bi bi-bus-front"></i><br>
-                    <b>No trips assigned for today.</b><br>
-                    <span style="font-size:.78rem;color:#64748b">Your supervisor will post the schedule before your shift starts.</span>
+                    <b>No trips assigned for this week.</b><br>
+                    <span style="font-size:.78rem;color:#64748b">Your supervisor will publish the schedule before the week starts.</span>
                 </div>
             </c:otherwise>
         </c:choose>
@@ -260,6 +241,16 @@
 <script>
 const DD_CTX = '${pageContext.request.contextPath}';
 let ddTripId = null, ddReason = '', sheetCollapsed = false;
+const DD_SHEET = () => document.getElementById('bottom-sheet');
+
+// Format ISO datetimes in trip cards (e.g. "2026-05-12T12:01" → "Tue 12 May at 12:01")
+document.querySelectorAll('time.fmt-dt').forEach(el => {
+    const raw = el.dataset.dt; // "2026-05-12T12:01:00" or "2026-05-12T12:01"
+    if (!raw) return;
+    const d = new Date(raw.replace('T', ' ')); // Safari-safe parse
+    if (isNaN(d)) { el.textContent = raw; return; }
+    el.textContent = d.toLocaleString('en-ZA', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false });
+});
 
 // -- MAP --
 const map = L.map('map', { zoomControl: false, attributionControl: false });
@@ -286,8 +277,47 @@ liveTrips.forEach(t => {
 // -- SHEET --
 function toggleSheet() {
     sheetCollapsed = !sheetCollapsed;
-    document.getElementById('bottom-sheet').style.transform = sheetCollapsed ? 'translateY(calc(100% - 68px))' : '';
+    const sheet = DD_SHEET();
+    const hint  = document.getElementById('drv-hint');
+    sheet.style.transition = '';
+    if (sheetCollapsed) { sheet.classList.add('collapsed');    hint.textContent = 'DRAG UP FOR DETAILS'; }
+    else                { sheet.classList.remove('collapsed'); hint.textContent = 'DRAG TO RESIZE'; }
 }
+(function() {
+    const handle = document.getElementById('drv-handle');
+    const sheet  = DD_SHEET();
+    let startY = 0, startH = 0, dragging = false;
+    function onStart(e) {
+        dragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        startH = sheet.getBoundingClientRect().height;
+        sheet.style.transition = 'none';
+    }
+    function onMove(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        const newH = Math.max(52, Math.min(window.innerHeight * 0.88, startH + (startY - y)));
+        sheet.style.height = newH + 'px';
+    }
+    function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        const h = sheet.getBoundingClientRect().height;
+        const vh = window.innerHeight;
+        sheet.style.height = '';
+        sheet.style.transition = '';
+        if (h < vh * 0.2) { sheetCollapsed = true;  sheet.classList.add('collapsed');    document.getElementById('drv-hint').textContent = 'DRAG UP FOR DETAILS'; }
+        else               { sheetCollapsed = false; sheet.classList.remove('collapsed'); document.getElementById('drv-hint').textContent = 'DRAG TO RESIZE'; }
+    }
+    handle.addEventListener('touchstart', onStart, { passive: true });
+    handle.addEventListener('touchmove',  onMove,  { passive: false });
+    handle.addEventListener('touchend',   onEnd);
+    handle.addEventListener('mousedown',  onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onEnd);
+    handle.addEventListener('click', toggleSheet);
+})();
 
 // -- DELAY MODAL --
 function openDelayModal(tripId) {
