@@ -39,12 +39,6 @@
         .sheet-handle::after { content: ""; width: 40px; height: 4px; background: #e0e0e0; border-radius: 4px; }
         .sheet-content { padding: 0 18px 32px; }
 
-        /* Where to bar */
-        .where-to { display: flex; align-items: center; gap: 12px; background: #f7f8fa; border-radius: 16px; padding: 14px 16px; margin-bottom: 20px; cursor: pointer; transition: background .15s; }
-        .where-to:hover { background: #eef0f3; }
-        .where-to i { font-size: 1.1rem; color: #aaa; }
-        .where-to span { font-size: .95rem; color: #aaa; font-weight: 500; }
-
         /* Section */
         .section-lbl { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.2px; color: #aaa; margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
         .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #00c853; animation: pulse 1.4s infinite; }
@@ -141,16 +135,7 @@
                 <div id="trec-sub">Allow location access when asked</div>
             </div>
         </div>
-        <!-- Route search / filter -->
-        <div class="where-to" onclick="toggleRouteFilter()" title="Search routes">
-            <i class="bi bi-search"></i>
-            <span id="where-label">Search routes or destinations…</span>
-        </div>
-        <div id="route-filter-box" style="display:none;margin:-12px 0 16px">
-            <input id="route-search" type="text" placeholder="e.g. Soshanguve, Pretoria CBD…"
-                   style="width:100%;border-radius:12px;border:1.5px solid #e0e0e0;padding:11px 14px;font-size:.9rem;outline:none"
-                   oninput="filterTrips(this.value)" autofocus>
-        </div>
+
 
         <!-- Live Now -->
         <div class="section-lbl"><span class="live-dot"></span> Buses Running Now</div>
@@ -237,23 +222,6 @@ function updateLastRefreshLabel() {
     el.textContent = secs < 10 ? 'Updated just now' : 'Updated ' + secs + 's ago';
 }
 setInterval(updateLastRefreshLabel, 5000);
-
-// -- ROUTE SEARCH FILTER --
-let filterOpen = false;
-function toggleRouteFilter() {
-    filterOpen = !filterOpen;
-    document.getElementById('route-filter-box').style.display = filterOpen ? 'block' : 'none';
-    document.getElementById('where-label').textContent = filterOpen ? 'Tap here to close search' : 'Search routes or destinations\u2026';
-    if (filterOpen) document.getElementById('route-search').focus();
-    else { document.getElementById('route-search').value = ''; filterTrips(''); }
-}
-function filterTrips(q) {
-    q = q.toLowerCase().trim();
-    document.querySelectorAll('.trip-card').forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = (!q || text.includes(q)) ? '' : 'none';
-    });
-}
 
 // -- MAP --
 const map = L.map('map', { zoomControl: false, attributionControl: false });

@@ -19,9 +19,7 @@
                      text-decoration:none; transition:all .15s; display:inline-block; }
         .week-pill:hover,.week-pill.active { background:rgba(59,130,246,.18); color:#93c5fd;
                                              border-color:#3b82f6; }
-        .tut-banner { background: linear-gradient(135deg,#0f2a4a,#0d1f3c);
-                      border:1px solid #1e3a5f; border-radius:10px; padding:1rem 1.25rem;
-                      margin-bottom:1.5rem; }
+
     </style>
 </head>
 <body>
@@ -73,40 +71,6 @@
                    value="${weekStart}">
             <button class="btn btn-sm btn-outline-secondary" type="submit">Go</button>
         </form>
-    </div>
-
-    <%-- TUT template banner (reference card) --%>
-    <div class="tut-banner">
-        <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#60a5fa;margin-bottom:.5rem">
-            <i class="bi bi-info-circle me-1"></i>Triponza / TUT Schedule Template (Mon–Fri)
-        </div>
-        <div style="overflow-x:auto">
-        <table style="width:100%;font-size:.72rem;border-collapse:collapse;color:#cbd5e1">
-            <thead>
-                <tr style="color:#64748b">
-                    <th style="padding:.3rem .6rem">Route</th>
-                    <th style="padding:.3rem .6rem">Departure Point</th>
-                    <th style="padding:.3rem .6rem">Destination</th>
-                    <th style="padding:.3rem .6rem">Depart</th>
-                    <th style="padding:.3rem .6rem">Arrive</th>
-                    <th style="padding:.3rem .6rem">Shift</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td style="padding:.25rem .6rem">Route 1</td><td>Soshanguve North Campus</td><td>Pretoria Campus</td><td style="color:#34d399">05:30</td><td style="color:#f87171">06:45</td><td><span style="color:#34d399">Morning</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 2</td><td>Soshanguve South Campus</td><td>Pretoria Campus</td><td style="color:#34d399">06:00</td><td style="color:#f87171">07:15</td><td><span style="color:#34d399">Morning</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 3</td><td>Soshanguve North Campus</td><td>Arcadia Campus</td><td style="color:#34d399">06:30</td><td style="color:#f87171">07:40</td><td><span style="color:#34d399">Morning</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 4</td><td>Ga-Rankuwa Campus</td><td>Pretoria Campus</td><td style="color:#34d399">05:45</td><td style="color:#f87171">07:00</td><td><span style="color:#34d399">Morning</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 5</td><td>Ga-Rankuwa Campus</td><td>Arcadia Campus</td><td style="color:#34d399">06:15</td><td style="color:#f87171">07:25</td><td><span style="color:#34d399">Morning</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 6–9</td><td>Arcadia / Pretoria</td><td>Pretoria / Arcadia</td><td style="color:#34d399">06:30–07:20</td><td style="color:#f87171">–</td><td><span style="color:#60a5fa">Shuttle</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 10</td><td>Pretoria Campus</td><td>Soshanguve North</td><td style="color:#fbbf24">13:00</td><td style="color:#f87171">14:15</td><td><span style="color:#fbbf24">Afternoon</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 11</td><td>Pretoria Campus</td><td>Soshanguve South</td><td style="color:#fbbf24">14:00</td><td style="color:#f87171">15:15</td><td><span style="color:#fbbf24">Afternoon</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 12</td><td>Arcadia Campus</td><td>Soshanguve North</td><td style="color:#fbbf24">15:00</td><td style="color:#f87171">16:10</td><td><span style="color:#fbbf24">Afternoon</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 13</td><td>Pretoria Campus</td><td>Ga-Rankuwa Campus</td><td style="color:#fbbf24">15:30</td><td style="color:#f87171">16:45</td><td><span style="color:#fbbf24">Afternoon</span></td></tr>
-                <tr><td style="padding:.25rem .6rem">Route 14</td><td>Arcadia Campus</td><td>Ga-Rankuwa Campus</td><td style="color:#fbbf24">16:00</td><td style="color:#f87171">17:15</td><td><span style="color:#fbbf24">Afternoon</span></td></tr>
-            </tbody>
-        </table>
-        </div>
     </div>
 
     <%-- Schedule entries table --%>

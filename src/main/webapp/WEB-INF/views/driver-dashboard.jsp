@@ -52,7 +52,9 @@
         .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-action { flex: 1; min-width: 110px; padding: 11px 12px; border-radius: 12px; font-size: .85rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: all .15s; }
         .btn-go { background: #1a1a1a; color: #fff; }
-        .btn-go:hover { background: #00c853; color: #000; }
+        .btn-go:hover:not(:disabled) { background: #00c853; color: #000; }
+        .btn-go:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; border: 1.5px solid #e2e8f0; }
+        .btn-go.window-passed:disabled { background: #fff1f2; color: #dc2626; border-color: #fecaca; }
         .btn-map { background: #f0fff4; color: #16a34a; border: 1.5px solid #bbf7d0; }
         .btn-map:hover { background: #dcfce7; }
         .btn-delay { background: #fffbeb; color: #d97706; border: 1.5px solid #fde68a; }
@@ -208,13 +210,15 @@
                         </div>
                         <div class="card-actions">
                             <c:if test="${t.status == 'SCHEDULED'}">
-                                <a href="javascript:void(0)" class="btn-action btn-go"
-                                   onclick="startTripCheck('${t.tripId}',
-                                       ${not empty t.route.startLat ? t.route.startLat : 'null'},
-                                       ${not empty t.route.startLng ? t.route.startLng : 'null'},
-                                       '${fn:escapeXml(t.route.startLocation)}')">
+                                <button class="btn-action btn-go"
+                                   data-trip-id="${t.tripId}"
+                                   data-depart-time="${t.startTime}"
+                                   data-start-lat="${not empty t.route.startLat ? t.route.startLat : ''}"
+                                   data-start-lng="${not empty t.route.startLng ? t.route.startLng : ''}"
+                                   data-start-loc="${fn:escapeXml(t.route.startLocation)}"
+                                   onclick="handleStartBtn(this)">
                                     <i class="bi bi-play-fill"></i> Start My Trip
-                                </a>
+                                </button>
                             </c:if>
                             <c:if test="${t.status == 'IN_PROGRESS'}">
                                 <a href="${pageContext.request.contextPath}/tracking/drive?tripId=${t.tripId}" class="btn-action btn-map"><i class="bi bi-geo-alt-fill"></i> Share My Location</a>
@@ -308,6 +312,53 @@ function submitDashDelay() {
         }).catch(() => alert('Network error'));
 }
 
+// ── Trip start: time-lock logic ─────────────────────────────────────────
+function parseDepartMin(raw) {
+    // handles LocalTime "14:00" / "14:00:00" and LocalDateTime "2026-05-12T14:00"
+    if (!raw || raw === 'null') return null;
+    const timePart = raw.includes('T') ? raw.split('T')[1] : raw;
+    const parts = timePart.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function refreshStartButtons() {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const pad = n => String(n).padStart(2, '0');
+    document.querySelectorAll('button[data-depart-time]').forEach(btn => {
+        const tripMin = parseDepartMin(btn.getAttribute('data-depart-time'));
+        if (tripMin === null) { btn.disabled = false; return; }
+        const diff = tripMin - nowMin; // positive = still in future
+        const h = Math.floor(tripMin / 60), m = tripMin % 60;
+        if (diff > 15) {
+            // Too early — locked
+            btn.disabled = true;
+            btn.classList.remove('window-passed');
+            btn.innerHTML = `<i class="bi bi-lock-fill"></i> Available at ${pad(h)}:${pad(m)}`;
+        } else if (diff < -60) {
+            // Grace period expired
+            btn.disabled = true;
+            btn.classList.add('window-passed');
+            btn.innerHTML = '<i class="bi bi-clock-history"></i> Window passed';
+        } else {
+            // It\'s time
+            btn.disabled = false;
+            btn.classList.remove('window-passed');
+            btn.innerHTML = '<i class="bi bi-play-fill"></i> Start My Trip';
+        }
+    });
+}
+
+function handleStartBtn(btn) {
+    if (btn.disabled) return;
+    startTripCheck(
+        btn.getAttribute('data-trip-id'),
+        parseFloat(btn.getAttribute('data-start-lat')) || null,
+        parseFloat(btn.getAttribute('data-start-lng')) || null,
+        btn.getAttribute('data-start-loc')
+    );
+}
+
 // ── Trip start: GPS location check ────────────────────────────────────────
 function haversineKm(lat1, lng1, lat2, lng2) {
     const R = 6371, toRad = x => x * Math.PI / 180;
@@ -367,6 +418,10 @@ function startTripCheck(tripId, startLat, startLng, locationName) {
     }
     setInterval(autoRefresh, 10000);
 })();
+
+// Run time-lock check immediately and every 30 seconds
+refreshStartButtons();
+setInterval(refreshStartButtons, 30000);
 </script>
 </body>
 </html>
