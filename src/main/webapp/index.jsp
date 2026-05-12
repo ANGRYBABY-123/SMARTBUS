@@ -1,7 +1,400 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<% response.sendRedirect(request.getContextPath() + "/users/login"); %>
+<%-- Landing page — no redirect --%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SmartBus – Know where your bus is. Get to work on time.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #fff; color: #111; }
+
+        /* NAV */
+        .top-nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(8px);
+            padding: 14px 40px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-brand { font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; text-decoration: none; }
+        .nav-brand span { color: #00c853; }
+        .nav-cta {
+            background: #00c853; color: #000; border: none; border-radius: 8px;
+            padding: 9px 22px; font-size: 0.88rem; font-weight: 800;
+            text-decoration: none; transition: background .2s;
+        }
+        .nav-cta:hover { background: #00a846; color: #000; }
+
+        /* HERO */
+        .hero {
+            min-height: 92vh;
+            background: linear-gradient(135deg, #000 0%, #0d1b2a 60%, #1a3c5e 100%);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 80px 24px 60px;
+        }
+        .hero-inner { max-width: 760px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,200,83,0.15); color: #00c853;
+            border: 1px solid rgba(0,200,83,0.35);
+            border-radius: 40px; padding: 5px 16px; font-size: 0.78rem; font-weight: 700;
+            margin-bottom: 28px; letter-spacing: .5px;
+        }
+        .hero h1 { font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 20px; }
+        .hero h1 span { color: #00c853; }
+        .hero p { font-size: 1.1rem; color: #94a3b8; margin-bottom: 36px; line-height: 1.7; max-width: 580px; margin-left: auto; margin-right: auto; }
+        .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn-hero-primary {
+            background: #00c853; color: #000; border: none; border-radius: 10px;
+            padding: 14px 32px; font-size: 1rem; font-weight: 800;
+            text-decoration: none; transition: all .2s;
+        }
+        .btn-hero-primary:hover { background: #00a846; color: #000; transform: translateY(-2px); }
+        .btn-hero-outline {
+            background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px;
+            padding: 14px 32px; font-size: 1rem; font-weight: 700;
+            text-decoration: none; transition: all .2s;
+        }
+        .btn-hero-outline:hover { border-color: #fff; color: #fff; }
+
+        /* SECTIONS */
+        .section { padding: 90px 24px; }
+        .section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #3b82f6; margin-bottom: 10px; }
+        .section-title { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 900; line-height: 1.15; }
+        .section-sub { font-size: 1rem; color: #64748b; margin-top: 14px; max-width: 560px; }
+
+        /* PROBLEM */
+        .problem-bg { background: #f8fafc; }
+        .problem-card {
+            background: #fff; border-radius: 16px; border: 1.5px solid #e2e8f0;
+            padding: 28px 24px; height: 100%; transition: box-shadow .2s, transform .2s;
+        }
+        .problem-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.08); transform: translateY(-4px); }
+        .problem-icon { font-size: 2rem; margin-bottom: 14px; }
+        .problem-card h4 { font-weight: 800; font-size: 1rem; margin-bottom: 8px; }
+        .problem-card p { font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.6; }
+
+        /* SOLUTION */
+        .solution-bg { background: linear-gradient(135deg, #000 0%, #0d1b2a 100%); color: #fff; }
+        .solution-bg .section-label { color: #00c853; }
+        .solution-bg .section-title { color: #fff; }
+        .solution-bg .section-sub { color: #94a3b8; }
+        .sol-item { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; }
+        .sol-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            background: rgba(0,200,83,0.15); color: #00c853;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+        }
+        .sol-item h5 { font-weight: 700; margin: 0 0 4px; font-size: 0.95rem; color: #fff; }
+        .sol-item p { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+
+        /* FEATURES */
+        .feature-card { background: #fff; border-radius: 20px; border: 1.5px solid #e2e8f0; padding: 36px 30px; height: 100%; }
+        .feature-num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; margin-bottom: 16px; }
+        .feature-card h3 { font-weight: 900; font-size: 1.25rem; margin-bottom: 16px; }
+        .feature-card ul { list-style: none; padding: 0; margin: 0 0 20px; }
+        .feature-card ul li { padding: 6px 0; font-size: 0.88rem; color: #475569; display: flex; align-items: flex-start; gap: 8px; }
+        .feature-card ul li::before { content: '✓'; font-weight: 900; flex-shrink: 0; }
+        .benefit-tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; font-weight: 700; }
+
+        /* BUILT FOR */
+        .built-bg { background: #0f172a; color: #fff; }
+        .built-bg .section-label { color: #00c853; }
+        .built-bg .section-title { color: #fff; }
+        .built-card { background: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 28px 24px; height: 100%; }
+        .built-card i { font-size: 2rem; margin-bottom: 12px; display: block; color: #00c853; }
+        .built-card h5 { font-weight: 800; color: #fff; margin-bottom: 6px; }
+        .built-card p { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+
+        /* IMPACT */
+        .impact-card { background: #fff; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 32px 28px; text-align: center; height: 100%; }
+        .impact-icon { font-size: 2.4rem; margin-bottom: 14px; }
+        .impact-card h4 { font-weight: 900; font-size: 1.1rem; margin-bottom: 8px; }
+        .impact-card p { font-size: 0.85rem; color: #64748b; margin: 0; }
+
+        /* CTA */
+        .cta-section { background: linear-gradient(135deg, #000 0%, #0d1b2a 60%, #1a3c5e 100%); padding: 100px 24px; text-align: center; }
+        .cta-section h2 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 900; color: #fff; margin-bottom: 16px; }
+        .cta-section h2 span { color: #00c853; }
+        .cta-section p { font-size: 1rem; color: #94a3b8; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+        /* FOOTER */
+        .site-footer { background: #000; color: #475569; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.82rem; }
+        .site-footer .brand { color: #fff; font-weight: 900; }
+        .site-footer .brand span { color: #00c853; }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+    <a href="${pageContext.request.contextPath}/" class="nav-brand">Smart<span>Bus</span></a>
+    <a href="${pageContext.request.contextPath}/users/login" class="nav-cta">Sign In</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-badge"><i class="bi bi-broadcast-pin"></i> Real-Time Bus Tracking</div>
+        <h1>Know where your bus is.<br><span>Get to work on time.</span></h1>
+        <p>SmartBus helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts — so you never waste time waiting at the wrong place.</p>
+        <div class="hero-btns">
+            <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-primary">
+                <i class="bi bi-arrow-right-circle me-2"></i>Get Started
+            </a>
+            <a href="#problem" class="btn-hero-outline">Learn More</a>
+        </div>
+    </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="section problem-bg" id="problem">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">The Problem</div>
+            <h2 class="section-title">What Daily Bus Users Struggle With</h2>
+            <p class="section-sub mx-auto">Millions of workers rely on buses every day — but the system leaves them guessing.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="problem-card">
+                    <div class="problem-icon">⏳</div>
+                    <h4>Unpredictable Waiting</h4>
+                    <p>Long, unpredictable waiting times at bus stops with no indication of when the next bus will arrive.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="problem-card">
+                    <div class="problem-icon">❓</div>
+                    <h4>No Visibility</h4>
+                    <p>No way to know if the bus is coming, already passed, or stuck in traffic somewhere ahead.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="problem-card">
+                    <div class="problem-icon">💸</div>
+                    <h4>Wasted Money</h4>
+                    <p>Commuters spend extra money on taxis as backup whenever they're unsure if the bus is coming.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="problem-card">
+                    <div class="problem-icon">📍</div>
+                    <h4>Hard to Navigate</h4>
+                    <p>Difficult to find the nearest bus stop when visiting new areas or traveling unfamiliar routes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="section solution-bg" id="solution">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <div class="section-label">Our Solution</div>
+                <h2 class="section-title">Simple Bus Tracking for Workers</h2>
+                <p class="section-sub mt-3">SmartBus removes the uncertainty from your daily commute — giving you the information you need, when you need it.</p>
+            </div>
+            <div class="col-lg-7">
+                <div class="sol-item">
+                    <div class="sol-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div>
+                        <h5>Real-time bus location and arrival times</h5>
+                        <p>See exactly where your bus is on the map and get an accurate ETA for your stop.</p>
+                    </div>
+                </div>
+                <div class="sol-item">
+                    <div class="sol-icon"><i class="bi bi-pin-map-fill"></i></div>
+                    <div>
+                        <h5>Find the nearest bus stop from your location</h5>
+                        <p>GPS-powered stop finder shows walking directions and all routes available at that stop.</p>
+                    </div>
+                </div>
+                <div class="sol-item">
+                    <div class="sol-icon"><i class="bi bi-bell-fill"></i></div>
+                    <div>
+                        <h5>Instant alerts for delays + backup options</h5>
+                        <p>Get notified the moment a delay happens, with alternative buses and wait times shown automatically.</p>
+                    </div>
+                </div>
+                <div class="sol-item">
+                    <div class="sol-icon"><i class="bi bi-phone"></i></div>
+                    <div>
+                        <h5>Built for low-end phones and low data</h5>
+                        <p>Designed to work smoothly even on affordable Android devices with limited mobile data.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">Key Features</div>
+            <h2 class="section-title">Everything You Need to Commute with Confidence</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-num" style="background:#dbeafe;color:#2563eb;">01</div>
+                    <h3>🚌 Live Bus Tracking</h3>
+                    <ul>
+                        <li>See your bus moving on the map in real time</li>
+                        <li>Get accurate ETA for your specific stop</li>
+                        <li>Auto-updates for traffic and delays</li>
+                    </ul>
+                    <div class="benefit-tag" style="background:#dbeafe;color:#1d4ed8;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Leave home at the right time — stop wasting hours waiting
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-num" style="background:#dcfce7;color:#16a34a;">02</div>
+                    <h3>📍 Nearest Stop Finder</h3>
+                    <ul>
+                        <li>GPS finds the closest bus stations near you</li>
+                        <li>Shows walking direction and distance</li>
+                        <li>Lists all bus routes available at that stop</li>
+                    </ul>
+                    <div class="benefit-tag" style="background:#dcfce7;color:#15803d;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Easy to commute even in unfamiliar areas
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-num" style="background:#fef9c3;color:#b45309;">03</div>
+                    <h3>⏰ Smart Delay Alerts</h3>
+                    <ul>
+                        <li>Instant notification if your bus is delayed or breaks down</li>
+                        <li>App suggests other buses on nearby routes</li>
+                        <li>Shows estimated wait time for backup options</li>
+                    </ul>
+                    <div class="benefit-tag" style="background:#fef9c3;color:#92400e;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Make fast decisions — avoid overpaying for taxis
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BUILT FOR LOW-INCOME COMMUTERS -->
+<section class="section built-bg" id="accessibility">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">Accessibility</div>
+            <h2 class="section-title">Simple, Light, Affordable</h2>
+            <p class="section-sub mx-auto" style="color:#94a3b8">Built specifically for the workers who rely on buses every single day.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="built-card">
+                    <i class="bi bi-phone"></i>
+                    <h5>Works on cheap Android phones</h5>
+                    <p>No need for a flagship smartphone — runs smoothly on any affordable device.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="built-card">
+                    <i class="bi bi-wifi"></i>
+                    <h5>Uses minimal mobile data</h5>
+                    <p>Lightweight design means you spend almost nothing on data to track your bus.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="built-card">
+                    <i class="bi bi-cloud-slash"></i>
+                    <h5>Saves routes for offline use</h5>
+                    <p>Your common routes are cached so you can view them even without a connection.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="built-card">
+                    <i class="bi bi-hand-index-thumb"></i>
+                    <h5>Big buttons, clear layout</h5>
+                    <p>Designed for anyone to use — no tech skills required, easy to navigate.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- IMPACT -->
+<section class="section" id="impact">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">Impact</div>
+            <h2 class="section-title">Real Benefits for Daily Users</h2>
+            <p class="section-sub mx-auto">SmartBus directly improves the lives of commuters who can't afford to be late or waste money.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="impact-card">
+                    <div class="impact-icon">⏱️</div>
+                    <h4>Cut Waiting Time</h4>
+                    <p>Plan your trip with live data and leave home at the right moment — not too early or too late.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="impact-card">
+                    <div class="impact-icon">💰</div>
+                    <h4>Save Money</h4>
+                    <p>Stop spending on taxis as backup. Know your bus is coming before you decide to take one.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="impact-card">
+                    <div class="impact-icon">😌</div>
+                    <h4>Reduce Stress</h4>
+                    <p>Remove the uncertainty of your commute. Arrive calmer and more focused for work.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="impact-card">
+                    <div class="impact-icon">🛡️</div>
+                    <h4>Safer Commuting</h4>
+                    <p>Spend less time standing in unsafe areas waiting — know exactly when your bus arrives.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <h2>Ready to ride <span>smarter</span>?</h2>
+    <p>A practical tool for the people who rely on buses every day. Sign in or create your account now.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-primary">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </a>
+        <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-outline">Create Account</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    <div class="brand">Smart<span>Bus</span></div>
+    <div>Know where your bus is. Get to work on time.</div>
+    <div>&copy; 2026 SmartBus. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
 
         /* Sidebar */
         .sidebar {
