@@ -52,12 +52,12 @@ public final class EmailUtil {
 
         Message msg = new MimeMessage(session);
         try {
-            msg.setFrom(new InternetAddress(user, "SmartBus", "UTF-8"));
+            msg.setFrom(new InternetAddress(user, "CommuteSafe", "UTF-8"));
         } catch (java.io.UnsupportedEncodingException e) {
             msg.setFrom(new InternetAddress(user));
         }
         msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-        msg.setSubject("SmartBus – Your Password Reset Code");
+        msg.setSubject("CommuteSafe – Your Password Reset Code");
         msg.setContent(buildCodeHtml(code), "text/html; charset=UTF-8");
 
         Transport.send(msg);
@@ -92,12 +92,12 @@ public final class EmailUtil {
 
         Message msg = new MimeMessage(session);
         try {
-            msg.setFrom(new InternetAddress(user, "SmartBus", "UTF-8"));
+            msg.setFrom(new InternetAddress(user, "CommuteSafe", "UTF-8"));
         } catch (java.io.UnsupportedEncodingException e) {
             msg.setFrom(new InternetAddress(user));
         }
         msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-        msg.setSubject("SmartBus – Your Account Has Been Approved");
+        msg.setSubject("CommuteSafe – Your Account Has Been Approved");
         msg.setContent(buildApprovalHtml(userName), "text/html; charset=UTF-8");
 
         Transport.send(msg);
@@ -106,17 +106,17 @@ public final class EmailUtil {
     private static String buildApprovalHtml(String name) {
         return "<!DOCTYPE html><html><body style='font-family:Segoe UI,sans-serif;background:#f4f7fb;padding:32px'>"
              + "<div style='max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>"
-             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Smart</span>Bus – Account Approved</h2>"
+             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Commute</span>Safe – Account Approved</h2>"
              + "<p style='color:#555;font-size:.95rem'>Hi <strong>" + name + "</strong>,</p>"
-             + "<p style='color:#555;font-size:.95rem'>Great news! Your SmartBus account has been <strong style='color:#00c853'>approved</strong> by our admin team.</p>"
+             + "<p style='color:#555;font-size:.95rem'>Great news! Your CommuteSafe account has been <strong style='color:#00c853'>approved</strong> by our admin team.</p>"
              + "<p style='color:#555;font-size:.95rem'>You can now sign in and start using the platform.</p>"
              + "<div style='text-align:center;margin:28px 0'>"
              + "<a href='#' style='display:inline-block;background:#000;color:#fff;text-decoration:none;"
-             + "border-radius:12px;padding:14px 36px;font-size:.95rem;font-weight:800;'>Sign In to SmartBus</a>"
+             + "border-radius:12px;padding:14px 36px;font-size:.95rem;font-weight:800;'>Sign In to CommuteSafe</a>"
              + "</div>"
-             + "<p style='color:#999;font-size:.8rem;margin-bottom:0'>If you didn't create a SmartBus account, you can safely ignore this email.</p>"
+             + "<p style='color:#999;font-size:.8rem;margin-bottom:0'>If you didn't create a CommuteSafe account, you can safely ignore this email.</p>"
              + "<hr style='border:none;border-top:1px solid #eee;margin:20px 0'>"
-             + "<p style='color:#bbb;font-size:.75rem;margin:0'>SmartBus &mdash; Real-time bus tracking system</p>"
+             + "<p style='color:#bbb;font-size:.75rem;margin:0'>CommuteSafe &mdash; Safe, real-time commuting powered by live GPS</p>"
              + "</div></body></html>";
     }
 
@@ -125,8 +125,8 @@ public final class EmailUtil {
         String display = code.substring(0, 3) + " " + code.substring(3);
         return "<!DOCTYPE html><html><body style='font-family:Segoe UI,sans-serif;background:#f4f7fb;padding:32px'>"
              + "<div style='max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>"
-             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Smart</span>Bus – Password Reset</h2>"
-             + "<p style='color:#555;font-size:.95rem'>We received a request to reset your SmartBus password.</p>"
+             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Commute</span>Safe – Password Reset</h2>"
+             + "<p style='color:#555;font-size:.95rem'>We received a request to reset your CommuteSafe password.</p>"
              + "<p style='color:#555;font-size:.95rem'>Enter the code below on the verification page. "
              + "This code is valid for <strong>15 minutes</strong>.</p>"
              + "<div style='text-align:center;margin:28px 0'>"
@@ -138,7 +138,7 @@ public final class EmailUtil {
              + "<p style='color:#999;font-size:.8rem;margin-bottom:0'>"
              + "If you didn't request a password reset, you can safely ignore this email.</p>"
              + "<hr style='border:none;border-top:1px solid #eee;margin:20px 0'>"
-             + "<p style='color:#bbb;font-size:.75rem;margin:0'>SmartBus &mdash; Real-time bus tracking system</p>"
+             + "<p style='color:#bbb;font-size:.75rem;margin:0'>CommuteSafe &mdash; Safe, real-time commuting powered by live GPS</p>"
              + "</div></body></html>";
     }
 }
