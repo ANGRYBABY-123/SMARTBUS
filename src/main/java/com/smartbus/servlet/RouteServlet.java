@@ -37,7 +37,7 @@ public class RouteServlet extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/views/route-form.jsp").forward(req, resp);
                 break;
             case "/delete":
-                routeDAO.delete(Long.parseLong(req.getParameter("id")));
+                routeDAO.deleteWithDependents(Long.parseLong(req.getParameter("id")));
                 resp.sendRedirect(req.getContextPath() + "/routes/list");
                 break;
             default:
