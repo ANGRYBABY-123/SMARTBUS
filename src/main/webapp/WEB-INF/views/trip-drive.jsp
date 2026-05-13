@@ -31,8 +31,12 @@
   }
   #status-chip {
     margin-left:auto;border-radius:20px;padding:4px 12px;font-size:0.76rem;
-    font-weight:700;display:flex;align-items:center;gap:5px;
+    font-weight:700;display:flex;align-items:center;gap:5px;cursor:pointer;
     background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.3);
+    transition:background .25s, color .25s, border-color .25s;
+  }
+  #status-chip.gps-off {
+    background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.4);
   }
   .live-dot { width:7px;height:7px;border-radius:50%;background:#22c55e;animation:blink 1.2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -119,7 +123,10 @@
 <div id="topbar">
   <button class="back-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
   <div class="route-pill"><i class="bi bi-bus-front-fill" style="color:#22c55e"></i> ${trip.route.routeName}</div>
-  <div id="status-chip"><div class="live-dot"></div><span id="gps-label">GPS Off</span></div>
+  <div id="status-chip" class="gps-off" onclick="retryGps()" title="Tap to retry GPS">
+    <div class="live-dot" id="gps-dot" style="background:#ef4444"></div>
+    <span id="gps-label">GPS Off</span>
+  </div>
 </div>
 
 <div id="instruction-bar">
@@ -128,6 +135,17 @@
     <div id="instruction-text">Starting navigation…</div>
     <div id="distance-text">—</div>
   </div>
+</div>
+
+<div id="gps-error-bar" style="display:none;position:fixed;top:115px;left:14px;right:14px;z-index:449;
+     background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.45);border-radius:12px;
+     padding:10px 14px;flex-direction:row;align-items:center;gap:10px;">
+  <i class="bi bi-geo-slash-fill" style="color:#f87171;font-size:1.2rem;flex-shrink:0"></i>
+  <div style="flex:1">
+    <div style="font-size:.82rem;font-weight:700;color:#f87171">Location access blocked</div>
+    <div style="font-size:.73rem;color:#94a3b8;margin-top:2px">Enable location in your browser settings, then tap <b style="color:#f87171">GPS Off</b> above to retry</div>
+  </div>
+  <button onclick="retryGps()" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.78rem;font-weight:700;cursor:pointer;flex-shrink:0">Retry</button>
 </div>
 
 <!-- AI Delay Risk Banner -->
@@ -257,12 +275,44 @@ function loadRouteHistory() {
 }
 
 function startTracking() {
-  if (!navigator.geolocation) return;
-  watchId = navigator.geolocation.watchPosition(onPos, ()=>{}, { enableHighAccuracy:true, maximumAge:3000 });
+  if (!navigator.geolocation) { onGpsError({code:-1}); return; }
+  watchId = navigator.geolocation.watchPosition(onPos, onGpsError,
+    { enableHighAccuracy:true, maximumAge:5000, timeout:15000 });
   tracking = true;
 }
 
+function onGpsError(err) {
+  const chip = document.getElementById('status-chip');
+  chip.classList.add('gps-off');
+  const dot = document.getElementById('gps-dot');
+  if (dot) dot.style.background = '#ef4444';
+  document.getElementById('gps-label').textContent =
+    (err && err.code === 1) ? 'Blocked – tap to fix' : 'GPS Off – tap to retry';
+  const bar = document.getElementById('gps-error-bar');
+  if (bar) bar.style.display = 'flex';
+}
+
+function retryGps() {
+  if (!navigator.geolocation) return;
+  if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  const bar = document.getElementById('gps-error-bar');
+  if (bar) bar.style.display = 'none';
+  const chip = document.getElementById('status-chip');
+  chip.classList.remove('gps-off');
+  const dot = document.getElementById('gps-dot');
+  if (dot) dot.style.background = '#f59e0b';
+  document.getElementById('gps-label').textContent = 'Finding…';
+  startTracking();
+}
+
 function onPos(pos) {
+  // GPS acquired — clear error state
+  const chip = document.getElementById('status-chip');
+  chip.classList.remove('gps-off');
+  const dot = document.getElementById('gps-dot');
+  if (dot) dot.style.background = '#22c55e';
+  const bar = document.getElementById('gps-error-bar');
+  if (bar) bar.style.display = 'none';
   lastLat = pos.coords.latitude;
   lastLng = pos.coords.longitude;
   document.getElementById('gps-label').textContent = 'Live';

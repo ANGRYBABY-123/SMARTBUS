@@ -321,10 +321,11 @@ function pollBus() {
     .then(r=>r.json())
     .then(d=>{
       if (!d.found) {
-        document.getElementById('live-label').textContent='Offline';
-        document.getElementById('status-chip').style.background='#fee2e2';
-        document.getElementById('status-chip').style.color='#b91c1c';
-        document.getElementById('bus-status-text').textContent='Bus is offline';
+        document.getElementById('live-label').textContent='Waiting…';
+        document.getElementById('status-chip').style.background='#fef9c3';
+        document.getElementById('status-chip').style.color='#854d0e';
+        document.getElementById('bus-status-text').textContent='Waiting for driver location…';
+        document.getElementById('bus-status-sub').textContent='Driver may still be granting GPS access';
         velLat = 0; velLng = 0; // stop extrapolating
         if (busMarker) busMarker.setIcon(busIcon(false));
         return;
