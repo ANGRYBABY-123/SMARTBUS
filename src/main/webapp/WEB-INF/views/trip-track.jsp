@@ -237,6 +237,12 @@
 const TRIP_ID = ${trip.tripId};
 const CTX     = '${pageContext.request.contextPath}';
 
+// Route endpoint coordinates — used to centre the map before GPS arrives
+const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.route.startLat}') : null;
+const ROUTE_START_LNG = '${trip.route.startLng}' !== '' ? parseFloat('${trip.route.startLng}') : null;
+const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.route.endLat}')   : null;
+const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.route.endLng}')   : null;
+
 let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
@@ -276,7 +282,23 @@ function startDeadReckoning() {
 function initMap() {
   map = L.map('map', { zoomControl:false, attributionControl:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
-  map.setView([3.1390, 101.6869], 13);
+  // Centre on route start → end, or fall back to Pretoria/TUT area
+  if (ROUTE_START_LAT && ROUTE_END_LAT) {
+    const bounds = L.latLngBounds(
+      [ROUTE_START_LAT, ROUTE_START_LNG],
+      [ROUTE_END_LAT,   ROUTE_END_LNG]
+    );
+    map.fitBounds(bounds, { padding: [60, 60] });
+    // Drop subtle origin/destination markers
+    L.circleMarker([ROUTE_START_LAT, ROUTE_START_LNG], {radius:6, color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.7, weight:2})
+      .addTo(map).bindPopup('${trip.route.startLocation}');
+    L.circleMarker([ROUTE_END_LAT, ROUTE_END_LNG], {radius:6, color:'#f87171', fillColor:'#f87171', fillOpacity:0.7, weight:2})
+      .addTo(map).bindPopup('${trip.route.endLocation}');
+  } else if (ROUTE_START_LAT) {
+    map.setView([ROUTE_START_LAT, ROUTE_START_LNG], 13);
+  } else {
+    map.setView([-25.7313, 28.1648], 13); // Pretoria/TUT fallback
+  }
   pollBus();
   setInterval(pollBus, 3000);
   setInterval(pollDelay, 15000);
