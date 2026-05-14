@@ -35,16 +35,27 @@ import java.util.regex.Pattern;
 @WebServlet("/ai/*")
 public class AiServlet extends HttpServlet {
 
-    private static final String GEMINI_KEY = "AIzaSyAMMxrYl49Xij4srs-sVjOmEv8Jq3BeJaw";
-    private static final String GEMINI_URL =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_KEY;
+    private static final String GEMINI_BASE =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
 
     private static final Pattern TEXT_PAT =
         Pattern.compile("\"text\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
 
+    /** Resolved at startup from env var → context-param. */
+    private String geminiUrl;
+
     private final TripDAO        tripDAO  = new TripDAO();
     private final GpsTrackingDAO gpsDAO   = new GpsTrackingDAO();
     private final NotificationDAO notifDAO = new NotificationDAO();
+
+    @Override
+    public void init() {
+        String key = System.getenv("GEMINI_API_KEY");
+        if (key == null || key.isBlank()) {
+            key = getServletContext().getInitParameter("gemini.api.key");
+        }
+        geminiUrl = GEMINI_BASE + (key != null ? key.strip() : "");
+    }
 
     // ── GET ──────────────────────────────────────────────────────────────────
     @Override
@@ -119,7 +130,7 @@ public class AiServlet extends HttpServlet {
     private String callGemini(String prompt) {
         try {
             String body = "{\"contents\":[{\"parts\":[{\"text\":" + jsonString(prompt) + "}]}]}";
-            URL url = URI.create(GEMINI_URL).toURL();
+            URL url = URI.create(geminiUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");

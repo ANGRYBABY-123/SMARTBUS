@@ -44,6 +44,10 @@ services:
       - key: SMTP_PASS
         sync: false     # set manually in Render dashboard (Gmail App Password)
 
+      # ── AI (Gemini) ───────────────────────────────────────────────────────
+      - key: GEMINI_API_KEY
+        sync: false     # set manually in Render dashboard
+
       # ── Optional JVM tuning ───────────────────────────────────────────────
       - key: JAVA_OPTS
         value: "-Xms128m -Xmx400m -XX:+UseContainerSupport"

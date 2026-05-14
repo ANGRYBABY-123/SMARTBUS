@@ -22,6 +22,16 @@
         <param-value>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</param-value>
     </context-param>
 
+    <!--
+        Gemini API key for the AI chat assistant.
+        Prefer setting the GEMINI_API_KEY environment variable (checked first).
+        Only fall back to this param for local development.
+    -->
+    <context-param>
+        <param-name>gemini.api.key</param-name>
+        <param-value></param-value>
+    </context-param>
+
     <!-- Default welcome page — routed through DashboardServlet so auth filter applies -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
