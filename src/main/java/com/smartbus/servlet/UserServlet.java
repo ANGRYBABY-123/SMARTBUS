@@ -8,7 +8,6 @@ import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.PasswordUtil;
-import com.smartbus.util.SmsUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -17,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +25,6 @@ public class UserServlet extends HttpServlet {
 
     private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
     private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserDAO       userDAO       = new UserDAO();
     private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
@@ -380,17 +377,13 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        if (phone == null || phone.trim().isEmpty()) {
-            req.setAttribute("error", "Please provide your mobile number for verification.");
-            req.setAttribute("tab", "register");
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
-            return;
-        }
-
-        // Normalise phone: ensure it starts with +
-        String normalPhone = phone.trim().replaceAll("[\\s\\-()]", "");
-        if (!normalPhone.startsWith("+")) {
-            normalPhone = "+" + normalPhone;
+        // Normalise phone if provided
+        String normalPhone = "";
+        if (phone != null && !phone.trim().isEmpty()) {
+            normalPhone = phone.trim().replaceAll("[\\s\\-()]", "");
+            if (!normalPhone.startsWith("+")) {
+                normalPhone = "+" + normalPhone;
+            }
         }
 
         // Check email uniqueness
@@ -401,31 +394,26 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        // Store registration data in session — account is created only after phone is verified
-        HttpSession s = req.getSession(true);
-        s.setAttribute("reg_name",    name.trim());
-        s.setAttribute("reg_email",   email.trim());
-        s.setAttribute("reg_password", PasswordUtil.hash(password));
-        s.setAttribute("reg_role",    role);
-        s.setAttribute("reg_license", licenseNumber != null ? licenseNumber.trim().toUpperCase() : "");
-        s.setAttribute("reg_phone",   normalPhone);
-
-        // Generate OTP, store in session, send via Africa's Talking
-        String otp = String.format("%06d", RANDOM.nextInt(1_000_000));
-        s.setAttribute("reg_otp",        otp);
-        s.setAttribute("reg_otp_expiry", LocalDateTime.now().plusMinutes(10));
-
-        try {
-            SmsUtil.sendOtp(normalPhone, otp);
-        } catch (Exception e) {
-            getServletContext().log("[Register] SMS failed for " + normalPhone, e);
-            req.setAttribute("error", "Could not send SMS verification. Check the phone number and try again.");
-            req.setAttribute("tab", "register");
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
-            return;
+        // Create the account directly (no OTP required)
+        String hashedPassword = PasswordUtil.hash(password);
+        User newUser;
+        if ("DRIVER".equals(role)) {
+            String license = licenseNumber != null ? licenseNumber.trim().toUpperCase() : "";
+            Driver d = new Driver(name.trim(), email.trim(), hashedPassword,
+                    license.isEmpty() ? "DRV-" + System.currentTimeMillis() % 100000L : license);
+            d.setStatus("PENDING");
+            d.setPhoneNumber(normalPhone);
+            newUser = d;
+        } else {
+            Passenger p = new Passenger(name.trim(), email.trim(), hashedPassword);
+            p.setStatus("PENDING");
+            p.setPhoneNumber(normalPhone);
+            newUser = p;
         }
+        userDAO.save(newUser);
 
-        resp.sendRedirect(req.getContextPath() + "/users/verify-phone");
+        resp.sendRedirect(req.getContextPath() + "/users/login?msg="
+                + java.net.URLEncoder.encode("Account created! An admin will review your request. Once approved, you'll receive a confirmation email.", "UTF-8"));
     }
 
     private void verifyPhone(HttpServletRequest req, HttpServletResponse resp)
@@ -488,6 +476,6 @@ public class UserServlet extends HttpServlet {
         userDAO.save(newUser);
 
         resp.sendRedirect(req.getContextPath() + "/users/login?msg="
-                + java.net.URLEncoder.encode("Phone verified! Your account is pending admin approval. We'll notify you once approved.", "UTF-8"));
+                + java.net.URLEncoder.encode("Phone verified! An admin will review your request. Once approved, you'll receive a confirmation email.", "UTF-8"));
     }
 }

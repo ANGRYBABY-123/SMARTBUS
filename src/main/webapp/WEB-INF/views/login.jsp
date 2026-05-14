@@ -100,10 +100,10 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         <div class="field"><label>Full Name</label><input type="text" name="name" required placeholder="Jane Doe" minlength="2" maxlength="100"></div>
         <div class="field"><label>Email</label><input type="email" name="email" required placeholder="you@example.com"></div>
         <div class="field" id="license-field" style="display:none"><label>Licence / Registration No.</label><input type="text" name="licenseNumber" id="licenseNumber" placeholder="e.g. DRV-00123" maxlength="50"></div>
-        <div class="field"><label>Mobile Number</label><input type="tel" name="phone" required placeholder="+27 82 123 4567" maxlength="20"></div>
+        <div class="field"><label>Mobile Number</label><input type="tel" name="phone" placeholder="+27 82 123 4567" maxlength="20"></div>
         <div class="field"><label>Password</label><input type="password" name="password" id="reg-password" required placeholder="At least 6 characters" minlength="6"></div>
         <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="confirmPassword" required placeholder="Repeat password"><div class="pw-msg" id="pw-match-msg"></div></div>
-        <div class="pending-notice"><i class="bi bi-phone"></i><span>You'll receive an SMS code to verify your number, then an admin will review your account.</span></div>
+        <div class="pending-notice"><i class="bi bi-clock"></i><span>An admin will review your account. Once approved, you'll receive a confirmation email and can sign in.</span></div>
         <button type="submit" class="btn-main" id="reg-submit-btn">Create Account</button>
       </form>
       <div class="link-row">Already have an account? <a href="#" onclick="showTab('login');return false;">Sign in</a></div>
