@@ -28,21 +28,22 @@ import java.util.regex.Pattern;
 
 /**
  * AI endpoints:
- *   POST /ai/chat        — Gemini-powered chat assistant
+ *   POST /ai/chat        — Groq-powered chat assistant (Llama 3)
  *   GET  /ai/eta         — Speed & traffic status from GPS trail
  *   GET  /ai/delay-risk  — Delay prediction + auto-notification
  */
 @WebServlet("/ai/*")
 public class AiServlet extends HttpServlet {
 
-    private static final String GEMINI_BASE =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
+    private static final String GROQ_URL =
+        "https://api.groq.com/openai/v1/chat/completions";
+    private static final String GROQ_MODEL = "llama3-8b-8192";
 
     private static final Pattern TEXT_PAT =
         Pattern.compile("\"text\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
 
-    /** Resolved at startup from env var → context-param. */
-    private String geminiUrl;
+    /** Resolved at startup from env var. */
+    private String groqApiKey;
 
     private final TripDAO        tripDAO  = new TripDAO();
     private final GpsTrackingDAO gpsDAO   = new GpsTrackingDAO();
@@ -50,11 +51,11 @@ public class AiServlet extends HttpServlet {
 
     @Override
     public void init() {
-        String key = System.getenv("GEMINI_API_KEY");
-        if (key == null || key.isBlank()) {
-            key = getServletContext().getInitParameter("gemini.api.key");
+        groqApiKey = System.getenv("GROQ_API_KEY");
+        if (groqApiKey == null || groqApiKey.isBlank()) {
+            groqApiKey = getServletContext().getInitParameter("groq.api.key");
         }
-        geminiUrl = GEMINI_BASE + (key != null ? key.strip() : "");
+        if (groqApiKey != null) groqApiKey = groqApiKey.strip();
     }
 
     // ── GET ──────────────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ public class AiServlet extends HttpServlet {
         }
 
         String prompt = buildChatPrompt(trip, question);
-        String reply  = callGemini(prompt);
+        String reply  = callGroq(prompt);
         out.print("{\"reply\":" + jsonString(reply) + "}");
     }
 
@@ -127,13 +128,19 @@ public class AiServlet extends HttpServlet {
         return sb.toString();
     }
 
-    private String callGemini(String prompt) {
+    private String callGroq(String prompt) {
+        if (groqApiKey == null || groqApiKey.isBlank()) {
+            return "AI is not configured. Please contact the administrator.";
+        }
         try {
-            String body = "{\"contents\":[{\"parts\":[{\"text\":" + jsonString(prompt) + "}]}]}";
-            URL url = URI.create(geminiUrl).toURL();
+            String body = "{\"model\":\"" + GROQ_MODEL + "\","
+                + "\"messages\":[{\"role\":\"user\",\"content\":" + jsonString(prompt) + "}],"
+                + "\"max_tokens\":300}";
+            URL url = URI.create(GROQ_URL).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Authorization", "Bearer " + groqApiKey);
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(20000);
             conn.setDoOutput(true);
@@ -144,17 +151,19 @@ public class AiServlet extends HttpServlet {
             InputStream is = (conn.getErrorStream() != null) ? conn.getErrorStream() : conn.getInputStream();
             String response = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             if (code == 429) {
-                return "The AI assistant is temporarily at capacity. Please wait a minute and try again.";
+                return "The AI assistant is temporarily at capacity. Please wait a moment and try again.";
             }
             if (code >= 400) {
-                // Surface a readable hint from the Gemini error body
                 java.util.regex.Matcher em = java.util.regex.Pattern
                     .compile("\"message\":\\s*\"([^\"]{1,120})")
                     .matcher(response);
                 String hint = em.find() ? em.group(1) : ("HTTP " + code);
                 return "AI unavailable: " + hint + ". Please try again later.";
             }
-            Matcher m = TEXT_PAT.matcher(response);
+            // Groq returns OpenAI-compatible format: choices[0].message.content
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("\"content\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"")
+                .matcher(response);
             if (m.find()) {
                 return m.group(1)
                     .replace("\\n", "\n").replace("\\\"", "\"")
@@ -164,7 +173,7 @@ public class AiServlet extends HttpServlet {
         } catch (java.net.SocketTimeoutException e) {
             return "AI response timed out. Please try again.";
         } catch (Exception e) {
-            return "AI service is temporarily unavailable (" + e.getClass().getSimpleName() + "). Please try again later.";
+            return "AI service is temporarily unavailable. Please try again later.";
         }
     }
 

@@ -44,9 +44,9 @@ services:
       - key: SMTP_PASS
         sync: false     # set manually in Render dashboard (Gmail App Password)
 
-      # ── AI (Gemini) ───────────────────────────────────────────────────────
-      - key: GEMINI_API_KEY
-        sync: false     # set manually in Render dashboard
+      # ── AI (Groq / Llama 3 — free tier: 14,400 req/day) ─────────────────
+      - key: GROQ_API_KEY
+        sync: false     # get free key at https://console.groq.com
       # ── Africa's Talking (SMS OTP at registration) ────────────────────────────
       - key: AT_API_KEY
         sync: false     # set manually in Render dashboard
