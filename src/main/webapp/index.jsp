@@ -179,6 +179,7 @@
 <section class="hero">
     <div class="hero-inner">
         <div class="hero-badge"><i class="bi bi-broadcast-pin"></i> Real-Time Bus Tracking</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.38);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:22px">by Maetso Pty Ltd</div>
         <h1>Know where your bus is.<br><span>Get to work on time.</span></h1>
         <p>CommuteSafe helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts &mdash; so you never waste time waiting at the wrong place.</p>
         <div class="hero-btns">
@@ -199,7 +200,7 @@
             <p class="section-sub mx-auto">Understanding the problem we set out to solve.</p>
         </div>
         <div class="about-card">
-            <p>CommuteSafe is a smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
+            <p>CommuteSafe, developed by <strong>Maetso Pty Ltd</strong>, is a smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
             <p>The purpose of CommuteSafe is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services &mdash; giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
             <p>CommuteSafe is intended to be affordable and accessible for low-income commuters, built to run on entry-level smartphones with minimal data usage, so that the cost of the app is never a barrier to a better commuting experience.</p>
             <p>The expected impact of the system includes reduced waiting times, lower transport expenses, improved commuter safety, reduced stress, and better overall trip planning for the millions of people who rely on public buses every single day.</p>
@@ -467,7 +468,7 @@
         <a href="#impact" style="color:#475569;text-decoration:none;">Impact</a>
         <a href="${pageContext.request.contextPath}/users/login" style="color:#00c853;text-decoration:none;font-weight:700;">Sign In</a>
     </div>
-    <div style="font-size:0.78rem;">&copy; 2026 CommuteSafe. All rights reserved.</div>
+    <div style="font-size:0.78rem;">&copy; 2026 Maetso Pty Ltd &mdash; CommuteSafe. All rights reserved.</div>
 </footer>
 
 </body>
