@@ -49,7 +49,10 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
 .pw-rule{display:flex;align-items:center;gap:7px;font-size:.78rem;color:#6b7280;margin-bottom:3px;transition:color .2s}
 .pw-rule.ok{color:#15803d}.pw-rule.fail{color:#c0392b}
 .pw-rule i{font-size:.7rem;width:12px;text-align:center}
-</style></head><body>
+.recaptcha-wrap{display:flex;justify-content:center;margin:12px 0 8px;}
+</style>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head><body>
 <div class="card">
   <div class="card-hdr">
     <div class="brand-icon">
@@ -89,6 +92,9 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         <div class="field"><label>Email</label><input type="email" name="email" required autofocus placeholder="you@example.com"></div>
         <div class="field"><label>Password</label><input type="password" name="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
         <label class="remember"><input type="checkbox" name="rememberMe" value="true"> Remember me for 30 days</label>
+        <% String rcSiteKey = System.getenv("RECAPTCHA_SITE_KEY"); if (rcSiteKey != null && !rcSiteKey.isBlank()) { %>
+        <div class="recaptcha-wrap"><div class="g-recaptcha" data-sitekey="<%= rcSiteKey %>"></div></div>
+        <% } %>
         <button type="submit" class="btn-main">Sign In</button>
         <a href="${pageContext.request.contextPath}/forgot-password" class="forgot">Forgot password?</a>
       </form>

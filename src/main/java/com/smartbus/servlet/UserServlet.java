@@ -297,6 +297,18 @@ public class UserServlet extends HttpServlet {
 
     private void loginUser(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        // reCAPTCHA verification (only enforced when RECAPTCHA_SECRET_KEY is set)
+        String rcSecret = System.getenv("RECAPTCHA_SECRET_KEY");
+        if (rcSecret != null && !rcSecret.isBlank()) {
+            String captchaToken = req.getParameter("g-recaptcha-response");
+            if (captchaToken == null || captchaToken.isBlank() || !verifyCaptcha(captchaToken, rcSecret)) {
+                req.setAttribute("error", "Please complete the reCAPTCHA verification.");
+                req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                return;
+            }
+        }
+
         String email = req.getParameter("email");
         String password = req.getParameter("password");
         User user = userDAO.authenticate(email, password);
@@ -336,6 +348,28 @@ public class UserServlet extends HttpServlet {
         } else {
             req.setAttribute("error", "Invalid email or password.");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+        }
+    }
+
+    private boolean verifyCaptcha(String token, String secret) {
+        try {
+            java.net.URL url = new java.net.URL("https://www.google.com/recaptcha/api/siteverify");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            String body = "secret=" + java.net.URLEncoder.encode(secret, "UTF-8")
+                    + "&response=" + java.net.URLEncoder.encode(token, "UTF-8");
+            try (java.io.OutputStream out = conn.getOutputStream()) {
+                out.write(body.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            try (java.io.InputStream in = conn.getInputStream()) {
+                String json = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                return json.contains("\"success\":true") || json.contains("\"success\": true");
+            }
+        } catch (Exception e) {
+            return false;
         }
     }
 
