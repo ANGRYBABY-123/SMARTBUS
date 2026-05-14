@@ -218,28 +218,28 @@
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
                 <div class="problem-card">
-                    <div class="problem-icon">â³</div>
+                    <div class="problem-icon"><i class="bi bi-hourglass-split" style="color:#ef4444"></i></div>
                     <h4>Unpredictable Waiting</h4>
                     <p>Long, unpredictable waiting times at bus stops with no indication of when the next bus will arrive.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="problem-card">
-                    <div class="problem-icon">â“</div>
+                    <div class="problem-icon"><i class="bi bi-question-circle-fill" style="color:#f59e0b"></i></div>
                     <h4>No Visibility</h4>
                     <p>No way to know if the bus is coming, already passed, or stuck in traffic somewhere ahead.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="problem-card">
-                    <div class="problem-icon">ðŸ’¸</div>
+                    <div class="problem-icon"><i class="bi bi-cash-stack" style="color:#22c55e"></i></div>
                     <h4>Wasted Money</h4>
                     <p>Commuters spend extra money on taxis as backup whenever they're unsure if the bus is coming.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="problem-card">
-                    <div class="problem-icon">ðŸ“</div>
+                    <div class="problem-icon"><i class="bi bi-geo-alt-fill" style="color:#3b82f6"></i></div>
                     <h4>Hard to Navigate</h4>
                     <p>Difficult to find the nearest bus stop when visiting new areas or traveling unfamiliar routes.</p>
                 </div>
@@ -302,7 +302,7 @@
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-num" style="background:#dbeafe;color:#2563eb;">01</div>
-                    <h3>ðŸšŒ Live Bus Tracking</h3>
+                    <h3><i class="bi bi-bus-front-fill" style="color:#2563eb"></i> Live Bus Tracking</h3>
                     <ul>
                         <li>See your bus moving on the map in real time</li>
                         <li>Get accurate ETA for your specific stop</li>
@@ -317,7 +317,7 @@
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-num" style="background:#dcfce7;color:#16a34a;">02</div>
-                    <h3>ðŸ“ Nearest Stop Finder</h3>
+                    <h3><i class="bi bi-pin-map-fill" style="color:#16a34a"></i> Nearest Stop Finder</h3>
                     <ul>
                         <li>GPS finds the closest bus stations near you</li>
                         <li>Shows walking direction and distance</li>
@@ -332,7 +332,7 @@
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-num" style="background:#fef9c3;color:#b45309;">03</div>
-                    <h3>â° Smart Delay Alerts</h3>
+                    <h3><i class="bi bi-alarm-fill" style="color:#b45309"></i> Smart Delay Alerts</h3>
                     <ul>
                         <li>Instant notification if your bus is delayed or breaks down</li>
                         <li>App suggests other buses on nearby routes</li>
@@ -400,28 +400,28 @@
         <div class="row g-4">
             <div class="col-sm-6 col-lg-3">
                 <div class="impact-card">
-                    <div class="impact-icon">â±ï¸</div>
+                    <div class="impact-icon"><i class="bi bi-stopwatch-fill" style="color:#6366f1"></i></div>
                     <h4>Cut Waiting Time</h4>
                     <p>Plan your trip with live data and leave home at the right moment â€” not too early or too late.</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="impact-card">
-                    <div class="impact-icon">ðŸ’°</div>
+                    <div class="impact-icon"><i class="bi bi-piggy-bank-fill" style="color:#22c55e"></i></div>
                     <h4>Save Money</h4>
                     <p>Stop spending on taxis as backup. Know your bus is coming before you decide to take one.</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="impact-card">
-                    <div class="impact-icon">ðŸ˜Œ</div>
+                    <div class="impact-icon"><i class="bi bi-emoji-smile-fill" style="color:#f59e0b"></i></div>
                     <h4>Reduce Stress</h4>
                     <p>Remove the uncertainty of your commute. Arrive calmer and more focused for work.</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="impact-card">
-                    <div class="impact-icon">ðŸ›¡ï¸</div>
+                    <div class="impact-icon"><i class="bi bi-shield-fill-check" style="color:#3b82f6"></i></div>
                     <h4>Safer Commuting</h4>
                     <p>Spend less time standing in unsafe areas waiting â€” know exactly when your bus arrives.</p>
                 </div>
