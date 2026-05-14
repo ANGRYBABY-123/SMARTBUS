@@ -1,5 +1,5 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" %>
-<%-- Landing page â€” no redirect --%>
+<%-- Landing page &mdash; no redirect --%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -118,7 +118,7 @@
         .feature-card h3 { font-weight: 900; font-size: 1.25rem; margin-bottom: 16px; }
         .feature-card ul { list-style: none; padding: 0; margin: 0 0 20px; }
         .feature-card ul li { padding: 6px 0; font-size: 0.88rem; color: #475569; display: flex; align-items: flex-start; gap: 8px; }
-        .feature-card ul li::before { content: 'âœ“'; font-weight: 900; flex-shrink: 0; }
+        .feature-card ul li::before { content: '\2713'; font-weight: 900; flex-shrink: 0; }
         .benefit-tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; font-weight: 700; }
 
         /* BUILT FOR */
@@ -180,7 +180,7 @@
     <div class="hero-inner">
         <div class="hero-badge"><i class="bi bi-broadcast-pin"></i> Real-Time Bus Tracking</div>
         <h1>Know where your bus is.<br><span>Get to work on time.</span></h1>
-        <p>CommuteSafe helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts â€” so you never waste time waiting at the wrong place.</p>
+        <p>CommuteSafe helps daily commuters track live bus locations, find nearby stops, and get instant delay alerts &mdash; so you never waste time waiting at the wrong place.</p>
         <div class="hero-btns">
             <a href="${pageContext.request.contextPath}/users/login" class="btn-hero-primary">
                 <i class="bi bi-arrow-right-circle me-2"></i>Get Started
@@ -200,7 +200,7 @@
         </div>
         <div class="about-card">
             <p>CommuteSafe is a smart bus tracking and commuter assistance system designed to solve common problems faced by daily public transport users. Many commuters experience long and unpredictable waiting times, uncertainty about bus arrivals, difficulty finding nearby bus stops, and unnecessary transport costs caused by delays or missed buses. These challenges lead to wasted time, financial strain, stress, and safety concerns.</p>
-            <p>The purpose of CommuteSafe is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services â€” giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
+            <p>The purpose of CommuteSafe is to improve the commuting experience by providing real-time bus tracking, estimated arrival times, and location-based services &mdash; giving passengers the information they need to plan their journeys more effectively and make confident decisions at every step of their commute.</p>
             <p>CommuteSafe is intended to be affordable and accessible for low-income commuters, built to run on entry-level smartphones with minimal data usage, so that the cost of the app is never a barrier to a better commuting experience.</p>
             <p>The expected impact of the system includes reduced waiting times, lower transport expenses, improved commuter safety, reduced stress, and better overall trip planning for the millions of people who rely on public buses every single day.</p>
         </div>
@@ -213,7 +213,7 @@
         <div class="text-center mb-5">
             <div class="section-label">The Problem</div>
             <h2 class="section-title">What Daily Bus Users Struggle With</h2>
-            <p class="section-sub mx-auto">Millions of workers rely on buses every day â€” but the system leaves them guessing.</p>
+            <p class="section-sub mx-auto">Millions of workers rely on buses every day &mdash; but the system leaves them guessing.</p>
         </div>
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
@@ -255,7 +255,7 @@
             <div class="col-lg-5">
                 <div class="section-label">Our Solution</div>
                 <h2 class="section-title">Simple Bus Tracking for Workers</h2>
-                <p class="section-sub mt-3">CommuteSafe removes the uncertainty from your daily commute â€” giving you the information you need, when you need it.</p>
+                <p class="section-sub mt-3">CommuteSafe removes the uncertainty from your daily commute &mdash; giving you the information you need, when you need it.</p>
             </div>
             <div class="col-lg-7">
                 <div class="sol-item">
@@ -310,7 +310,7 @@
                     </ul>
                     <div class="benefit-tag" style="background:#dbeafe;color:#1d4ed8;">
                         <i class="bi bi-check-circle-fill"></i>
-                        Leave home at the right time â€” stop wasting hours waiting
+                        Leave home at the right time &mdash; stop wasting hours waiting
                     </div>
                 </div>
             </div>
@@ -340,7 +340,7 @@
                     </ul>
                     <div class="benefit-tag" style="background:#fef9c3;color:#92400e;">
                         <i class="bi bi-check-circle-fill"></i>
-                        Make fast decisions â€” avoid overpaying for taxis
+                        Make fast decisions &mdash; avoid overpaying for taxis
                     </div>
                 </div>
             </div>
@@ -361,7 +361,7 @@
                 <div class="built-card">
                     <i class="bi bi-phone"></i>
                     <h5>Works on cheap Android phones</h5>
-                    <p>No need for a flagship smartphone â€” runs smoothly on any affordable device.</p>
+                    <p>No need for a flagship smartphone &mdash; runs smoothly on any affordable device.</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
@@ -382,7 +382,7 @@
                 <div class="built-card">
                     <i class="bi bi-hand-index-thumb"></i>
                     <h5>Big buttons, clear layout</h5>
-                    <p>Designed for anyone to use â€” no tech skills required, easy to navigate.</p>
+                    <p>Designed for anyone to use &mdash; no tech skills required, easy to navigate.</p>
                 </div>
             </div>
         </div>
@@ -402,7 +402,7 @@
                 <div class="impact-card">
                     <div class="impact-icon"><i class="bi bi-stopwatch-fill" style="color:#6366f1"></i></div>
                     <h4>Cut Waiting Time</h4>
-                    <p>Plan your trip with live data and leave home at the right moment â€” not too early or too late.</p>
+                    <p>Plan your trip with live data and leave home at the right moment &mdash; not too early or too late.</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
@@ -423,7 +423,7 @@
                 <div class="impact-card">
                     <div class="impact-icon"><i class="bi bi-shield-fill-check" style="color:#3b82f6"></i></div>
                     <h4>Safer Commuting</h4>
-                    <p>Spend less time standing in unsafe areas waiting â€” know exactly when your bus arrives.</p>
+                    <p>Spend less time standing in unsafe areas waiting &mdash; know exactly when your bus arrives.</p>
                 </div>
             </div>
         </div>
