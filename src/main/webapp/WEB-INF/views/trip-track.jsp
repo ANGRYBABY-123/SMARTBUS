@@ -268,7 +268,7 @@ function startDeadReckoning() {
     if (busMarker && prevGps && (velLat !== 0 || velLng !== 0)) {
       const elapsed = performance.now() - prevGps.ts;
       // Don't extrapolate beyond 10 s (bus might have stopped)
-      const clamp = Math.min(elapsed, 10000);
+      const clamp = Math.min(elapsed, 15000);
       const lat = prevGps.lat + velLat * clamp;
       const lng = prevGps.lng + velLng * clamp;
       busMarker.setLatLng([lat, lng]);
@@ -281,7 +281,12 @@ function startDeadReckoning() {
 
 function initMap() {
   map = L.map('map', { zoomControl:false, attributionControl:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    keepBuffer: 4,
+    updateWhenIdle: false,
+    detectRetina: true
+  }).addTo(map);
   // Centre on route start → end, or fall back to Pretoria/TUT area
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
     const bounds = L.latLngBounds(
@@ -300,7 +305,7 @@ function initMap() {
     map.setView([-25.7313, 28.1648], 13); // Pretoria/TUT fallback
   }
   pollBus();
-  setInterval(pollBus, 3000);
+  setInterval(pollBus, 2000);
   setInterval(pollDelay, 15000);
   pollDelay();
   startDeadReckoning();
@@ -363,7 +368,7 @@ function pollBus() {
       document.getElementById('bus-status-text').textContent='Bus is live';
       if (!busMarker) {
         busMarker = L.marker([d.lat,d.lng], {icon:busIcon(true)}).addTo(map);
-        map.setView([d.lat,d.lng], 15);
+        map.setView([d.lat,d.lng], 16);
       } else {
         busMarker.setIcon(busIcon(true));
         // Snap to real GPS fix (DR loop will extrapolate from here)
@@ -372,7 +377,7 @@ function pollBus() {
     }).catch(()=>{});
 }
 
-function recenterBus() { if(busLat) map.setView([busLat,busLng], 15); }
+function recenterBus() { if(busLat) map.setView([busLat,busLng], 16); }
 
 function toggleSheet() {
   sheetExpanded=!sheetExpanded;

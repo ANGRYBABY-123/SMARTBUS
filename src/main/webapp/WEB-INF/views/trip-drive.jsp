@@ -224,15 +224,24 @@ let map, driverMarker, routeLayer, historyLayer;
 let lastLat = null, lastLng = null;
 let watchId = null, tracking = false;
 let steps = [], stepIdx = 0, sheetExpanded = true;
+let userPanned = false;
 
 function initMap() {
   map = L.map('map', { zoomControl:false, attributionControl:false });
-  L.tileLayer(DARK_TILES, { maxZoom:19 }).addTo(map);
+  L.tileLayer(DARK_TILES, {
+    maxZoom: 19,
+    keepBuffer: 4,
+    updateWhenIdle: false,
+    detectRetina: true
+  }).addTo(map);
   // Default centre on Pretoria / TUT area; overridden once GPS or route loads
   const defaultCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
     ? [ROUTE_START_LAT, ROUTE_START_LNG]
     : [-25.7313, 28.1648]; // Pretoria Campus fallback
-  map.setView(defaultCenter, 13);
+  map.setView(defaultCenter, 15);
+
+  // Detect manual pan — disable auto-follow until driver recentres
+  map.on('dragstart', function() { userPanned = true; });
 
   // Show origin + destination markers if coordinates are available
   if (ROUTE_START_LAT && ROUTE_START_LNG) {
@@ -277,7 +286,7 @@ function loadRouteHistory() {
 function startTracking() {
   if (!navigator.geolocation) { onGpsError({code:-1}); return; }
   watchId = navigator.geolocation.watchPosition(onPos, onGpsError,
-    { enableHighAccuracy:true, maximumAge:5000, timeout:15000 });
+    { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
   tracking = true;
 }
 
@@ -318,10 +327,12 @@ function onPos(pos) {
   document.getElementById('gps-label').textContent = 'Live';
   if (!driverMarker) {
     driverMarker = L.marker([lastLat,lastLng], {icon:busIcon()}).addTo(map);
-    map.setView([lastLat,lastLng], 15);
+    map.setView([lastLat,lastLng], 17);
     buildOsrmRoute(lastLat, lastLng); // build real road route from driver position to destination
   } else {
     driverMarker.setLatLng([lastLat,lastLng]);
+    // Auto-follow: keep driver centred unless they manually panned away
+    if (!userPanned) map.panTo([lastLat, lastLng], { animate:true, duration:0.5 });
     advanceStep(lastLat, lastLng);
   }
   sendGps(lastLat, lastLng);
@@ -384,7 +395,7 @@ function formatDist(m) {
 }
 
 function recenterMap() {
-  if (lastLat) map.setView([lastLat, lastLng], 15);
+  if (lastLat) { userPanned = false; map.setView([lastLat, lastLng], 17); }
 }
 
 function toggleSheet() {
