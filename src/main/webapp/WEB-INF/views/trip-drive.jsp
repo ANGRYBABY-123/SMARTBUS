@@ -1,12 +1,15 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+  String googleMapsKey = System.getenv("GOOGLE_MAPS_API_KEY");
+  if (googleMapsKey == null) googleMapsKey = "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CommuteSafe – Drive</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -159,8 +162,8 @@
 </div>
 
 <div id="map-controls">
-  <button class="map-btn" id="zoom-in"  onclick="map.zoomIn()"><i class="bi bi-plus"></i></button>
-  <button class="map-btn" id="zoom-out" onclick="map.zoomOut()"><i class="bi bi-dash"></i></button>
+  <button class="map-btn" id="zoom-in"  onclick="map.setZoom(map.getZoom()+1)"><i class="bi bi-plus"></i></button>
+  <button class="map-btn" id="zoom-out" onclick="map.setZoom(map.getZoom()-1)"><i class="bi bi-dash"></i></button>
   <button class="map-btn" onclick="recenterMap()"><i class="bi bi-crosshair2"></i></button>
 </div>
 
@@ -207,66 +210,98 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const TRIP_ID = ${trip.tripId};
 const CTX     = '${pageContext.request.contextPath}';
-const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 
-// Route endpoint coordinates (from DB — null-safe via JSP EL)
 const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.route.startLat}') : null;
 const ROUTE_START_LNG = '${trip.route.startLng}' !== '' ? parseFloat('${trip.route.startLng}') : null;
 const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.route.endLat}')   : null;
 const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.route.endLng}')   : null;
 const START_LOCATION  = '${trip.route.startLocation}';
 
-let map, driverMarker, routeLayer, historyLayer;
-let lastLat = null, lastLng = null;
+let map, busMarker, routePolyline, historyPolyline;
+let lastLat = null, lastLng = null, lastFix = null, currentHeading = 0;
 let watchId = null, tracking = false;
 let steps = [], stepIdx = 0, sheetExpanded = true;
 let userPanned = false;
 
-function initMap() {
-  map = L.map('map', { zoomControl:false, attributionControl:false });
-  L.tileLayer(DARK_TILES, {
-    maxZoom: 19,
-    keepBuffer: 4,
-    updateWhenIdle: false,
-    detectRetina: true
-  }).addTo(map);
-  // Default centre on Pretoria / TUT area; overridden once GPS or route loads
-  const defaultCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
-    ? [ROUTE_START_LAT, ROUTE_START_LNG]
-    : [-25.7313, 28.1648]; // Pretoria Campus fallback
-  map.setView(defaultCenter, 15);
-
-  // Detect manual pan — disable auto-follow until driver recentres
-  map.on('dragstart', function() { userPanned = true; });
-
-  // Show origin + destination markers if coordinates are available
-  if (ROUTE_START_LAT && ROUTE_START_LNG) {
-    L.circleMarker([ROUTE_START_LAT, ROUTE_START_LNG], {radius:7, color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.8})
-      .addTo(map).bindPopup('${trip.route.startLocation}');
-  }
-  if (ROUTE_END_LAT && ROUTE_END_LNG) {
-    L.circleMarker([ROUTE_END_LAT, ROUTE_END_LNG], {radius:7, color:'#ef4444', fillColor:'#ef4444', fillOpacity:0.8})
-      .addTo(map).bindPopup('${trip.route.endLocation}');
-  }
-  if (ROUTE_START_LAT && ROUTE_END_LAT) {
-    // Draw straight-line preview until OSRM loads
-    routeLayer = L.polyline([[ROUTE_START_LAT, ROUTE_START_LNG],[ROUTE_END_LAT, ROUTE_END_LNG]],
-      {color:'#3b82f6', weight:3, dashArray:'8 6', opacity:0.5}).addTo(map);
-    map.fitBounds(routeLayer.getBounds(), {padding:[60,60]});
-  }
-  loadRouteHistory();
+// ── 3D Bus marker ─────────────────────────────────────────────────────────
+function makeBus3D() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.6));';
+  wrap.innerHTML = `
+    <div style="
+      width:52px;height:52px;
+      background:linear-gradient(160deg,#3b82f6 0%,#1d4ed8 55%,#1e3a8a 100%);
+      border-radius:12px 12px 6px 6px;
+      border:3px solid white;
+      box-shadow:0 6px 0 #1e3a8a,0 8px 4px rgba(0,0,0,0.3),inset 0 2px 6px rgba(255,255,255,0.25);
+      display:flex;align-items:center;justify-content:center;
+      transform:perspective(140px) rotateX(12deg);
+      transform-origin:bottom center;
+    ">
+      <i class="bi bi-bus-front-fill" style="color:white;font-size:1.6rem;text-shadow:0 2px 6px rgba(0,0,0,0.5)"></i>
+    </div>
+    <div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #1e3a8a;margin-top:-2px"></div>
+  `;
+  return wrap;
 }
 
-function busIcon() {
-  return L.divIcon({
-    className:'',
-    html:'<div style="width:36px;height:36px;border-radius:50%;background:#22c55e;border:3px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;box-shadow:0 0 12px rgba(34,197,94,0.6)"><i class=\'bi bi-bus-front-fill\'></i></div>',
-    iconSize:[36,36], iconAnchor:[18,18]
+// Bearing between two GPS points
+function calcHeadingFrom(from, to) {
+  const toRad = d => d * Math.PI / 180;
+  const dLng = toRad(to.lng - from.lng);
+  const y = Math.sin(dLng) * Math.cos(toRad(to.lat));
+  const x = Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat))
+           - Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+function initMap() {
+  const { Map } = google.maps;
+  const { AdvancedMarkerElement } = google.maps.marker;
+
+  const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
+    ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
+    : { lat: -25.7313, lng: 28.1648 };
+
+  map = new Map(document.getElementById('map'), {
+    center:     initCenter,
+    zoom:       15,
+    tilt:       0,
+    heading:    0,
+    mapId:      'DEMO_MAP_ID',
+    mapTypeId:  'roadmap',
+    disableDefaultUI: true,
+    gestureHandling: 'greedy'
   });
+
+  map.addListener('dragstart', () => { userPanned = true; });
+
+  function dotMarker(color) {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.35)';
+    return el;
+  }
+  if (ROUTE_START_LAT && ROUTE_START_LNG)
+    new AdvancedMarkerElement({ map, position:{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG}, content:dotMarker('#22c55e') });
+  if (ROUTE_END_LAT && ROUTE_END_LNG)
+    new AdvancedMarkerElement({ map, position:{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}, content:dotMarker('#ef4444') });
+
+  if (ROUTE_START_LAT && ROUTE_END_LAT) {
+    routePolyline = new google.maps.Polyline({
+      path: [{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG},{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}],
+      strokeColor:'#3b82f6', strokeOpacity:0.5, strokeWeight:3,
+      icons:[{ icon:{path:'M 0,-1 0,1',strokeOpacity:0.8,scale:3,strokeColor:'#3b82f6'}, offset:'0', repeat:'16px' }],
+      map
+    });
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend({lat:ROUTE_START_LAT,lng:ROUTE_START_LNG});
+    bounds.extend({lat:ROUTE_END_LAT,lng:ROUTE_END_LNG});
+    map.fitBounds(bounds, 60);
+  }
+  loadRouteHistory();
 }
 
 function loadRouteHistory() {
@@ -274,12 +309,20 @@ function loadRouteHistory() {
     .then(r=>r.json())
     .then(pts=>{
       if (pts.length) {
-        if (historyLayer) map.removeLayer(historyLayer);
-        historyLayer = L.polyline(pts, {color:'#22c55e',weight:3,opacity:0.5,dashArray:'6 6'}).addTo(map);
-        if (!lastLat) map.fitBounds(historyLayer.getBounds(), {padding:[60,60]});
+        const path = pts.map(p => ({lat:p[0], lng:p[1]}));
+        if (historyPolyline) historyPolyline.setMap(null);
+        historyPolyline = new google.maps.Polyline({
+          path, strokeColor:'#22c55e', strokeOpacity:0.5, strokeWeight:3,
+          icons:[{ icon:{path:'M 0,-1 0,1',strokeOpacity:0.7,scale:2,strokeColor:'#22c55e'}, offset:'0', repeat:'12px' }],
+          map
+        });
+        if (!lastLat) {
+          const bounds = new google.maps.LatLngBounds();
+          path.forEach(p => bounds.extend(p));
+          map.fitBounds(bounds, 60);
+        }
       }
-      if (!lastLat) startTracking();
-      else startTracking();
+      startTracking();
     }).catch(()=>startTracking());
 }
 
@@ -315,27 +358,31 @@ function retryGps() {
 }
 
 function onPos(pos) {
-  // GPS acquired — clear error state
   const chip = document.getElementById('status-chip');
   chip.classList.remove('gps-off');
   const dot = document.getElementById('gps-dot');
   if (dot) dot.style.background = '#22c55e';
   const bar = document.getElementById('gps-error-bar');
   if (bar) bar.style.display = 'none';
-  lastLat = pos.coords.latitude;
-  lastLng = pos.coords.longitude;
+  const newLat = pos.coords.latitude;
+  const newLng = pos.coords.longitude;
   document.getElementById('gps-label').textContent = 'Live';
-  if (!driverMarker) {
-    driverMarker = L.marker([lastLat,lastLng], {icon:busIcon()}).addTo(map);
-    map.setView([lastLat,lastLng], 17);
-    buildOsrmRoute(lastLat, lastLng); // build real road route from driver position to destination
+  if (lastFix) currentHeading = calcHeadingFrom(lastFix, {lat:newLat, lng:newLng});
+  lastFix = {lat:newLat, lng:newLng};
+  lastLat = newLat; lastLng = newLng;
+  const { AdvancedMarkerElement } = google.maps.marker;
+  if (!busMarker) {
+    busMarker = new AdvancedMarkerElement({ map, position:{lat:newLat,lng:newLng}, content:makeBus3D() });
+    map.moveCamera({ center:{lat:newLat,lng:newLng}, zoom:18, tilt:45, heading:currentHeading });
+    buildOsrmRoute(newLat, newLng);
   } else {
-    driverMarker.setLatLng([lastLat,lastLng]);
-    // Auto-follow: keep driver centred unless they manually panned away
-    if (!userPanned) map.panTo([lastLat, lastLng], { animate:true, duration:0.5 });
-    advanceStep(lastLat, lastLng);
+    busMarker.position = {lat:newLat, lng:newLng};
+    if (!userPanned) {
+      map.moveCamera({ center:{lat:newLat,lng:newLng}, zoom:18, tilt:45, heading:currentHeading });
+    }
+    advanceStep(newLat, newLng);
   }
-  sendGps(lastLat, lastLng);
+  sendGps(newLat, newLng);
 }
 
 function buildOsrmRoute(lat, lng) {
@@ -349,22 +396,22 @@ function buildOsrmRoute(lat, lng) {
     .then(data => {
       if (!data.routes || !data.routes.length) return;
       const route = data.routes[0];
-      // Replace preview line with real road geometry
-      if (routeLayer) map.removeLayer(routeLayer);
-      const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      routeLayer = L.polyline(coords, {color:'#22c55e', weight:4, opacity:0.85}).addTo(map);
-      // Build turn-by-turn steps
+      if (routePolyline) routePolyline.setMap(null);
+      const path = route.geometry.coordinates.map(c => ({lat:c[1], lng:c[0]}));
+      routePolyline = new google.maps.Polyline({
+        path, strokeColor:'#22c55e', strokeOpacity:0.85, strokeWeight:5, map
+      });
       steps = [];
       (route.legs || []).forEach(leg => {
         (leg.steps || []).forEach(s => {
           const type = s.maneuver ? s.maneuver.type : '';
           const mod  = s.maneuver ? (s.maneuver.modifier || '') : '';
           const inst = s.name
-            ? (type === 'turn' ? 'Turn ' + mod + ' onto ' + s.name
-                : type === 'arrive' ? 'Arrive at destination'
-                : 'Continue on ' + s.name)
-            : (type === 'arrive' ? 'Arrive at destination' : 'Continue straight');
-          steps.push({ instruction: inst, distance: s.distance || 0 });
+            ? (type==='turn'   ? 'Turn '+mod+' onto '+s.name
+             : type==='arrive' ? 'Arrive at destination'
+             : 'Continue on '+s.name)
+            : (type==='arrive' ? 'Arrive at destination' : 'Continue straight');
+          steps.push({ instruction:inst, distance:s.distance||0 });
         });
       });
       stepIdx = 0;
@@ -372,7 +419,7 @@ function buildOsrmRoute(lat, lng) {
         document.getElementById('instruction-text').textContent = steps[0].instruction;
         document.getElementById('distance-text').textContent    = formatDist(steps[0].distance);
       }
-    }).catch(() => {});
+    }).catch(()=>{});
 }
 
 function advanceStep(lat, lng) {
@@ -380,8 +427,6 @@ function advanceStep(lat, lng) {
   const s = steps[stepIdx];
   document.getElementById('instruction-text').textContent = s.instruction;
   document.getElementById('distance-text').textContent    = formatDist(s.distance);
-  // Advance to next step when within ~40 m of the current waypoint
-  // (simple proximity: decrement remaining distance by movement)
   if (s.distance < 40 && stepIdx < steps.length - 1) {
     stepIdx++;
   } else if (s.distance > 0) {
@@ -395,7 +440,10 @@ function formatDist(m) {
 }
 
 function recenterMap() {
-  if (lastLat) { userPanned = false; map.setView([lastLat, lastLng], 17); }
+  if (lastLat) {
+    userPanned = false;
+    map.moveCamera({ center:{lat:lastLat,lng:lastLng}, zoom:18, tilt:45, heading:currentHeading });
+  }
 }
 
 function toggleSheet() {
@@ -405,9 +453,9 @@ function toggleSheet() {
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371, toRad = x => x * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dLat = toRad(lat2-lat1), dLng = toRad(lng2-lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function _doUpdateStatus(status) {
@@ -422,19 +470,18 @@ function _doUpdateStatus(status) {
 }
 
 function updateStatus(status) {
-  if (status === 'IN_PROGRESS' && ROUTE_START_LAT && ROUTE_START_LNG) {
+  if (status==='IN_PROGRESS' && ROUTE_START_LAT && ROUTE_START_LNG) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
         const distKm = haversineKm(pos.coords.latitude, pos.coords.longitude, ROUTE_START_LAT, ROUTE_START_LNG);
         if (distKm > 0.5) {
-          alert('You are ' + distKm.toFixed(2) + ' km from the start location.\n' +
-                'Please be within 0.5 km of ' + START_LOCATION + ' before starting the trip.');
+          alert('You are '+distKm.toFixed(2)+' km from the start location.\nPlease be within 0.5 km of '+START_LOCATION+' before starting the trip.');
           return;
         }
         _doUpdateStatus(status);
       },
-      function() { _doUpdateStatus(status); }, // GPS unavailable — fall through to server check
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      function() { _doUpdateStatus(status); },
+      { enableHighAccuracy:true, timeout:8000, maximumAge:0 }
     );
   } else {
     _doUpdateStatus(status);
@@ -462,28 +509,26 @@ function sendGps(lat, lng) {
   }).catch(()=>{});
 }
 
-window.addEventListener('load', initMap);
-
 // ── AI Delay Risk polling ─────────────────────────────────────────────────
 function pollDelayRisk() {
   fetch(CTX+'/ai/delay-risk?tripId='+TRIP_ID)
     .then(r=>r.json())
     .then(d=>{
       const banner = document.getElementById('ai-risk-banner');
-      if (!d.risk || d.risk === 'LOW') {
-        banner.classList.remove('visible');
-        return;
-      }
+      if (!d.risk || d.risk==='LOW') { banner.classList.remove('visible'); return; }
       banner.className = 'visible risk-'+d.risk;
-      document.getElementById('ai-risk-icon').textContent = d.risk === 'HIGH' ? '🚨' : '⚠️';
+      document.getElementById('ai-risk-icon').textContent = d.risk==='HIGH' ? '\uD83D\uDEA8' : '\u26A0\uFE0F';
       document.getElementById('ai-risk-msg').textContent =
-        d.risk === 'HIGH' ? 'High delay risk detected on this segment' : 'Moderate slowdown detected ahead';
+        d.risk==='HIGH' ? 'High delay risk detected on this segment' : 'Moderate slowdown detected ahead';
       document.getElementById('ai-risk-conf').textContent =
-        (d.confidence ? d.confidence : '--') + ' confidence · AI prediction';
+        (d.confidence||'--')+' confidence \u00B7 AI prediction';
     }).catch(()=>{});
 }
 setInterval(pollDelayRisk, 30000);
 setTimeout(pollDelayRisk, 5000);
+</script>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsKey %>&libraries=marker&callback=initMap&loading=async">
 </script>
 </body>
 </html>
