@@ -7,6 +7,11 @@
     <meta charset="UTF-8"><title>Personnel Directory – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        #confirmModal .modal-header { border-bottom: none; padding-bottom: 0; }
+        #confirmModal .modal-footer { border-top: none; padding-top: 0; }
+        #confirmModal .modal-icon { font-size: 2.4rem; }
+    </style>
 </head>
 <body>
 <%@ include file="navbar.jsp" %>
@@ -37,16 +42,14 @@
                             </c:choose>
                         </td>
                         <td>
-                            <a href="${pageContext.request.contextPath}/users/approve?id=${u.userId}"
-                               class="btn btn-success btn-sm me-1"
-                               onclick="return confirm('Approve ${u.name}?')">
+                            <button type="button" class="btn btn-success btn-sm me-1"
+                               onclick="showConfirm('Approve ${u.name}?', 'Are you sure you want to approve this account? They will be able to sign in immediately.', 'success', '${pageContext.request.contextPath}/users/approve?id=${u.userId}')">
                                 <i class="bi bi-check-circle-fill me-1"></i>Approve
-                            </a>
-                            <a href="${pageContext.request.contextPath}/users/reject?id=${u.userId}"
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Reject and delete ${u.name}\'s account?')">
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm"
+                               onclick="showConfirm('Reject ${u.name}?', 'This will permanently delete their account. This action cannot be undone.', 'danger', '${pageContext.request.contextPath}/users/reject?id=${u.userId}')">
                                 <i class="bi bi-x-circle-fill me-1"></i>Reject
-                            </a>
+                            </button>
                         </td>
                     </tr>
                 </c:forEach>
@@ -102,11 +105,10 @@
                         <a href="${pageContext.request.contextPath}/users/edit?id=${u.userId}"
                            class="btn btn-sm btn-outline-primary" title="Edit record"><i class="bi bi-pencil"></i></a>
                         <c:if test="${u.role != 'ADMIN'}">
-                        <a href="${pageContext.request.contextPath}/users/delete?id=${u.userId}"
-                           class="btn btn-sm btn-outline-danger ms-1" title="Delete user"
-                           onclick="return confirm('Permanently delete ${u.name}? This cannot be undone.')">
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" title="Delete user"
+                           onclick="showConfirm('Delete ${u.name}?', 'This will permanently remove the user. This action cannot be undone.', 'danger', '${pageContext.request.contextPath}/users/delete?id=${u.userId}')">
                             <i class="bi bi-trash"></i>
-                        </a>
+                        </button>
                         </c:if>
                     </td>
                 </tr>
@@ -118,5 +120,48 @@
         </table>
     </div>
 </div>
+
+<!-- Confirm Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header pt-4 px-4">
+                <div id="confirmIcon" class="modal-icon me-3"></div>
+                <h5 class="modal-title fw-bold" id="confirmTitle"></h5>
+            </div>
+            <div class="modal-body px-4 pb-2" id="confirmBody" style="color:#555;font-size:.95rem"></div>
+            <div class="modal-footer px-4 pb-4 gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="confirmOkBtn" href="#" class="btn">Confirm</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function showConfirm(title, body, type, url) {
+    var modal = document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    var btn = document.getElementById('confirmOkBtn');
+    var icon = document.getElementById('confirmIcon');
+    btn.href = url;
+    if (type === 'danger') {
+        btn.className = 'btn btn-danger';
+        btn.textContent = 'Delete';
+        icon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+    } else if (type === 'success') {
+        btn.className = 'btn btn-success';
+        btn.textContent = 'Approve';
+        icon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+    } else {
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Confirm';
+        icon.innerHTML = '<i class="bi bi-question-circle-fill text-primary"></i>';
+    }
+    new bootstrap.Modal(modal).show();
+}
+</script>
 </body>
 </html>
