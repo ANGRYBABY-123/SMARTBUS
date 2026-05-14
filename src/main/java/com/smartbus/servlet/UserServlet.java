@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class UserServlet extends HttpServlet {
 
     private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
     private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserDAO       userDAO       = new UserDAO();
     private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
@@ -38,7 +40,11 @@ public class UserServlet extends HttpServlet {
         if (path == null) path = "/";
 
         // Public paths — no auth needed
-        if ("/login".equals(path) || "/logout".equals(path) || "/register".equals(path)) {
+        if ("/login".equals(path) || "/logout".equals(path) || "/register".equals(path) || "/verify-otp".equals(path)) {
+            if ("/verify-otp".equals(path)) {
+                verifyOtp(req, resp);
+                return;
+            }
             switch (path) {
                 case "/login":
                     // Support ?msg= from redirects (e.g. password reset success)
@@ -119,6 +125,11 @@ public class UserServlet extends HttpServlet {
 
         if ("/register".equals(path)) {
             registerPassenger(req, resp);
+            return;
+        }
+
+        if ("/verify-otp".equals(path)) {
+            verifyOtp(req, resp);
             return;
         }
 
@@ -302,6 +313,30 @@ public class UserServlet extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                 return;
             }
+
+            // Gate DRIVER and PASSENGER with email OTP (2FA)
+            if ("DRIVER".equals(user.getRole()) || "PASSENGER".equals(user.getRole())) {
+                String otp = String.format("%06d", RANDOM.nextInt(1000000));
+                HttpSession pending = req.getSession(true);
+                pending.setAttribute("pendingUserId",    user.getUserId());
+                pending.setAttribute("pendingUserEmail", user.getEmail());
+                pending.setAttribute("pendingUserName",  user.getName());
+                pending.setAttribute("pendingUserRole",  user.getRole());
+                pending.setAttribute("pendingOtpCode",   otp);
+                pending.setAttribute("pendingOtpExpiry", LocalDateTime.now().plusMinutes(10));
+                pending.setAttribute("pendingRememberMe", req.getParameter("rememberMe") != null);
+                try {
+                    EmailUtil.sendLoginOtp(user.getEmail(), user.getName(), otp);
+                } catch (Exception mailEx) {
+                    getServletContext().log("[LoginOtp] SMTP failure for " + user.getEmail(), mailEx);
+                    req.setAttribute("error", "Login verified but OTP email could not be sent. Please try again.");
+                    req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                    return;
+                }
+                resp.sendRedirect(req.getContextPath() + "/users/verify-otp");
+                return;
+            }
+
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedUser", user);
 
@@ -327,6 +362,76 @@ public class UserServlet extends HttpServlet {
             req.setAttribute("error", "Invalid email or password.");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
         }
+    }
+
+    private void verifyOtp(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        if ("GET".equals(req.getMethod())) {
+            // Show OTP entry page (only valid if there's a pending OTP session)
+            HttpSession s = req.getSession(false);
+            if (s == null || s.getAttribute("pendingUserId") == null) {
+                resp.sendRedirect(req.getContextPath() + "/users/login");
+                return;
+            }
+            req.getRequestDispatcher("/WEB-INF/views/verify-otp.jsp").forward(req, resp);
+            return;
+        }
+
+        // POST — validate OTP
+        HttpSession s = req.getSession(false);
+        if (s == null || s.getAttribute("pendingUserId") == null) {
+            resp.sendRedirect(req.getContextPath() + "/users/login");
+            return;
+        }
+
+        String submitted   = req.getParameter("otp");
+        String expected    = (String) s.getAttribute("pendingOtpCode");
+        LocalDateTime expiry = (LocalDateTime) s.getAttribute("pendingOtpExpiry");
+
+        if (submitted == null || !submitted.equals(expected) || LocalDateTime.now().isAfter(expiry)) {
+            req.setAttribute("error", submitted != null && !submitted.equals(expected)
+                    ? "Incorrect code. Please check your email and try again."
+                    : "Your code has expired. Please sign in again.");
+            req.getRequestDispatcher("/WEB-INF/views/verify-otp.jsp").forward(req, resp);
+            return;
+        }
+
+        // OTP valid — promote session to fully authenticated
+        Long   userId     = (Long)    s.getAttribute("pendingUserId");
+        String role       = (String)  s.getAttribute("pendingUserRole");
+        boolean rememberMe = Boolean.TRUE.equals(s.getAttribute("pendingRememberMe"));
+
+        s.removeAttribute("pendingUserId");
+        s.removeAttribute("pendingUserEmail");
+        s.removeAttribute("pendingUserName");
+        s.removeAttribute("pendingUserRole");
+        s.removeAttribute("pendingOtpCode");
+        s.removeAttribute("pendingOtpExpiry");
+        s.removeAttribute("pendingRememberMe");
+
+        User user = userDAO.findById(userId);
+        s.setAttribute("loggedUser", user);
+
+        if (rememberMe) {
+            String token = UUID.randomUUID().toString().replace("-", "");
+            rememberMeDAO.save(new RememberMeToken(token, user, LocalDateTime.now().plusDays(30)));
+            Cookie rememberCookie = new Cookie(COOKIE_NAME, token);
+            rememberCookie.setMaxAge(COOKIE_MAX_AGE);
+            rememberCookie.setPath("/");
+            rememberCookie.setHttpOnly(true);
+            resp.addCookie(rememberCookie);
+        }
+
+        String dest;
+        if ("DRIVER".equals(role)) {
+            dest = "/driver/dashboard";
+        } else if ("PASSENGER".equals(role)) {
+            dest = "/passenger/dashboard";
+        } else {
+            dest = "/dashboard";
+        }
+        resp.sendRedirect(req.getContextPath() + dest);
     }
 
     private void registerPassenger(HttpServletRequest req, HttpServletResponse resp)

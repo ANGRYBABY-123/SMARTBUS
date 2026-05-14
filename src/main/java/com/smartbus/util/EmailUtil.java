@@ -120,6 +120,66 @@ public final class EmailUtil {
              + "</div></body></html>";
     }
 
+    /**
+     * Sends a 6-digit login OTP to a user (driver or passenger) for 2FA verification.
+     */
+    public static void sendLoginOtp(String toEmail, String userName, String otp) throws MessagingException {
+        String host = env("SMTP_HOST", "smtp.gmail.com");
+        int    port = Integer.parseInt(env("SMTP_PORT", "587"));
+        String user = env("SMTP_USER", null);
+        String pass = env("SMTP_PASS", null);
+
+        if (user == null || pass == null) {
+            throw new MessagingException("SMTP_USER / SMTP_PASS environment variables are not set.");
+        }
+
+        Properties props = new Properties();
+        props.put("mail.smtp.auth",            "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host",            host);
+        props.put("mail.smtp.port",            String.valueOf(port));
+        props.put("mail.smtp.ssl.trust",       host);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pass);
+            }
+        });
+
+        Message msg = new MimeMessage(session);
+        try {
+            msg.setFrom(new InternetAddress(user, "CommuteSafe", "UTF-8"));
+        } catch (java.io.UnsupportedEncodingException e) {
+            msg.setFrom(new InternetAddress(user));
+        }
+        msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+        msg.setSubject("CommuteSafe \u2013 Your Login Verification Code");
+        msg.setContent(buildLoginOtpHtml(userName, otp), "text/html; charset=UTF-8");
+
+        Transport.send(msg);
+    }
+
+    private static String buildLoginOtpHtml(String name, String otp) {
+        String display = otp.substring(0, 3) + " " + otp.substring(3);
+        return "<!DOCTYPE html><html><body style='font-family:Segoe UI,sans-serif;background:#f4f7fb;padding:32px'>"
+             + "<div style='max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>"
+             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Commute</span>Safe &ndash; Login Verification</h2>"
+             + "<p style='color:#555;font-size:.95rem'>Hi <strong>" + name + "</strong>,</p>"
+             + "<p style='color:#555;font-size:.95rem'>A sign-in was attempted for your CommuteSafe account. Use the code below to complete login.</p>"
+             + "<div style='text-align:center;margin:28px 0'>"
+             + "<div style='display:inline-block;background:#f0fdf4;border:2px solid #86efac;"
+             + "border-radius:16px;padding:18px 40px'>"
+             + "<div style='font-size:2.4rem;font-weight:900;letter-spacing:8px;color:#000'>" + display + "</div>"
+             + "<div style='font-size:.75rem;color:#94a3b8;margin-top:6px'>Valid for 10 minutes</div>"
+             + "</div></div>"
+             + "<p style='color:#e11d48;font-size:.85rem;font-weight:600'>"
+             + "If you did not attempt to sign in, please change your password immediately.</p>"
+             + "<hr style='border:none;border-top:1px solid #eee;margin:20px 0'>"
+             + "<p style='color:#bbb;font-size:.75rem;margin:0'>CommuteSafe &mdash; Safe, real-time commuting powered by live GPS</p>"
+             + "</div></body></html>";
+    }
+
     private static String buildCodeHtml(String code) {
         // Format code with a space in the middle: "123 45"
         String display = code.substring(0, 3) + " " + code.substring(3);

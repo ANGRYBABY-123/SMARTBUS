@@ -38,6 +38,7 @@ public class AuthFilter implements Filter {
         if (path.isEmpty() || path.equals("/") || path.equals("/index.jsp")
                 || path.startsWith("/users/login")
                 || path.startsWith("/users/register")
+                || path.startsWith("/users/verify-otp")
                 || path.startsWith("/oauth/google/")
                 || path.startsWith("/forgot-password")
                 || path.startsWith("/verify-code")
