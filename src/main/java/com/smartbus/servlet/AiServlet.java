@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 public class AiServlet extends HttpServlet {
 
     private static final String GEMINI_BASE =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
     private static final Pattern TEXT_PAT =
         Pattern.compile("\"text\":\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
@@ -143,6 +143,9 @@ public class AiServlet extends HttpServlet {
             int code = conn.getResponseCode();
             InputStream is = (conn.getErrorStream() != null) ? conn.getErrorStream() : conn.getInputStream();
             String response = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            if (code == 429) {
+                return "The AI assistant is temporarily at capacity. Please wait a minute and try again.";
+            }
             if (code >= 400) {
                 // Surface a readable hint from the Gemini error body
                 java.util.regex.Matcher em = java.util.regex.Pattern
