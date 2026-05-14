@@ -230,26 +230,34 @@ let watchId = null, tracking = false;
 let steps = [], stepIdx = 0, sheetExpanded = true;
 let userPanned = false;
 
-// ── 3D Bus marker ─────────────────────────────────────────────────────────
-function makeBus3D() {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.6));';
-  wrap.innerHTML = `
-    <div style="
-      width:52px;height:52px;
-      background:linear-gradient(160deg,#3b82f6 0%,#1d4ed8 55%,#1e3a8a 100%);
-      border-radius:12px 12px 6px 6px;
-      border:3px solid white;
-      box-shadow:0 6px 0 #1e3a8a,0 8px 4px rgba(0,0,0,0.3),inset 0 2px 6px rgba(255,255,255,0.25);
-      display:flex;align-items:center;justify-content:center;
-      transform:perspective(140px) rotateX(12deg);
-      transform-origin:bottom center;
-    ">
-      <i class="bi bi-bus-front-fill" style="color:white;font-size:1.6rem;text-shadow:0 2px 6px rgba(0,0,0,0.5)"></i>
-    </div>
-    <div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #1e3a8a;margin-top:-2px"></div>
-  `;
-  return wrap;
+// ── Bus marker icons (SVG data URI — no AdvancedMarkerElement needed) ─────
+function makeBusIcon3D() {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="52" height="60" viewBox="0 0 52 60">'
+    + '<defs><linearGradient id="bg3d" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/>'
+    + '</linearGradient></defs>'
+    + '<ellipse cx="26" cy="57" rx="13" ry="3" fill="rgba(0,0,0,0.3)"/>'
+    + '<rect x="2" y="3" width="48" height="44" rx="8" fill="url(#bg3d)"/>'
+    + '<rect x="2" y="3" width="48" height="8" rx="4" fill="#22c55e"/>'
+    + '<rect x="6" y="13" width="40" height="18" rx="4" fill="#bfdbfe" opacity="0.88"/>'
+    + '<rect x="8" y="14" width="12" height="5" rx="2" fill="white" opacity="0.4"/>'
+    + '<rect x="6" y="36" width="12" height="7" rx="3" fill="#fef08a"/>'
+    + '<rect x="34" y="36" width="12" height="7" rx="3" fill="#fef08a"/>'
+    + '<rect x="2" y="41" width="48" height="6" rx="4" fill="#1e3a8a"/>'
+    + '<polygon points="26,56 17,47 35,47" fill="#1e3a8a"/>'
+    + '</svg>';
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(52, 60),
+    anchor: new google.maps.Point(26, 57)
+  };
+}
+function makeDotIcon(color) {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 8, fillColor: color, fillOpacity: 1,
+    strokeColor: 'white', strokeWeight: 2.5
+  };
 }
 
 // Bearing between two GPS points
@@ -263,19 +271,13 @@ function calcHeadingFrom(from, to) {
 }
 
 function initMap() {
-  const { Map } = google.maps;
-  const { AdvancedMarkerElement } = google.maps.marker;
-
   const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
     ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
     : { lat: -25.7313, lng: 28.1648 };
 
-  map = new Map(document.getElementById('map'), {
+  map = new google.maps.Map(document.getElementById('map'), {
     center:     initCenter,
     zoom:       15,
-    tilt:       0,
-    heading:    0,
-    mapId:      'DEMO_MAP_ID',
     mapTypeId:  'roadmap',
     disableDefaultUI: true,
     gestureHandling: 'greedy'
@@ -283,15 +285,10 @@ function initMap() {
 
   map.addListener('dragstart', () => { userPanned = true; });
 
-  function dotMarker(color) {
-    const el = document.createElement('div');
-    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.35)';
-    return el;
-  }
   if (ROUTE_START_LAT && ROUTE_START_LNG)
-    new AdvancedMarkerElement({ map, position:{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG}, content:dotMarker('#22c55e') });
+    new google.maps.Marker({ map, position:{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG}, icon:makeDotIcon('#22c55e') });
   if (ROUTE_END_LAT && ROUTE_END_LNG)
-    new AdvancedMarkerElement({ map, position:{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}, content:dotMarker('#ef4444') });
+    new google.maps.Marker({ map, position:{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}, icon:makeDotIcon('#ef4444') });
 
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
     routePolyline = new google.maps.Polyline({
@@ -374,16 +371,14 @@ function onPos(pos) {
   if (lastFix) currentHeading = calcHeadingFrom(lastFix, {lat:newLat, lng:newLng});
   lastFix = {lat:newLat, lng:newLng};
   lastLat = newLat; lastLng = newLng;
-  const { AdvancedMarkerElement } = google.maps.marker;
   if (!busMarker) {
-    busMarker = new AdvancedMarkerElement({ map, position:{lat:newLat,lng:newLng}, content:makeBus3D() });
-    map.moveCamera({ center:{lat:newLat,lng:newLng}, zoom:18, tilt:45, heading:currentHeading });
+    busMarker = new google.maps.Marker({ map, position:{lat:newLat,lng:newLng}, icon:makeBusIcon3D() });
+    map.panTo({lat:newLat, lng:newLng});
+    map.setZoom(18);
     buildOsrmRoute(newLat, newLng);
   } else {
-    busMarker.position = {lat:newLat, lng:newLng};
-    if (!userPanned) {
-      map.moveCamera({ center:{lat:newLat,lng:newLng}, zoom:18, tilt:45, heading:currentHeading });
-    }
+    busMarker.setPosition({lat:newLat, lng:newLng});
+    if (!userPanned) map.panTo({lat:newLat, lng:newLng});
     advanceStep(newLat, newLng);
   }
   sendGps(newLat, newLng);
@@ -446,7 +441,8 @@ function formatDist(m) {
 function recenterMap() {
   if (lastLat) {
     userPanned = false;
-    map.moveCamera({ center:{lat:lastLat,lng:lastLng}, zoom:18, tilt:45, heading:currentHeading });
+    map.panTo({lat:lastLat, lng:lastLng});
+    map.setZoom(18);
   }
 }
 
@@ -537,7 +533,7 @@ setInterval(pollDelayRisk, 30000);
 setTimeout(pollDelayRisk, 5000);
 </script>
 <script async
-  src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsKey %>&libraries=marker&callback=initMap&loading=async">
+  src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsKey %>&callback=initMap&loading=async">
 </script>
 </body>
 </html>
