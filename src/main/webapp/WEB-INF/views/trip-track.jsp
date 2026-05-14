@@ -93,13 +93,14 @@
     position:fixed;right:14px;top:50%;transform:translateY(-50%);
     z-index:400;display:flex;flex-direction:column;gap:8px;
   }
-  .map-btn {
+  .map-btn { 
     width:42px;height:42px;border-radius:12px;border:none;
     background:white;color:#111;font-size:1.2rem;
     display:flex;align-items:center;justify-content:center;cursor:pointer;
     box-shadow:0 2px 10px rgba(0,0,0,0.15);
   }
   .map-btn:hover { background:#f3f4f6; }
+  .map-btn.active { background:#0f172a; color:white; }
   #bottom-sheet {
     position:fixed;bottom:0;left:0;right:0;z-index:500;
     background:white;border-radius:24px 24px 0 0;
@@ -183,7 +184,8 @@
 <div id="map-controls">
   <button class="map-btn" onclick="map.zoomIn()"><i class="bi bi-plus"></i></button>
   <button class="map-btn" onclick="map.zoomOut()"><i class="bi bi-dash"></i></button>
-  <button class="map-btn" onclick="recenterBus()"><i class="bi bi-crosshair2"></i></button>
+  <button class="map-btn active" id="follow-btn" onclick="toggleFollow()" title="Auto-follow bus"><i class="bi bi-record-circle"></i></button>
+  <button class="map-btn" onclick="recenterBus()" title="Re-center on bus"><i class="bi bi-crosshair2"></i></button>
 </div>
 <div id="bottom-sheet">
   <div id="sheet-handle" onclick="toggleSheet()"><div class="handle-bar"></div></div>
@@ -246,6 +248,44 @@ const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.rou
 let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
+let autoFollow = true;   // whether map tracks the bus automatically
+let lastDynZoom = -1;    // last zoom set by dynamic logic
+let userZooming = false; // user is manually zooming
+
+// ── Dynamic zoom based on speed (Google Maps–style) ─────────────────────────
+function dynamicZoom(speedKmh) {
+  if (speedKmh < 3)   return 19;  // stopped / parking
+  if (speedKmh < 15)  return 18;  // slow traffic / intersection
+  if (speedKmh < 45)  return 17;  // normal urban
+  if (speedKmh < 80)  return 16;  // fast urban
+  if (speedKmh < 110) return 15;  // highway
+  return 14;                       // fast highway
+}
+
+function applyDynamicView(lat, lng, speedKmh) {
+  if (!autoFollow) return;
+  const target = dynamicZoom(speedKmh);
+  const cur = map.getZoom();
+  if (target !== lastDynZoom || Math.abs(cur - target) >= 1) {
+    // Zoom changed — smooth flyTo with tilt-like easing
+    map.flyTo([lat, lng], target, { duration: 1.4, easeLinearity: 0.4 });
+    lastDynZoom = target;
+  } else {
+    // Same zoom — just smoothly pan
+    map.panTo([lat, lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
+  }
+}
+
+function toggleFollow() {
+  autoFollow = !autoFollow;
+  const btn = document.getElementById('follow-btn');
+  btn.classList.toggle('active', autoFollow);
+  btn.title = autoFollow ? 'Auto-follow ON' : 'Auto-follow OFF';
+  if (autoFollow && busLat) recenterBus();
+}
+
+// Stop auto-follow when user manually drags the map
+function onMapDrag() { if (autoFollow) toggleFollow(); }
 
 // ── Dead-reckoning state ────────────────────────────────────────────────────
 // prevGps: last confirmed GPS fix {lat, lng, ts (ms)}
@@ -287,6 +327,7 @@ function initMap() {
     updateWhenIdle: false,
     detectRetina: true
   }).addTo(map);
+  map.on('dragstart', onMapDrag);
   // Centre on route start → end, or fall back to Pretoria/TUT area
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
     const bounds = L.latLngBounds(
@@ -337,6 +378,7 @@ function pollBus() {
       }
       const nowMs = performance.now();
       const newFix = { lat: d.lat, lng: d.lng, ts: nowMs };
+      let speedKmh = 0;
 
       // Calculate velocity from two consecutive fixes
       if (prevGps) {
@@ -345,7 +387,7 @@ function pollBus() {
           const dLat = d.lat - prevGps.lat;
           const dLng = d.lng - prevGps.lng;
           const distKm = haversineKm(prevGps, newFix);
-          const speedKmh = (distKm / dtMs) * 3600000;
+          speedKmh = (distKm / dtMs) * 3600000;
           // Only extrapolate when actually moving (>1 km/h); if stopped, zero velocity
           if (speedKmh > 1) {
             velLat = dLat / dtMs;
@@ -362,22 +404,31 @@ function pollBus() {
       }
       prevGps = newFix;
 
-      document.getElementById('live-label').textContent='Live';
-      document.getElementById('status-chip').style.background='#dcfce7';
-      document.getElementById('status-chip').style.color='#15803d';
-      document.getElementById('bus-status-text').textContent='Bus is live';
+      document.getElementById('live-label').textContent = 'Live';
+      document.getElementById('status-chip').style.background = '#dcfce7';
+      document.getElementById('status-chip').style.color = '#15803d';
+      document.getElementById('bus-status-text').textContent = 'Bus is live';
+
+      // ── Dynamic zoom & auto-follow ────────────────────────────────────────
       if (!busMarker) {
         busMarker = L.marker([d.lat,d.lng], {icon:busIcon(true)}).addTo(map);
-        map.setView([d.lat,d.lng], 16);
+        map.setView([d.lat,d.lng], dynamicZoom(0));
+        lastDynZoom = dynamicZoom(0);
       } else {
         busMarker.setIcon(busIcon(true));
-        // Snap to real GPS fix (DR loop will extrapolate from here)
         busMarker.setLatLng([d.lat, d.lng]);
+        applyDynamicView(d.lat, d.lng, speedKmh);
       }
     }).catch(()=>{});
 }
 
-function recenterBus() { if(busLat) map.setView([busLat,busLng], 16); }
+function recenterBus() {
+  if (busLat) {
+    autoFollow = true;
+    document.getElementById('follow-btn').classList.add('active');
+    map.flyTo([busLat, busLng], lastDynZoom > 0 ? lastDynZoom : 17, { duration: 1.2 });
+  }
+}
 
 function toggleSheet() {
   sheetExpanded=!sheetExpanded;
