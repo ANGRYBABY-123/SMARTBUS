@@ -1,9 +1,5 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-  String googleMapsKey = System.getenv("GOOGLE_MAPS_API_KEY");
-  if (googleMapsKey == null) googleMapsKey = "";
-%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CommuteSafe – Live Track</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",sans-serif; height:100vh; overflow:hidden; }
@@ -274,39 +272,21 @@ function calcHeading(from, to) {
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-// Smooth camera animation (Google Maps lacks built-in flyTo)
+// Smooth camera (Leaflet flyTo)
 function smoothCamera(toLat, toLng, targetZoom, targetTilt, targetHeading) {
   if (camAnimFrame) cancelAnimationFrame(camAnimFrame);
-  const startZoom    = map.getZoom();
-  const startTilt    = map.getTilt()    || 0;
-  const startCenter  = map.getCenter();
-  const startLat     = startCenter.lat();
-  const startLng     = startCenter.lng();
-  const t0 = performance.now();
-  const dur = 1400;
-  (function step(now) {
-    const t    = Math.min((now - t0) / dur, 1);
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
-    map.moveCamera({
-      center:  { lat: startLat + (toLat - startLat)*ease,
-                 lng: startLng + (toLng - startLng)*ease },
-      zoom:    startZoom + (targetZoom - startZoom) * ease,
-      tilt:    startTilt + (targetTilt - startTilt) * ease,
-      heading: targetHeading
-    });
-    if (t < 1) camAnimFrame = requestAnimationFrame(step);
-  })(t0);
+  camAnimFrame = null;
+  map.flyTo([toLat, toLng], targetZoom, { duration: 1.4, easeLinearity: 0.5 });
 }
 
 function applyDynamicView(lat, lng, speedKmh) {
   if (!autoFollow) return;
   const cam = dynamicCamera(speedKmh);
-  const heading = speedKmh > 5 ? currentHeading : (map.getHeading() || 0);
   if (Math.abs(map.getZoom() - cam.zoom) >= 0.5 || lastDynZoom !== cam.zoom) {
-    smoothCamera(lat, lng, cam.zoom, cam.tilt, heading);
+    smoothCamera(lat, lng, cam.zoom, 0, 0);
     lastDynZoom = cam.zoom;
   } else {
-    map.moveCamera({ center:{lat,lng}, tilt:cam.tilt, heading, zoom:cam.zoom });
+    map.panTo([lat, lng]);
   }
 }
 
@@ -336,7 +316,7 @@ function startDeadReckoning() {
       const clamp = Math.min(performance.now() - prevGps.ts, 15000);
       const lat = prevGps.lat + velLat * clamp;
       const lng = prevGps.lng + velLng * clamp;
-      busMarker.setPosition({ lat, lng });
+      busMarker.setLatLng([lat, lng]);
       busLat = lat; busLng = lng;
     }
     drRafId = requestAnimationFrame(dr);
@@ -346,53 +326,46 @@ function startDeadReckoning() {
 // ── Map initialisation ────────────────────────────────────────────────
 function makeBusIcon(live) {
   const color = live ? '#22c55e' : '#94a3b8';
-  const glow = live ? '<circle cx="22" cy="22" r="20" fill="' + color + '" opacity="0.18"/>' : '';
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">'
+  const glow = live
+    ? '<div style="position:absolute;inset:-8px;border-radius:50%;background:'+color+';opacity:0.18;pointer-events:none"></div>'
+    : '';
+  const html = '<div style="position:relative;width:44px;height:44px;border-radius:50%;background:'+color
+    +';border:3px solid white;box-shadow:'+(live?'0 0 0 10px rgba(34,197,94,.15),':'')+'0 2px 14px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'
     + glow
-    + '<circle cx="22" cy="22" r="18" fill="' + color + '" stroke="white" stroke-width="2.5"/>'
-    + '<g transform="translate(10.5,11) scale(1.5)" fill="white">'
-    + '<path d="M5 0a.5.5 0 0 0-.5.5V2a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V.5A.5.5 0 0 0 11 0H5zM1.5 3a.5.5 0 0 0-.5.5v3.17c-.32.69-.5 1.46-.5 2.33v3a.5.5 0 0 0 .5.5h.5a.5.5 0 0 0 .5-.5V12h12v.5a.5.5 0 0 0 .5.5h.5a.5.5 0 0 0 .5-.5V9c0-.87-.18-1.64-.5-2.33V3.5a.5.5 0 0 0-.5-.5h-13zm.5 2h12v3.5l.01.01a.5.5 0 0 0 .49.49h-13a.5.5 0 0 0 .49-.49L2 5zm2.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>'
-    + '</g>'
-    + '</svg>';
-  return {
-    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(44, 44),
-    anchor: new google.maps.Point(22, 22)
-  };
+    + '<i class="bi bi-bus-front-fill" style="color:white;font-size:1.2rem;position:relative"></i></div>';
+  return L.divIcon({ html, className:'', iconSize:[44,44], iconAnchor:[22,22] });
 }
 function makeDotIcon(color) {
-  return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 8, fillColor: color, fillOpacity: 1,
-    strokeColor: 'white', strokeWeight: 2.5
-  };
+  return L.divIcon({
+    html: '<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.35)"></div>',
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  });
 }
 function initMap() {
   const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
-    ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
-    : { lat: -25.7313, lng: 28.1648 };
+    ? [ROUTE_START_LAT, ROUTE_START_LNG]
+    : [-25.7313, 28.1648];
 
-  map = new google.maps.Map(document.getElementById('map'), {
-    center:     initCenter,
-    zoom:       13,
-    mapTypeId:  'roadmap',
-    disableDefaultUI: true,
-    gestureHandling: 'greedy'
-  });
+  map = L.map('map', { zoomControl:false, attributionControl:false });
+  map.setView(initCenter, 13);
 
-  map.addListener('dragstart', onMapDrag);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:20
+  }).addTo(map);
+  L.control.attribution({ position:'bottomleft', prefix:false })
+    .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>')
+    .addTo(map);
+
+  map.on('dragstart', onMapDrag);
 
   if (ROUTE_START_LAT && ROUTE_START_LNG)
-    new google.maps.Marker({ map, position:{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG}, icon:makeDotIcon('#22c55e'), title:'${trip.route.startLocation}' });
+    L.marker([ROUTE_START_LAT,ROUTE_START_LNG], { icon:makeDotIcon('#22c55e') }).addTo(map);
   if (ROUTE_END_LAT && ROUTE_END_LNG)
-    new google.maps.Marker({ map, position:{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}, icon:makeDotIcon('#f87171'), title:'${trip.route.endLocation}' });
+    L.marker([ROUTE_END_LAT,ROUTE_END_LNG], { icon:makeDotIcon('#f87171') }).addTo(map);
 
-  // Fit to route bounds
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend({lat:ROUTE_START_LAT,lng:ROUTE_START_LNG});
-    bounds.extend({lat:ROUTE_END_LAT,  lng:ROUTE_END_LNG});
-    map.fitBounds(bounds, 60);
+    const bounds = L.latLngBounds([[ROUTE_START_LAT,ROUTE_START_LNG],[ROUTE_END_LAT,ROUTE_END_LNG]]);
+    map.fitBounds(bounds, { padding:[60,60] });
   }
 
   pollBus();
@@ -401,11 +374,7 @@ function initMap() {
   pollDelay();
   startDeadReckoning();
 }
-
-function makeBusEl(live) {
-  // Legacy: returns icon for google.maps.Marker
-  return makeBusIcon(live);
-}
+function makeBusEl(live) { return makeBusIcon(live); }
 function updateBusMarkerLive(live) {
   if (!busMarker) return;
   busMarker.setIcon(makeBusIcon(live));
@@ -447,14 +416,13 @@ function pollBus() {
       document.getElementById('status-chip').style.color = '#15803d';
       document.getElementById('bus-status-text').textContent = 'Bus is live';
       if (!busMarker) {
-        busMarker = new google.maps.Marker({ map, position:{lat:d.lat,lng:d.lng}, icon:makeBusIcon(true) });
+        busMarker = L.marker([d.lat,d.lng], { icon:makeBusIcon(true), zIndexOffset:1000 }).addTo(map);
         busLat=d.lat; busLng=d.lng;
-        map.panTo({lat:d.lat,lng:d.lng});
-        map.setZoom(17);
+        map.setView([d.lat,d.lng], 17);
         lastDynZoom = 17;
       } else {
         updateBusMarkerLive(true);
-        busMarker.setPosition({ lat:d.lat, lng:d.lng });
+        busMarker.setLatLng([d.lat, d.lng]);
         busLat=d.lat; busLng=d.lng;
         applyDynamicView(d.lat, d.lng, speedKmh);
       }
@@ -465,7 +433,7 @@ function recenterBus() {
   if (busLat !== null) {
     autoFollow = true;
     document.getElementById('follow-btn').classList.add('active');
-    smoothCamera(busLat, busLng, lastDynZoom>0?lastDynZoom:17, 45, currentHeading);
+    map.flyTo([busLat, busLng], lastDynZoom>0?lastDynZoom:17, { duration: 1.4 });
   }
 }
 
@@ -572,8 +540,6 @@ function pollAiEta() {
 setInterval(pollAiEta, 15000);
 pollAiEta();
 </script>
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsKey %>&callback=initMap&loading=async">
-</script>
+<script>initMap();</script>
 </body>
 </html>
