@@ -211,7 +211,7 @@
 <script>
 const TRIP_ID = ${trip.tripId};
 const CTX     = '${pageContext.request.contextPath}';
-const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 
 // Route endpoint coordinates (from DB — null-safe via JSP EL)
 const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.route.startLat}') : null;
