@@ -230,21 +230,11 @@ let userPanned = false;
 
 // ── Leaflet marker icons ─────────────────────────────────────────────────
 function makeBusIcon3D() {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="52" height="60" viewBox="0 0 52 60">'
-    + '<defs><linearGradient id="bg3d" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/>'
-    + '</linearGradient></defs>'
-    + '<ellipse cx="26" cy="57" rx="13" ry="3" fill="rgba(0,0,0,0.3)"/>'
-    + '<rect x="2" y="3" width="48" height="44" rx="8" fill="url(#bg3d)"/>'
-    + '<rect x="2" y="3" width="48" height="8" rx="4" fill="#22c55e"/>'
-    + '<rect x="6" y="13" width="40" height="18" rx="4" fill="#bfdbfe" opacity="0.88"/>'
-    + '<rect x="8" y="14" width="12" height="5" rx="2" fill="white" opacity="0.4"/>'
-    + '<rect x="6" y="36" width="12" height="7" rx="3" fill="#fef08a"/>'
-    + '<rect x="34" y="36" width="12" height="7" rx="3" fill="#fef08a"/>'
-    + '<rect x="2" y="41" width="48" height="6" rx="4" fill="#1e3a8a"/>'
-    + '<polygon points="26,56 17,47 35,47" fill="#1e3a8a"/>'
-    + '</svg>';
-  return L.divIcon({ html: svg, className: '', iconSize:[52,60], iconAnchor:[26,57] });
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:36px;height:36px;border-radius:50%;background:#22c55e;border:3px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;box-shadow:0 0 12px rgba(34,197,94,0.6)"><i class=\'bi bi-bus-front-fill\'></i></div>',
+    iconSize: [36,36], iconAnchor: [18,18]
+  });
 }
 function makeDotIcon(color) {
   return L.divIcon({

@@ -327,15 +327,13 @@ function startDeadReckoning() {
 
 // ── Map initialisation ────────────────────────────────────────────────
 function makeBusIcon(live) {
-  const color = live ? '#22c55e' : '#94a3b8';
-  const glow = live
-    ? '<div style="position:absolute;inset:-8px;border-radius:50%;background:'+color+';opacity:0.18;pointer-events:none"></div>'
-    : '';
-  const html = '<div style="position:relative;width:44px;height:44px;border-radius:50%;background:'+color
-    +';border:3px solid white;box-shadow:'+(live?'0 0 0 10px rgba(34,197,94,.15),':'')+'0 2px 14px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'
-    + glow
-    + '<i class="bi bi-bus-front-fill" style="color:white;font-size:1.2rem;position:relative"></i></div>';
-  return L.divIcon({ html, className:'', iconSize:[44,44], iconAnchor:[22,22] });
+  const col = live ? '#22c55e' : '#94a3b8';
+  const shadow = live ? '0 0 0 8px rgba(34,197,94,0.25)' : '0 2px 6px rgba(0,0,0,0.2)';
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:40px;height:40px;border-radius:50%;background:'+col+';border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:1.15rem;box-shadow:'+shadow+'"><i class=\'bi bi-bus-front-fill\'></i></div>',
+    iconSize: [40,40], iconAnchor: [20,20]
+  });
 }
 function makeDotIcon(color) {
   return L.divIcon({
