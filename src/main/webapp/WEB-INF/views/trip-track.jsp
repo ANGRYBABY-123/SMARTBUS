@@ -1,12 +1,15 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+  String googleMapsKey = System.getenv("GOOGLE_MAPS_API_KEY");
+  if (googleMapsKey == null) googleMapsKey = "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CommuteSafe – Live Track</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -234,12 +237,10 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const TRIP_ID = ${trip.tripId};
 const CTX     = '${pageContext.request.contextPath}';
 
-// Route endpoint coordinates — used to centre the map before GPS arrives
 const ROUTE_START_LAT = '${trip.route.startLat}' !== '' ? parseFloat('${trip.route.startLat}') : null;
 const ROUTE_START_LNG = '${trip.route.startLng}' !== '' ? parseFloat('${trip.route.startLng}') : null;
 const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.route.endLat}')   : null;
@@ -248,31 +249,64 @@ const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.rou
 let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
-let autoFollow = true;   // whether map tracks the bus automatically
-let lastDynZoom = -1;    // last zoom set by dynamic logic
-let userZooming = false; // user is manually zooming
+let autoFollow = true;
+let lastDynZoom = -1;
+let currentHeading = 0;
+let camAnimFrame = null;
 
-// ── Dynamic zoom based on speed (Google Maps–style) ─────────────────────────
-function dynamicZoom(speedKmh) {
-  if (speedKmh < 3)   return 19;  // stopped / parking
-  if (speedKmh < 15)  return 18;  // slow traffic / intersection
-  if (speedKmh < 45)  return 17;  // normal urban
-  if (speedKmh < 80)  return 16;  // fast urban
-  if (speedKmh < 110) return 15;  // highway
-  return 14;                       // fast highway
+// ── Dynamic camera profile ──────────────────────────────────────────────────
+function dynamicCamera(speedKmh) {
+  if (speedKmh < 3)   return { zoom:19, tilt:  0 }; // stopped — top-down
+  if (speedKmh < 15)  return { zoom:18, tilt: 30 }; // slow / intersection
+  if (speedKmh < 45)  return { zoom:17, tilt: 45 }; // normal urban
+  if (speedKmh < 80)  return { zoom:16, tilt: 52 }; // fast urban
+  if (speedKmh < 110) return { zoom:15, tilt: 58 }; // highway
+  return                     { zoom:14, tilt: 67 }; // fast highway
+}
+
+// Bearing between two GPS points
+function calcHeading(from, to) {
+  const toRad = d => d * Math.PI / 180;
+  const dLng  = toRad(to.lng - from.lng);
+  const y = Math.sin(dLng) * Math.cos(toRad(to.lat));
+  const x = Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat))
+           - Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+// Smooth camera animation (Google Maps lacks built-in flyTo)
+function smoothCamera(toLat, toLng, targetZoom, targetTilt, targetHeading) {
+  if (camAnimFrame) cancelAnimationFrame(camAnimFrame);
+  const startZoom    = map.getZoom();
+  const startTilt    = map.getTilt()    || 0;
+  const startCenter  = map.getCenter();
+  const startLat     = startCenter.lat();
+  const startLng     = startCenter.lng();
+  const t0 = performance.now();
+  const dur = 1400;
+  (function step(now) {
+    const t    = Math.min((now - t0) / dur, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    map.moveCamera({
+      center:  { lat: startLat + (toLat - startLat)*ease,
+                 lng: startLng + (toLng - startLng)*ease },
+      zoom:    startZoom + (targetZoom - startZoom) * ease,
+      tilt:    startTilt + (targetTilt - startTilt) * ease,
+      heading: targetHeading
+    });
+    if (t < 1) camAnimFrame = requestAnimationFrame(step);
+  })(t0);
 }
 
 function applyDynamicView(lat, lng, speedKmh) {
   if (!autoFollow) return;
-  const target = dynamicZoom(speedKmh);
-  const cur = map.getZoom();
-  if (target !== lastDynZoom || Math.abs(cur - target) >= 1) {
-    // Zoom changed — smooth flyTo with tilt-like easing
-    map.flyTo([lat, lng], target, { duration: 1.4, easeLinearity: 0.4 });
-    lastDynZoom = target;
+  const cam = dynamicCamera(speedKmh);
+  const heading = speedKmh > 5 ? currentHeading : (map.getHeading() || 0);
+  if (Math.abs(map.getZoom() - cam.zoom) >= 0.5 || lastDynZoom !== cam.zoom) {
+    smoothCamera(lat, lng, cam.zoom, cam.tilt, heading);
+    lastDynZoom = cam.zoom;
   } else {
-    // Same zoom — just smoothly pan
-    map.panTo([lat, lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
+    map.moveCamera({ center:{lat,lng}, tilt:cam.tilt, heading, zoom:cam.zoom });
   }
 }
 
@@ -281,70 +315,75 @@ function toggleFollow() {
   const btn = document.getElementById('follow-btn');
   btn.classList.toggle('active', autoFollow);
   btn.title = autoFollow ? 'Auto-follow ON' : 'Auto-follow OFF';
-  if (autoFollow && busLat) recenterBus();
+  if (autoFollow && busLat !== null) recenterBus();
 }
-
-// Stop auto-follow when user manually drags the map
 function onMapDrag() { if (autoFollow) toggleFollow(); }
 
-// ── Dead-reckoning state ────────────────────────────────────────────────────
-// prevGps: last confirmed GPS fix {lat, lng, ts (ms)}
-// velLat/velLng: velocity in degrees/ms from two consecutive fixes
-// drRafId: requestAnimationFrame handle for the DR loop
+// ── Dead-reckoning ───────────────────────────────────────────────────────
 let prevGps = null, velLat = 0, velLng = 0, drRafId = null;
 
-// Haversine distance in km between two lat/lng points
 function haversineKm(a, b) {
   const R = 6371, toRad = d => d * Math.PI / 180;
-  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
   const h = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
   return R * 2 * Math.asin(Math.sqrt(h));
 }
 
-// Start/restart the dead-reckoning RAF loop
 function startDeadReckoning() {
   if (drRafId) cancelAnimationFrame(drRafId);
-  function dr() {
-    if (busMarker && prevGps && (velLat !== 0 || velLng !== 0)) {
-      const elapsed = performance.now() - prevGps.ts;
-      // Don't extrapolate beyond 10 s (bus might have stopped)
-      const clamp = Math.min(elapsed, 15000);
+  (function dr() {
+    if (busMarker && prevGps && (velLat || velLng)) {
+      const clamp = Math.min(performance.now() - prevGps.ts, 15000);
       const lat = prevGps.lat + velLat * clamp;
       const lng = prevGps.lng + velLng * clamp;
-      busMarker.setLatLng([lat, lng]);
+      busMarker.position = { lat, lng };
       busLat = lat; busLng = lng;
     }
     drRafId = requestAnimationFrame(dr);
-  }
-  drRafId = requestAnimationFrame(dr);
+  })();
 }
 
+// ── Map initialisation ────────────────────────────────────────────────────────
 function initMap() {
-  map = L.map('map', { zoomControl:false, attributionControl:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    keepBuffer: 4,
-    updateWhenIdle: false,
-    detectRetina: true
-  }).addTo(map);
-  map.on('dragstart', onMapDrag);
-  // Centre on route start → end, or fall back to Pretoria/TUT area
-  if (ROUTE_START_LAT && ROUTE_END_LAT) {
-    const bounds = L.latLngBounds(
-      [ROUTE_START_LAT, ROUTE_START_LNG],
-      [ROUTE_END_LAT,   ROUTE_END_LNG]
-    );
-    map.fitBounds(bounds, { padding: [60, 60] });
-    // Drop subtle origin/destination markers
-    L.circleMarker([ROUTE_START_LAT, ROUTE_START_LNG], {radius:6, color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.7, weight:2})
-      .addTo(map).bindPopup('${trip.route.startLocation}');
-    L.circleMarker([ROUTE_END_LAT, ROUTE_END_LNG], {radius:6, color:'#f87171', fillColor:'#f87171', fillOpacity:0.7, weight:2})
-      .addTo(map).bindPopup('${trip.route.endLocation}');
-  } else if (ROUTE_START_LAT) {
-    map.setView([ROUTE_START_LAT, ROUTE_START_LNG], 13);
-  } else {
-    map.setView([-25.7313, 28.1648], 13); // Pretoria/TUT fallback
+  const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
+    ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
+    : { lat: -25.7313, lng: 28.1648 };
+
+  const { Map } = google.maps;
+  const { AdvancedMarkerElement } = google.maps.marker;
+
+  map = new Map(document.getElementById('map'), {
+    center:     initCenter,
+    zoom:       13,
+    tilt:       0,
+    heading:    0,
+    mapId:      'DEMO_MAP_ID',
+    mapTypeId:  'roadmap',
+    disableDefaultUI: true,
+    gestureHandling: 'greedy'
+  });
+
+  map.addListener('dragstart', onMapDrag);
+
+  // Route endpoint markers
+  function dotMarker(color) {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.35)';
+    return el;
   }
+  if (ROUTE_START_LAT && ROUTE_START_LNG)
+    new AdvancedMarkerElement({ map, position:{lat:ROUTE_START_LAT,lng:ROUTE_START_LNG}, content:dotMarker('#22c55e'), title:'${trip.route.startLocation}' });
+  if (ROUTE_END_LAT && ROUTE_END_LNG)
+    new AdvancedMarkerElement({ map, position:{lat:ROUTE_END_LAT,lng:ROUTE_END_LNG}, content:dotMarker('#f87171'), title:'${trip.route.endLocation}' });
+
+  // Fit to route bounds
+  if (ROUTE_START_LAT && ROUTE_END_LAT) {
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend({lat:ROUTE_START_LAT,lng:ROUTE_START_LNG});
+    bounds.extend({lat:ROUTE_END_LAT,  lng:ROUTE_END_LNG});
+    map.fitBounds(bounds, 60);
+  }
+
   pollBus();
   setInterval(pollBus, 2000);
   setInterval(pollDelay, 15000);
@@ -352,14 +391,24 @@ function initMap() {
   startDeadReckoning();
 }
 
-function busIcon(live) {
-  const col = live ? '#22c55e' : '#94a3b8';
-  const shadow = live ? '0 0 0 8px rgba(34,197,94,0.25)' : '0 2px 6px rgba(0,0,0,0.2)';
-  return L.divIcon({
-    className:'',
-    html:'<div style="width:40px;height:40px;border-radius:50%;background:'+col+';border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:1.15rem;box-shadow:'+shadow+'"><i class=\'bi bi-bus-front-fill\'></i></div>',
-    iconSize:[40,40], iconAnchor:[20,20]
-  });
+function makeBusEl(live) {
+  const el = document.createElement('div');
+  el.style.cssText =
+    'width:44px;height:44px;border-radius:50%;transition:background .3s,box-shadow .3s;' +
+    'border:3px solid white;display:flex;align-items:center;justify-content:center;' +
+    'color:white;font-size:1.2rem;' +
+    'background:'   + (live ? '#22c55e' : '#94a3b8') + ';' +
+    'box-shadow:'   + (live ? '0 0 0 10px rgba(34,197,94,.2),0 2px 14px rgba(0,0,0,.3)'
+                            : '0 2px 8px rgba(0,0,0,.2)');
+  el.innerHTML = '<i class="bi bi-bus-front-fill"></i>';
+  return el;
+}
+function updateBusMarkerLive(live) {
+  if (!busMarker) return;
+  const el = busMarker.content;
+  el.style.background = live ? '#22c55e' : '#94a3b8';
+  el.style.boxShadow  = live ? '0 0 0 10px rgba(34,197,94,.2),0 2px 14px rgba(0,0,0,.3)'
+                             : '0 2px 8px rgba(0,0,0,.2)';
 }
 
 function pollBus() {
@@ -372,96 +421,84 @@ function pollBus() {
         document.getElementById('status-chip').style.color='#854d0e';
         document.getElementById('bus-status-text').textContent='Waiting for driver location…';
         document.getElementById('bus-status-sub').textContent='Driver may still be granting GPS access';
-        velLat = 0; velLng = 0; // stop extrapolating
-        if (busMarker) busMarker.setIcon(busIcon(false));
-        return;
+        velLat=0; velLng=0; updateBusMarkerLive(false); return;
       }
       const nowMs = performance.now();
-      const newFix = { lat: d.lat, lng: d.lng, ts: nowMs };
+      const newFix = { lat:d.lat, lng:d.lng, ts:nowMs };
       let speedKmh = 0;
-
-      // Calculate velocity from two consecutive fixes
       if (prevGps) {
         const dtMs = nowMs - prevGps.ts;
-        if (dtMs > 100) { // ignore duplicate/too-fast responses
-          const dLat = d.lat - prevGps.lat;
-          const dLng = d.lng - prevGps.lng;
-          const distKm = haversineKm(prevGps, newFix);
-          speedKmh = (distKm / dtMs) * 3600000;
-          // Only extrapolate when actually moving (>1 km/h); if stopped, zero velocity
+        if (dtMs > 100) {
+          speedKmh = (haversineKm(prevGps,newFix) / dtMs) * 3600000;
           if (speedKmh > 1) {
-            velLat = dLat / dtMs;
-            velLng = dLng / dtMs;
-          } else {
-            velLat = 0; velLng = 0;
-          }
-          // Show live speed in status
+            velLat = (d.lat-prevGps.lat)/dtMs;
+            velLng = (d.lng-prevGps.lng)/dtMs;
+            currentHeading = calcHeading(prevGps, newFix);
+          } else { velLat=0; velLng=0; }
           document.getElementById('bus-status-sub').textContent =
-            speedKmh > 1 ? speedKmh.toFixed(0) + ' km/h · Live' : 'Stopped · Live';
+            speedKmh > 1 ? speedKmh.toFixed(0)+' km/h · Live' : 'Stopped · Live';
         }
       } else {
         document.getElementById('bus-status-sub').textContent = 'Live';
       }
       prevGps = newFix;
-
       document.getElementById('live-label').textContent = 'Live';
       document.getElementById('status-chip').style.background = '#dcfce7';
       document.getElementById('status-chip').style.color = '#15803d';
       document.getElementById('bus-status-text').textContent = 'Bus is live';
-
-      // ── Dynamic zoom & auto-follow ────────────────────────────────────────
+      const { AdvancedMarkerElement } = google.maps.marker;
       if (!busMarker) {
-        busMarker = L.marker([d.lat,d.lng], {icon:busIcon(true)}).addTo(map);
-        map.setView([d.lat,d.lng], dynamicZoom(0));
-        lastDynZoom = dynamicZoom(0);
+        busMarker = new AdvancedMarkerElement({ map, position:{lat:d.lat,lng:d.lng}, content:makeBusEl(true) });
+        busLat=d.lat; busLng=d.lng;
+        map.moveCamera({ center:{lat:d.lat,lng:d.lng}, zoom:19, tilt:0 });
+        lastDynZoom = 19;
       } else {
-        busMarker.setIcon(busIcon(true));
-        busMarker.setLatLng([d.lat, d.lng]);
+        updateBusMarkerLive(true);
+        busMarker.position = { lat:d.lat, lng:d.lng };
+        busLat=d.lat; busLng=d.lng;
         applyDynamicView(d.lat, d.lng, speedKmh);
       }
     }).catch(()=>{});
 }
 
 function recenterBus() {
-  if (busLat) {
+  if (busLat !== null) {
     autoFollow = true;
     document.getElementById('follow-btn').classList.add('active');
-    map.flyTo([busLat, busLng], lastDynZoom > 0 ? lastDynZoom : 17, { duration: 1.2 });
+    smoothCamera(busLat, busLng, lastDynZoom>0?lastDynZoom:17, 45, currentHeading);
   }
 }
 
 function toggleSheet() {
-  sheetExpanded=!sheetExpanded;
-  document.getElementById('bottom-sheet').style.maxHeight=sheetExpanded?'55vh':'110px';
+  sheetExpanded = !sheetExpanded;
+  document.getElementById('bottom-sheet').style.maxHeight = sheetExpanded ? '55vh' : '110px';
 }
 
-var delayDismissed=false;
+var delayDismissed = false;
 function pollDelay() {
   fetch(CTX+'/notifications/latest-delay?tripId='+TRIP_ID)
-    .then(r=>r.json())
-    .then(d=>{
+    .then(r=>r.json()).then(d=>{
       if (d.hasDelay && !delayDismissed) {
         document.getElementById('delay-banner').classList.add('visible');
-        document.getElementById('delay-msg-text').textContent=d.message||'The driver has reported a delay.';
+        document.getElementById('delay-msg-text').textContent = d.message||'The driver has reported a delay.';
         fetchAlternatives();
       }
     }).catch(()=>{});
 }
-var altsFetched=false;
+var altsFetched = false;
 function fetchAlternatives() {
-  if (altsFetched) return;
-  altsFetched=true;
+  if (altsFetched) return; altsFetched=true;
   fetch(CTX+'/trips/alternatives?tripId='+TRIP_ID).then(r=>r.json()).then(alts=>{
     if (!alts||!alts.length) return;
-    const list=document.getElementById('alt-list');
-    list.innerHTML=alts.map(t=>{
-      const isLive=t.status==='IN_PROGRESS';
-      const badge=isLive
-        ?'<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">LIVE</span>'
-        :'<span style="background:#ede9fe;color:#7c3aed;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">'+t.startTime+'</span>';
-      const link=isLive
-        ?'<a href="'+CTX+'/tracking/view?tripId='+t.tripId+'" style="background:#1a1a1a;color:#fff;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700;text-decoration:none;white-space:nowrap">Track</a>'
-        :'<span style="background:#e5e7eb;color:#9ca3af;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700">Soon</span>';
+    const list = document.getElementById('alt-list');
+    list.innerHTML = alts.map(t=>{
+      const isLive = t.status==='IN_PROGRESS';
+      const badge = isLive
+        ? '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">LIVE</span>'
+        : '<span style="background:#ede9fe;color:#7c3aed;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:800">'+t.startTime+'</span>';
+      const link = isLive
+        ? '<a href="'+CTX+'/tracking/view?tripId='+t.tripId+'" style="background:#1a1a1a;color:#fff;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700;text-decoration:none;white-space:nowrap">Track</a>'
+        : '<span style="background:#e5e7eb;color:#9ca3af;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700">Soon</span>';
       return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">'
         +'<div style="flex:1"><div style="font-weight:700;font-size:.88rem">'+t.route+'</div>'
         +'<div style="font-size:.75rem;color:#888">'+t.from+' → '+t.to+'</div>'
@@ -472,9 +509,7 @@ function fetchAlternatives() {
   }).catch(()=>{});
 }
 
-window.addEventListener('load', initMap);
-
-// ── AI Chat ──────────────────────────────────────────────────────────────────
+// ── AI Chat ───────────────────────────────────────────────────────────────────
 let aiOpen = false;
 function toggleAiPanel() {
   aiOpen = !aiOpen;
@@ -482,27 +517,23 @@ function toggleAiPanel() {
 }
 function sendAiMsg() {
   const input = document.getElementById('ai-input');
-  const msg = input.value.trim();
-  if (!msg) return;
+  const msg = input.value.trim(); if (!msg) return;
   input.value = '';
   appendAiMsg(msg, true);
   const typing = appendTypingIndicator();
-  fetch(CTX+'/ai/chat', {
-    method:'POST',
+  fetch(CTX+'/ai/chat', { method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'tripId='+TRIP_ID+'&message='+encodeURIComponent(msg)
   }).then(r=>r.json()).then(d=>{
-    typing.remove();
-    appendAiMsg(d.reply || d.error || 'Sorry, no response.', false);
+    typing.remove(); appendAiMsg(d.reply||d.error||'Sorry, no response.', false);
   }).catch(()=>{ typing.remove(); appendAiMsg('Could not reach AI. Check your connection.', false); });
 }
 function appendAiMsg(text, isUser) {
   const div = document.createElement('div');
-  div.className = 'ai-msg ' + (isUser ? 'ai-user' : 'ai-bot');
+  div.className = 'ai-msg '+(isUser?'ai-user':'ai-bot');
   div.textContent = text;
   const msgs = document.getElementById('ai-messages');
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
   return div;
 }
 function appendTypingIndicator() {
@@ -510,45 +541,39 @@ function appendTypingIndicator() {
   div.className = 'ai-msg ai-bot ai-typing';
   div.innerHTML = '<span></span><span></span><span></span>';
   const msgs = document.getElementById('ai-messages');
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
   return div;
 }
-// ── AI ETA polling ─────────────────────────────────────────────────────────
 function pollAiEta() {
-  fetch(CTX+'/ai/eta?tripId='+TRIP_ID)
-    .then(r=>r.json())
-    .then(d=>{
-      // Speed chip
-      document.getElementById('ai-speed-val').textContent =
-        d.speedKmh ? parseFloat(d.speedKmh).toFixed(0)+' km/h' : '-- km/h';
-      document.getElementById('ai-traffic-val').textContent = d.label || '--';
-
-      // ETA card
-      if (d.etaMinutes > 0) {
-        const mins = Math.round(d.etaMinutes);
-        document.getElementById('eta-mins').textContent = mins < 1 ? '<1' : mins;
-        if (mins <= 2) {
-          document.getElementById('eta-label').textContent = 'Arriving soon';
-        } else {
-          const now = new Date();
-          now.setMinutes(now.getMinutes() + mins);
-          const hh = now.getHours().toString().padStart(2,'0');
-          const mm = now.getMinutes().toString().padStart(2,'0');
-          document.getElementById('eta-label').textContent = 'Est. arrival at ' + hh + ':' + mm;
-        }
+  fetch(CTX+'/ai/eta?tripId='+TRIP_ID).then(r=>r.json()).then(d=>{
+    document.getElementById('ai-speed-val').textContent =
+      d.speedKmh ? parseFloat(d.speedKmh).toFixed(0)+' km/h' : '-- km/h';
+    document.getElementById('ai-traffic-val').textContent = d.label||'--';
+    if (d.etaMinutes > 0) {
+      const mins = Math.round(d.etaMinutes);
+      document.getElementById('eta-mins').textContent = mins<1?'<1':mins;
+      if (mins<=2) {
+        document.getElementById('eta-label').textContent = 'Arriving soon';
       } else {
-        document.getElementById('eta-mins').textContent = '--';
-        document.getElementById('eta-label').textContent = 'ETA unavailable';
+        const now = new Date();
+        now.setMinutes(now.getMinutes()+mins);
+        document.getElementById('eta-label').textContent =
+          'Est. arrival at '+now.getHours().toString().padStart(2,'0')+':'
+          +now.getMinutes().toString().padStart(2,'0');
       }
-      if (d.distKm > 0) {
-        document.getElementById('dist-label').textContent =
-          parseFloat(d.distKm).toFixed(1) + ' km remaining';
-      }
-    }).catch(()=>{});
+    } else {
+      document.getElementById('eta-mins').textContent = '--';
+      document.getElementById('eta-label').textContent = 'ETA unavailable';
+    }
+    if (d.distKm>0)
+      document.getElementById('dist-label').textContent = parseFloat(d.distKm).toFixed(1)+' km remaining';
+  }).catch(()=>{});
 }
 setInterval(pollAiEta, 15000);
 pollAiEta();
+</script>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsKey %>&libraries=marker&callback=initMap&loading=async">
 </script>
 </body>
 </html>
