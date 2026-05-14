@@ -6,9 +6,9 @@ import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
-import com.smartbus.util.EmailUtil;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.PasswordUtil;
+import com.smartbus.util.TwilioUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +26,6 @@ public class UserServlet extends HttpServlet {
 
     private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
     private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserDAO       userDAO       = new UserDAO();
     private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
@@ -40,9 +38,9 @@ public class UserServlet extends HttpServlet {
         if (path == null) path = "/";
 
         // Public paths — no auth needed
-        if ("/login".equals(path) || "/logout".equals(path) || "/register".equals(path) || "/verify-otp".equals(path)) {
-            if ("/verify-otp".equals(path)) {
-                verifyOtp(req, resp);
+        if ("/login".equals(path) || "/logout".equals(path) || "/register".equals(path) || "/verify-phone".equals(path)) {
+            if ("/verify-phone".equals(path)) {
+                verifyPhone(req, resp);
                 return;
             }
             switch (path) {
@@ -128,8 +126,8 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        if ("/verify-otp".equals(path)) {
-            verifyOtp(req, resp);
+        if ("/verify-phone".equals(path)) {
+            verifyPhone(req, resp);
             return;
         }
 
@@ -314,29 +312,6 @@ public class UserServlet extends HttpServlet {
                 return;
             }
 
-            // Gate DRIVER and PASSENGER with email OTP (2FA)
-            if ("DRIVER".equals(user.getRole()) || "PASSENGER".equals(user.getRole())) {
-                String otp = String.format("%06d", RANDOM.nextInt(1000000));
-                HttpSession pending = req.getSession(true);
-                pending.setAttribute("pendingUserId",    user.getUserId());
-                pending.setAttribute("pendingUserEmail", user.getEmail());
-                pending.setAttribute("pendingUserName",  user.getName());
-                pending.setAttribute("pendingUserRole",  user.getRole());
-                pending.setAttribute("pendingOtpCode",   otp);
-                pending.setAttribute("pendingOtpExpiry", LocalDateTime.now().plusMinutes(10));
-                pending.setAttribute("pendingRememberMe", req.getParameter("rememberMe") != null);
-                try {
-                    EmailUtil.sendLoginOtp(user.getEmail(), user.getName(), otp);
-                } catch (Exception mailEx) {
-                    getServletContext().log("[LoginOtp] SMTP failure for " + user.getEmail(), mailEx);
-                    req.setAttribute("error", "Login verified but OTP email could not be sent. Please try again.");
-                    req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
-                    return;
-                }
-                resp.sendRedirect(req.getContextPath() + "/users/verify-otp");
-                return;
-            }
-
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedUser", user);
 
@@ -364,84 +339,15 @@ public class UserServlet extends HttpServlet {
         }
     }
 
-    private void verifyOtp(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
-        if ("GET".equals(req.getMethod())) {
-            // Show OTP entry page (only valid if there's a pending OTP session)
-            HttpSession s = req.getSession(false);
-            if (s == null || s.getAttribute("pendingUserId") == null) {
-                resp.sendRedirect(req.getContextPath() + "/users/login");
-                return;
-            }
-            req.getRequestDispatcher("/WEB-INF/views/verify-otp.jsp").forward(req, resp);
-            return;
-        }
-
-        // POST — validate OTP
-        HttpSession s = req.getSession(false);
-        if (s == null || s.getAttribute("pendingUserId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/users/login");
-            return;
-        }
-
-        String submitted   = req.getParameter("otp");
-        String expected    = (String) s.getAttribute("pendingOtpCode");
-        LocalDateTime expiry = (LocalDateTime) s.getAttribute("pendingOtpExpiry");
-
-        if (submitted == null || !submitted.equals(expected) || LocalDateTime.now().isAfter(expiry)) {
-            req.setAttribute("error", submitted != null && !submitted.equals(expected)
-                    ? "Incorrect code. Please check your email and try again."
-                    : "Your code has expired. Please sign in again.");
-            req.getRequestDispatcher("/WEB-INF/views/verify-otp.jsp").forward(req, resp);
-            return;
-        }
-
-        // OTP valid — promote session to fully authenticated
-        Long   userId     = (Long)    s.getAttribute("pendingUserId");
-        String role       = (String)  s.getAttribute("pendingUserRole");
-        boolean rememberMe = Boolean.TRUE.equals(s.getAttribute("pendingRememberMe"));
-
-        s.removeAttribute("pendingUserId");
-        s.removeAttribute("pendingUserEmail");
-        s.removeAttribute("pendingUserName");
-        s.removeAttribute("pendingUserRole");
-        s.removeAttribute("pendingOtpCode");
-        s.removeAttribute("pendingOtpExpiry");
-        s.removeAttribute("pendingRememberMe");
-
-        User user = userDAO.findById(userId);
-        s.setAttribute("loggedUser", user);
-
-        if (rememberMe) {
-            String token = UUID.randomUUID().toString().replace("-", "");
-            rememberMeDAO.save(new RememberMeToken(token, user, LocalDateTime.now().plusDays(30)));
-            Cookie rememberCookie = new Cookie(COOKIE_NAME, token);
-            rememberCookie.setMaxAge(COOKIE_MAX_AGE);
-            rememberCookie.setPath("/");
-            rememberCookie.setHttpOnly(true);
-            resp.addCookie(rememberCookie);
-        }
-
-        String dest;
-        if ("DRIVER".equals(role)) {
-            dest = "/driver/dashboard";
-        } else if ("PASSENGER".equals(role)) {
-            dest = "/passenger/dashboard";
-        } else {
-            dest = "/dashboard";
-        }
-        resp.sendRedirect(req.getContextPath() + dest);
-    }
-
     private void registerPassenger(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String name            = req.getParameter("name");
         String email           = req.getParameter("email");
         String password        = req.getParameter("password");
         String confirmPassword = req.getParameter("confirmPassword");
-        String role            = req.getParameter("registerRole"); // PASSENGER or DRIVER
-        String licenseNumber   = req.getParameter("licenseNumber"); // for drivers
+        String role            = req.getParameter("registerRole");
+        String licenseNumber   = req.getParameter("licenseNumber");
+        String phone           = req.getParameter("phone");
 
         if (role == null || (!"PASSENGER".equals(role) && !"DRIVER".equals(role))) {
             role = "PASSENGER";
@@ -452,7 +358,7 @@ public class UserServlet extends HttpServlet {
                 || !InputValidator.isValidEmail(email)
                 || !InputValidator.isValidPassword(password)
                 || !InputValidator.isValidName(name)) {
-            req.setAttribute("error", "Please fill in all fields correctly. Email must be a valid address (e.g. name@example.com). Password must be at least 6 characters.");
+            req.setAttribute("error", "Please fill in all fields correctly. Email must be valid and password at least 6 characters.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             return;
@@ -472,6 +378,19 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
+        if (phone == null || phone.trim().isEmpty()) {
+            req.setAttribute("error", "Please provide your mobile number for verification.");
+            req.setAttribute("tab", "register");
+            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            return;
+        }
+
+        // Normalise phone: ensure it starts with +
+        String normalPhone = phone.trim().replaceAll("[\\s\\-()]", "");
+        if (!normalPhone.startsWith("+")) {
+            normalPhone = "+" + normalPhone;
+        }
+
         // Check email uniqueness
         if (userDAO.emailExists(email.trim())) {
             req.setAttribute("error", "An account with this email already exists. Please sign in.");
@@ -480,24 +399,91 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        // Hash password before storing
-        String hashedPassword = PasswordUtil.hash(password);
+        // Store registration data in session — account is created only after phone is verified
+        HttpSession s = req.getSession(true);
+        s.setAttribute("reg_name",    name.trim());
+        s.setAttribute("reg_email",   email.trim());
+        s.setAttribute("reg_password", PasswordUtil.hash(password));
+        s.setAttribute("reg_role",    role);
+        s.setAttribute("reg_license", licenseNumber != null ? licenseNumber.trim().toUpperCase() : "");
+        s.setAttribute("reg_phone",   normalPhone);
 
-        // Create PENDING user
-        User pending;
-        if ("DRIVER".equals(role)) {
-            Driver d = new Driver(name.trim(), email.trim(), hashedPassword, licenseNumber.trim().toUpperCase());
-            d.setStatus("PENDING");
-            pending = d;
-        } else {
-            Passenger p = new Passenger(name.trim(), email.trim(), hashedPassword);
-            p.setStatus("PENDING");
-            pending = p;
+        // Send Twilio Verify OTP to phone
+        try {
+            TwilioUtil.sendVerification(normalPhone);
+        } catch (Exception e) {
+            getServletContext().log("[Register] Twilio Verify failed for " + normalPhone, e);
+            req.setAttribute("error", "Could not send SMS verification. Check the phone number and try again.");
+            req.setAttribute("tab", "register");
+            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            return;
         }
-        userDAO.save(pending);
 
-        // Redirect to login with success message
-        req.setAttribute("success", "Account created! Your request is pending admin approval. You will be able to sign in once an admin reviews and approves your account.");
-        req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+        resp.sendRedirect(req.getContextPath() + "/users/verify-phone");
+    }
+
+    private void verifyPhone(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        HttpSession s = req.getSession(false);
+        if (s == null || s.getAttribute("reg_phone") == null) {
+            resp.sendRedirect(req.getContextPath() + "/users/login");
+            return;
+        }
+
+        if ("GET".equals(req.getMethod())) {
+            req.getRequestDispatcher("/WEB-INF/views/verify-phone.jsp").forward(req, resp);
+            return;
+        }
+
+        // POST — check code with Twilio Verify
+        String code  = req.getParameter("otp");
+        String phone = (String) s.getAttribute("reg_phone");
+
+        boolean approved;
+        try {
+            approved = TwilioUtil.checkVerification(phone, code);
+        } catch (Exception e) {
+            getServletContext().log("[VerifyPhone] Twilio check failed", e);
+            req.setAttribute("error", "Verification service error. Please try again.");
+            req.getRequestDispatcher("/WEB-INF/views/verify-phone.jsp").forward(req, resp);
+            return;
+        }
+
+        if (!approved) {
+            req.setAttribute("error", "Incorrect or expired code. Please try again.");
+            req.getRequestDispatcher("/WEB-INF/views/verify-phone.jsp").forward(req, resp);
+            return;
+        }
+
+        // Phone verified — create the account
+        String regName    = (String) s.getAttribute("reg_name");
+        String regEmail   = (String) s.getAttribute("reg_email");
+        String regPassword= (String) s.getAttribute("reg_password");
+        String regRole    = (String) s.getAttribute("reg_role");
+        String regLicense = (String) s.getAttribute("reg_license");
+        String regPhone   = phone;
+
+        s.removeAttribute("reg_name");    s.removeAttribute("reg_email");
+        s.removeAttribute("reg_password"); s.removeAttribute("reg_role");
+        s.removeAttribute("reg_license"); s.removeAttribute("reg_phone");
+
+        User newUser;
+        if ("DRIVER".equals(regRole)) {
+            Driver d = new Driver(regName, regEmail, regPassword,
+                    regLicense.isEmpty() ? "DRV-" + System.currentTimeMillis() % 100000L : regLicense);
+            d.setStatus("PENDING");
+            d.setPhoneNumber(regPhone);
+            newUser = d;
+        } else {
+            Passenger p = new Passenger(regName, regEmail, regPassword);
+            p.setStatus("PENDING");
+            p.setPhoneNumber(regPhone);
+            newUser = p;
+        }
+        userDAO.save(newUser);
+
+        resp.sendRedirect(req.getContextPath() + "/users/login?msg="
+                + java.net.URLEncoder.encode("Phone verified! Your account is pending admin approval. We'll notify you once approved.", "UTF-8"));
     }
 }

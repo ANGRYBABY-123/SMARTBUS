@@ -47,7 +47,13 @@ services:
       # ── AI (Gemini) ───────────────────────────────────────────────────────
       - key: GEMINI_API_KEY
         sync: false     # set manually in Render dashboard
-
+      # ── Twilio Verify (SMS OTP at registration) ────────────────────────────────
+      - key: TWILIO_ACCOUNT_SID
+        sync: false     # set manually in Render dashboard
+      - key: TWILIO_AUTH_TOKEN
+        sync: false     # set manually in Render dashboard
+      - key: TWILIO_VERIFY_SID
+        sync: false     # Verify Service SID (starts with VA...)
       # ── Optional JVM tuning ───────────────────────────────────────────────
       - key: JAVA_OPTS
         value: "-Xms128m -Xmx400m -XX:+UseContainerSupport"

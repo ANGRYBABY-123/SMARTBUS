@@ -15,13 +15,14 @@ USE smartbus;
 -- 1. users (base table – JOINED inheritance)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
-    user_id   BIGINT       NOT NULL AUTO_INCREMENT,
-    name      VARCHAR(100) NOT NULL,
-    email     VARCHAR(150) NOT NULL,
-    password  VARCHAR(255) NOT NULL,
-    role      VARCHAR(20)  NOT NULL,
-    status    VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    google_id VARCHAR(100) NULL,
+    user_id      BIGINT       NOT NULL AUTO_INCREMENT,
+    name         VARCHAR(100) NOT NULL,
+    email        VARCHAR(150) NOT NULL,
+    password     VARCHAR(255) NOT NULL,
+    role         VARCHAR(20)  NOT NULL,
+    status       VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    google_id    VARCHAR(100) NULL,
+    phone_number VARCHAR(20)  NULL,
     CONSTRAINT pk_users      PRIMARY KEY (user_id),
     CONSTRAINT uq_user_email  UNIQUE (email),
     CONSTRAINT uq_google_id   UNIQUE (google_id)

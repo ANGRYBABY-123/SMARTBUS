@@ -53,6 +53,9 @@ public class User {
     @Column(name = "google_id", length = 100, unique = true)
     private String googleId;
 
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
     @Column(name = "removal_scheduled_at")
     private LocalDateTime removalScheduledAt;
 
@@ -82,6 +85,8 @@ public class User {
     public void setStatus(String status) { this.status = status; }
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public LocalDateTime getRemovalScheduledAt() { return removalScheduledAt; }
     public void setRemovalScheduledAt(LocalDateTime removalScheduledAt) { this.removalScheduledAt = removalScheduledAt; }
     /** Epoch-milliseconds when the 30-minute removal window closes; 0 if not scheduled. */
