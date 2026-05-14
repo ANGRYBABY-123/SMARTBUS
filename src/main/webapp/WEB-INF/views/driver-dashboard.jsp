@@ -119,21 +119,6 @@
 <c:remove var="tripStartError" scope="session"/>
 </c:if>
 
-<%-- Schedule notification banner (shown when a new schedule has been posted) --%>
-<c:if test="${not empty scheduleNotifs}">
-<div class="sched-banner" id="sched-banner">
-    <i class="bi bi-calendar-check-fill"></i>
-    <div class="sched-banner-text">
-        <strong style="color:#60a5fa">New Schedule Posted</strong>&nbsp;
-        ${scheduleNotifs[0].message}
-        <c:if test="${fn:length(scheduleNotifs) > 1}">
-            &nbsp;<span style="color:#475569">+${fn:length(scheduleNotifs)-1} more</span>
-        </c:if>
-    </div>
-    <button class="sched-banner-close" onclick="document.getElementById('sched-banner').style.display='none'" title="Dismiss">&times;</button>
-</div>
-</c:if>
-
 <div class="bottom-sheet" id="bottom-sheet">
     <div class="sheet-handle" id="drv-handle">
         <div class="sheet-bar"></div>
