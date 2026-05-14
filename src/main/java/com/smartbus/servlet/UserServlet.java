@@ -8,7 +8,7 @@ import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.PasswordUtil;
-import com.smartbus.util.TwilioUtil;
+import com.smartbus.util.SmsUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class UserServlet extends HttpServlet {
 
     private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
     private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserDAO       userDAO       = new UserDAO();
     private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
@@ -408,11 +410,15 @@ public class UserServlet extends HttpServlet {
         s.setAttribute("reg_license", licenseNumber != null ? licenseNumber.trim().toUpperCase() : "");
         s.setAttribute("reg_phone",   normalPhone);
 
-        // Send Twilio Verify OTP to phone
+        // Generate OTP, store in session, send via Africa's Talking
+        String otp = String.format("%06d", RANDOM.nextInt(1_000_000));
+        s.setAttribute("reg_otp",        otp);
+        s.setAttribute("reg_otp_expiry", LocalDateTime.now().plusMinutes(10));
+
         try {
-            TwilioUtil.sendVerification(normalPhone);
+            SmsUtil.sendOtp(normalPhone, otp);
         } catch (Exception e) {
-            getServletContext().log("[Register] Twilio Verify failed for " + normalPhone, e);
+            getServletContext().log("[Register] SMS failed for " + normalPhone, e);
             req.setAttribute("error", "Could not send SMS verification. Check the phone number and try again.");
             req.setAttribute("tab", "register");
             req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
@@ -436,22 +442,19 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        // POST — check code with Twilio Verify
-        String code  = req.getParameter("otp");
-        String phone = (String) s.getAttribute("reg_phone");
+        // POST — validate OTP from session
+        String code          = req.getParameter("otp");
+        String phone         = (String)        s.getAttribute("reg_phone");
+        String expected      = (String)        s.getAttribute("reg_otp");
+        LocalDateTime expiry = (LocalDateTime) s.getAttribute("reg_otp_expiry");
 
-        boolean approved;
-        try {
-            approved = TwilioUtil.checkVerification(phone, code);
-        } catch (Exception e) {
-            getServletContext().log("[VerifyPhone] Twilio check failed", e);
-            req.setAttribute("error", "Verification service error. Please try again.");
+        if (code == null || code.isBlank() || !code.equals(expected)) {
+            req.setAttribute("error", "Incorrect code. Please try again.");
             req.getRequestDispatcher("/WEB-INF/views/verify-phone.jsp").forward(req, resp);
             return;
         }
-
-        if (!approved) {
-            req.setAttribute("error", "Incorrect or expired code. Please try again.");
+        if (expiry == null || LocalDateTime.now().isAfter(expiry)) {
+            req.setAttribute("error", "Your code has expired. Please go back and register again.");
             req.getRequestDispatcher("/WEB-INF/views/verify-phone.jsp").forward(req, resp);
             return;
         }
@@ -467,6 +470,7 @@ public class UserServlet extends HttpServlet {
         s.removeAttribute("reg_name");    s.removeAttribute("reg_email");
         s.removeAttribute("reg_password"); s.removeAttribute("reg_role");
         s.removeAttribute("reg_license"); s.removeAttribute("reg_phone");
+        s.removeAttribute("reg_otp");     s.removeAttribute("reg_otp_expiry");
 
         User newUser;
         if ("DRIVER".equals(regRole)) {

@@ -47,13 +47,13 @@ services:
       # ── AI (Gemini) ───────────────────────────────────────────────────────
       - key: GEMINI_API_KEY
         sync: false     # set manually in Render dashboard
-      # ── Twilio Verify (SMS OTP at registration) ────────────────────────────────
-      - key: TWILIO_ACCOUNT_SID
+      # ── Africa's Talking (SMS OTP at registration) ────────────────────────────
+      - key: AT_API_KEY
         sync: false     # set manually in Render dashboard
-      - key: TWILIO_AUTH_TOKEN
-        sync: false     # set manually in Render dashboard
-      - key: TWILIO_VERIFY_SID
-        sync: false     # Verify Service SID (starts with VA...)
+      - key: AT_USERNAME
+        sync: false     # your AT username (use "sandbox" for testing)
+      - key: AT_SENDER_ID
+        sync: false     # optional sender name/shortcode (e.g. CommuteSafe)
       # ── Optional JVM tuning ───────────────────────────────────────────────
       - key: JAVA_OPTS
         value: "-Xms128m -Xmx400m -XX:+UseContainerSupport"
