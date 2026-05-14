@@ -155,7 +155,7 @@
   </div>
 </div>
 <div id="delay-banner">
-  <strong>⚠️ Delay Reported</strong>
+  <strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1px;margin-right:4px"><path d="M12 2a1 1 0 0 1 .894.553l9 18A1 1 0 0 1 21 22H3a1 1 0 0 1-.894-1.447l9-18A1 1 0 0 1 12 2zm0 3.236L4.118 20h15.764L12 5.236zM11 10v4a1 1 0 1 0 2 0v-4a1 1 0 1 0-2 0zm1 7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Delay Reported</strong>
   <div id="delay-msg-text">The driver has reported a delay on this route.</div>
   <button onclick="document.getElementById('delay-banner').classList.remove('visible');document.getElementById('alt-panel').style.display='none';"
     style="float:right;background:none;border:none;cursor:pointer;margin-top:-20px;color:#7d5a00;font-size:1rem">✕</button>

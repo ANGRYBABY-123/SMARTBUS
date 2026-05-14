@@ -1,6 +1,7 @@
 package com.smartbus.listener;
 
 import com.smartbus.dao.UserDAO;
+import com.smartbus.dao.TripDAO;
 import com.smartbus.util.JPAUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletContextEvent;
@@ -29,7 +30,7 @@ public class AppContextListener implements ServletContextListener {
         }
         // Every 60 s, permanently delete users whose 30-minute removal window has expired
         UserDAO purgeDAO = new UserDAO();
-        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler = Executors.newScheduledThreadPool(2);
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 purgeDAO.hardDeleteExpiredRemovals();
@@ -37,6 +38,17 @@ public class AppContextListener implements ServletContextListener {
                 log.log(Level.WARNING, "Pending-removal purge job failed", ex);
             }
         }, 1, 1, TimeUnit.MINUTES);
+
+        // Every 10 minutes, delete SCHEDULED trips whose start time is 30+ minutes in the past
+        TripDAO tripDAO = new TripDAO();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                int n = tripDAO.deleteExpiredScheduledTrips();
+                if (n > 0) log.info("Auto-deleted " + n + " expired scheduled trip(s).");
+            } catch (Exception ex) {
+                log.log(Level.WARNING, "Expired-trip cleanup job failed", ex);
+            }
+        }, 2, 10, TimeUnit.MINUTES);
 
         // Seed Soshanguve bus stops and routes if the table is empty
         try {

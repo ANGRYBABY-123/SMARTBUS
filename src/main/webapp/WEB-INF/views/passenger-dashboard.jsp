@@ -331,10 +331,12 @@ function pollNotifs() {
         const list = document.getElementById('notif-list');
         list.innerHTML = notifs.map(n => {
             const d = document.createElement('div'); d.textContent = n.message;
-            const icon = n.type === 'DELAY' ? '\u26a0\ufe0f' : '\ud83d\udce3';
+            const icon = n.type === 'DELAY'
+              ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2a1 1 0 0 1 .894.553l9 18A1 1 0 0 1 21 22H3a1 1 0 0 1-.894-1.447l9-18A1 1 0 0 1 12 2zm0 3.236L4.118 20h15.764L12 5.236zM11 10v4a1 1 0 1 0 2 0v-4a1 1 0 1 0-2 0zm1 7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>'
+              : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3b82f6"><path d="M18 4a1 1 0 0 1 .948.684l.025.09.027.226V14a1 1 0 0 1-.684.948l-.09.025L18 15H7l-2 3H4V7l2-3h12zm-1 2H7.5L6 8.5V16h1l2-3h8V6zm-9 3h8v2H8V9zm0 4h5v2H8v-2z"/></svg>';
             const label = n.type === 'DELAY' ? 'Delay Alert' : 'Announcement';
             return '<div class="notif-item' + (n.type==='DELAY'?' delay':'') + '">'
-                + '<div style="font-size:1.2rem">' + icon + '</div>'
+                + '<div style="display:flex;align-items:center">' + icon + '</div>'
                 + '<div class="notif-msg"><b style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#f59e0b">' + label + '</b><br>' + d.innerHTML + '<div class="notif-time">' + n.time + '</div></div></div>';
         }).join('');
         document.getElementById('notif-badge').textContent = notifs.length;

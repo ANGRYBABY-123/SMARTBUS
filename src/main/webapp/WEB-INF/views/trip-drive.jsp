@@ -153,7 +153,11 @@
 
 <!-- AI Delay Risk Banner -->
 <div id="ai-risk-banner">
-  <span id="ai-risk-icon" style="font-size:1.2rem;flex-shrink:0">🤖</span>
+  <span id="ai-risk-icon" style="flex-shrink:0;display:flex;align-items:center">
+    <svg id="ai-risk-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a2 2 0 0 1 2 2 2 2 0 0 1-.184.845A4 4 0 0 1 16 8v1h1a2 2 0 0 1 2 2v1h1a1 1 0 1 1 0 2h-1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1H4a1 1 0 1 1 0-2h1v-1a2 2 0 0 1 2-2h1V8a4 4 0 0 1 2.184-3.155A2 2 0 0 1 10 4a2 2 0 0 1 2-2zm0 6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2zm-2 3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-7 5h10l1 2H3l1-2z"/>
+    </svg>
+  </span>
   <div style="flex:1">
     <div id="ai-risk-msg" style="font-weight:700">Analysing route…</div>
     <div id="ai-risk-conf" style="font-size:0.72rem;opacity:0.8;margin-top:2px">AI delay prediction</div>
@@ -517,7 +521,12 @@ function pollDelayRisk() {
       const banner = document.getElementById('ai-risk-banner');
       if (!d.risk || d.risk==='LOW') { banner.classList.remove('visible'); return; }
       banner.className = 'visible risk-'+d.risk;
-      document.getElementById('ai-risk-icon').textContent = d.risk==='HIGH' ? '\uD83D\uDEA8' : '\u26A0\uFE0F';
+      const riskSvg = document.getElementById('ai-risk-svg');
+      if (riskSvg) {
+        riskSvg.innerHTML = d.risk==='HIGH'
+          ? '<path d="M12 1a3 3 0 0 1 2.598 1.5l8.196 14.196A3 3 0 0 1 20.196 21H3.804a3 3 0 0 1-2.598-4.304L9.402 2.5A3 3 0 0 1 12 1zm0 4.236L4.118 19h15.764L12 5.236zM11 9v4a1 1 0 1 0 2 0V9a1 1 0 1 0-2 0zm1 7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'
+          : '<path d="M12 2a2 2 0 0 1 2 2 2 2 0 0 1-.184.845A4 4 0 0 1 16 8v1h1a2 2 0 0 1 2 2v1h1a1 1 0 1 1 0 2h-1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1H4a1 1 0 1 1 0-2h1v-1a2 2 0 0 1 2-2h1V8a4 4 0 0 1 2.184-3.155A2 2 0 0 1 10 4a2 2 0 0 1 2-2zm0 6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2zm-2 3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-7 5h10l1 2H3l1-2z"/>';
+      }
       document.getElementById('ai-risk-msg').textContent =
         d.risk==='HIGH' ? 'High delay risk detected on this segment' : 'Moderate slowdown detected ahead';
       document.getElementById('ai-risk-conf').textContent =

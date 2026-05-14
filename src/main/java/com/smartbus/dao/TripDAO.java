@@ -197,4 +197,32 @@ public class TripDAO extends GenericDAO<Trip> {
             em.close();
         }
     }
+
+    /**
+     * Delete SCHEDULED trips whose start time is in the past (more than 30 minutes ago).
+     * Called by a background job on startup.
+     * @return number of trips deleted
+     */
+    public int deleteExpiredScheduledTrips() {
+        EntityManager em = getEntityManager();
+        try {
+            em.getTransaction().begin();
+            LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
+            List<Trip> expired = em.createQuery(
+                "SELECT t FROM Trip t WHERE t.status = 'SCHEDULED' AND t.startTime < :cutoff",
+                Trip.class)
+                .setParameter("cutoff", cutoff)
+                .getResultList();
+            for (Trip t : expired) {
+                em.remove(em.contains(t) ? t : em.merge(t));
+            }
+            em.getTransaction().commit();
+            return expired.size();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
 }
