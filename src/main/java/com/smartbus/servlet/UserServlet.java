@@ -7,6 +7,7 @@ import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
 import com.smartbus.util.InputValidator;
+import com.smartbus.util.EmailUtil;
 import com.smartbus.util.PasswordUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
