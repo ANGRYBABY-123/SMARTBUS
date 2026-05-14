@@ -50,7 +50,7 @@ public class ResetPasswordServlet extends HttpServlet {
         String newPassword     = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");
 
-        if (newPassword == null || newPassword.length() < 6) {
+        if (newPassword == null || newPassword.length() < 8) {
             req.setAttribute("error", "Password must be at least 6 characters.");
             req.getRequestDispatcher("/WEB-INF/views/reset-password.jsp").forward(req, resp);
             return;

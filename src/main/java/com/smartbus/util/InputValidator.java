@@ -18,9 +18,12 @@ public final class InputValidator {
         return email != null && EMAIL_PATTERN.matcher(email.trim()).matches();
     }
 
-    /** Password must be at least 6 characters after trimming. */
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$");
+
+    /** Password must be ≥8 chars and contain uppercase, lowercase, digit, and special character. */
     public static boolean isValidPassword(String password) {
-        return password != null && password.length() >= 6;
+        return password != null && PASSWORD_PATTERN.matcher(password).matches();
     }
 
     /** Name must be at least 2 non-whitespace characters. */

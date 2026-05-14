@@ -44,6 +44,11 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
 .pending-notice{display:flex;align-items:flex-start;gap:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;font-size:.8rem;color:#78350f;margin-bottom:14px}
 .pending-notice i{margin-top:1px;flex-shrink:0;color:#d97706}
 .pw-msg{font-size:.76rem;margin-top:4px;min-height:16px}
+.pw-rules{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-top:6px;margin-bottom:14px;display:none}
+.pw-rules p{font-size:.74rem;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.pw-rule{display:flex;align-items:center;gap:7px;font-size:.78rem;color:#6b7280;margin-bottom:3px;transition:color .2s}
+.pw-rule.ok{color:#15803d}.pw-rule.fail{color:#c0392b}
+.pw-rule i{font-size:.7rem;width:12px;text-align:center}
 </style></head><body>
 <div class="card">
   <div class="card-hdr">
@@ -101,7 +106,18 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         <div class="field"><label>Email</label><input type="email" name="email" required placeholder="you@example.com"></div>
         <div class="field" id="license-field" style="display:none"><label>Licence / Registration No.</label><input type="text" name="licenseNumber" id="licenseNumber" placeholder="e.g. DRV-00123" maxlength="50"></div>
         <div class="field"><label>Mobile Number</label><input type="tel" name="phone" placeholder="+27 82 123 4567" maxlength="20"></div>
-        <div class="field"><label>Password</label><input type="password" name="password" id="reg-password" required placeholder="At least 6 characters" minlength="6"></div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password" id="reg-password" required placeholder="Min 8 chars, uppercase, number, symbol" minlength="8" oninput="checkPwStrength(this.value)" onfocus="document.getElementById('pw-rules').style.display='block'">
+          <div id="pw-rules" class="pw-rules">
+            <p>Password must contain:</p>
+            <div class="pw-rule" id="r-len"><i class="bi bi-circle"></i> At least 8 characters</div>
+            <div class="pw-rule" id="r-upper"><i class="bi bi-circle"></i> At least 1 uppercase letter</div>
+            <div class="pw-rule" id="r-lower"><i class="bi bi-circle"></i> At least 1 lowercase letter</div>
+            <div class="pw-rule" id="r-num"><i class="bi bi-circle"></i> At least 1 number</div>
+            <div class="pw-rule" id="r-special"><i class="bi bi-circle"></i> At least 1 special character (!@#$…)</div>
+          </div>
+        </div>
         <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="confirmPassword" required placeholder="Repeat password"><div class="pw-msg" id="pw-match-msg"></div></div>
         <div class="pending-notice"><i class="bi bi-clock"></i><span>An admin will review your account. Once approved, you'll receive a confirmation email and can sign in.</span></div>
         <button type="submit" class="btn-main" id="reg-submit-btn">Create Account</button>
@@ -131,9 +147,33 @@ document.getElementById('confirmPassword').addEventListener('input',function(){
   const pw=document.getElementById('reg-password').value;
   const msg=document.getElementById('pw-match-msg');
   const btn=document.getElementById('reg-submit-btn');
-  if(!this.value){msg.textContent='';btn.disabled=false;return;}
-  if(this.value===pw){msg.style.color='#15803d';msg.textContent='? Passwords match';btn.disabled=false;}
-  else{msg.style.color='#c0392b';msg.textContent='? Passwords do not match';btn.disabled=true;}
+  if(!this.value){msg.textContent='';updateSubmitBtn();return;}
+  if(this.value===pw){msg.style.color='#15803d';msg.textContent='✓ Passwords match';}
+  else{msg.style.color='#c0392b';msg.textContent='✗ Passwords do not match';}
+  updateSubmitBtn();
 });
+function checkPwStrength(val){
+  setRule('r-len',    val.length>=8);
+  setRule('r-upper',  /[A-Z]/.test(val));
+  setRule('r-lower',  /[a-z]/.test(val));
+  setRule('r-num',    /[0-9]/.test(val));
+  setRule('r-special',/[^a-zA-Z0-9]/.test(val));
+  updateSubmitBtn();
+}
+function setRule(id,ok){
+  const el=document.getElementById(id);
+  el.className='pw-rule '+(ok?'ok':'fail');
+  el.querySelector('i').className=ok?'bi bi-check-circle-fill':'bi bi-x-circle-fill';
+}
+function pwIsValid(){
+  const v=document.getElementById('reg-password').value;
+  return v.length>=8&&/[A-Z]/.test(v)&&/[a-z]/.test(v)&&/[0-9]/.test(v)&&/[^a-zA-Z0-9]/.test(v);
+}
+function updateSubmitBtn(){
+  const confirmVal=document.getElementById('confirmPassword').value;
+  const pw=document.getElementById('reg-password').value;
+  const btn=document.getElementById('reg-submit-btn');
+  btn.disabled=!(pwIsValid()&&(confirmVal===''||confirmVal===pw));
+}
 <% if ("register".equals(request.getAttribute("tab"))) { %>showTab('register');<% } %>
 </script></body></html>
