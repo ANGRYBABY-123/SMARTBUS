@@ -1,5 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+    String mapsKey = getServletContext().getInitParameter("google.maps.key");
+    if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
+        mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +12,7 @@
     <title>${empty trip ? 'Dispatch Trip' : 'Edit Trip'} – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>#route-preview-map{ height:200px; border-radius:10px; border:1px solid #dee2e6; overflow:hidden; margin-top:.75rem; display:none; }</style>
 </head>
 <body>
 <%@ include file="navbar.jsp" %>
@@ -57,14 +63,19 @@
 
             <div class="mb-3">
                 <label class="form-label">Route</label>
-                <select name="routeId" class="form-select" required>
+                <select name="routeId" id="routeId" class="form-select" required onchange="onRouteChange(this.value)">
                     <option value="">-- Select Route --</option>
                     <c:forEach var="r" items="${routes}">
-                        <option value="${r.routeId}" ${trip.route.routeId == r.routeId ? 'selected' : ''}>
+                        <option value="${r.routeId}"
+                            data-slat="${r.startLat}" data-slng="${r.startLng}"
+                            data-elat="${r.endLat}"  data-elng="${r.endLng}"
+                            data-name="${r.routeName}"
+                            ${trip.route.routeId == r.routeId ? 'selected' : ''}>
                             ${r.routeName} &nbsp;(${r.startLocation} &rarr; ${r.endLocation})
                         </option>
                     </c:forEach>
                 </select>
+                <div id="route-preview-map"></div>
             </div>
 
             <div class="row">
@@ -101,12 +112,63 @@
         </form>
     </div>
 </div>
-</body>
+<script>
+var routePreviewMap = null, rpOrigin = null, rpDest = null, rpLine = null;
+
+window.initMap = function() {
+    // Auto-show map if a route is already selected (edit mode)
+    var sel = document.getElementById('routeId');
+    if (sel && sel.value) onRouteChange(sel.value);
+};
+
+function onRouteChange(routeId) {
+    var sel = document.getElementById('routeId');
+    var opt = sel ? sel.querySelector('option[value="' + routeId + '"]') : null;
+    var mapDiv = document.getElementById('route-preview-map');
+    if (!opt || !routeId || !mapDiv) return;
+    var sLat = parseFloat(opt.dataset.slat), sLng = parseFloat(opt.dataset.slng);
+    var eLat = parseFloat(opt.dataset.elat), eLng = parseFloat(opt.dataset.elng);
+    if (isNaN(sLat) || isNaN(sLng) || isNaN(eLat) || isNaN(eLng)) {
+        mapDiv.style.display = 'none'; return;
+    }
+    mapDiv.style.display = '';
+    if (!routePreviewMap) {
+        routePreviewMap = new google.maps.Map(mapDiv, {
+            center: { lat: sLat, lng: sLng }, zoom: 11,
+            mapTypeId: 'roadmap', gestureHandling: 'cooperative',
+            styles: [
+                { featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] },
+                { featureType:'transit.station.bus', stylers:[{ visibility:'off' }] }
+            ]
+        });
+    }
+    if (rpOrigin) { rpOrigin.setMap(null); rpOrigin = null; }
+    if (rpDest)   { rpDest.setMap(null);   rpDest   = null; }
+    if (rpLine)   { rpLine.setMap(null);   rpLine   = null; }
+    rpOrigin = new google.maps.Marker({
+        position:{ lat:sLat, lng:sLng }, map:routePreviewMap, title: opt.dataset.name + ' – Start',
+        icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#22c55e', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
+    });
+    rpDest = new google.maps.Marker({
+        position:{ lat:eLat, lng:eLng }, map:routePreviewMap, title: opt.dataset.name + ' – End',
+        icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#ef4444', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
+    });
+    rpLine = new google.maps.Polyline({
+        path:[{ lat:sLat, lng:sLng },{ lat:eLat, lng:eLng }],
+        map:routePreviewMap, strokeColor:'#3b82f6', strokeWeight:3, strokeOpacity:0.85
+    });
+    var bounds = new google.maps.LatLngBounds();
+    bounds.extend({ lat:sLat, lng:sLng }); bounds.extend({ lat:eLat, lng:eLng });
+    routePreviewMap.fitBounds(bounds, 30);
+}
+</script>
+<% if (!mapsKey.isEmpty()) { %>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<% } %>
 <script>
     // For new trips only, prevent selecting past dates
     <c:if test="${empty trip.tripId}">
     (function () {
-        // Format local datetime as "YYYY-MM-DDThh:mm" (datetime-local value format)
         var now = new Date();
         var pad = function(n){ return n < 10 ? '0' + n : n; };
         var today = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate())
@@ -115,11 +177,11 @@
         var endEl   = document.getElementById('endTime');
         startEl.min = today;
         endEl.min   = today;
-        // Keep end min in sync with start selection
         startEl.addEventListener('change', function() {
             if (startEl.value) endEl.min = startEl.value;
         });
     })();
     </c:if>
 </script>
+</body>
 </html>
