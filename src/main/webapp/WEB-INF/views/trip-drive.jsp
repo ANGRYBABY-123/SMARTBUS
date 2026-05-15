@@ -463,12 +463,20 @@ function setGpsState(s) {
 
 /* ─── Map helpers ─────────────────────────────────────────────────────────── */
 function makeBusIcon() {
-  return L.divIcon({
-    className: '',
-    html: '<div style="width:42px;height:42px;border-radius:50%;background:#16a34a;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">&#x1F68C;</div>',
-    iconSize: [42, 42],
-    iconAnchor: [21, 21]
-  });
+  const bg = '#16a34a';
+  const busSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 17" width="28" height="20">'
+    + '<rect x="1" y="1" width="22" height="12" rx="2" fill="white" opacity="0.95"/>'
+    + '<rect x="2" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="8" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="14" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="20" y="2" width="3" height="5" rx="0.8" fill="' + bg + '" opacity="0.5"/>'
+    + '<circle cx="5.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+    + '<circle cx="18.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+    + '</svg>';
+  const html = '<div style="width:48px;height:36px;border-radius:10px;background:' + bg
+    + ';box-shadow:0 3px 14px rgba(22,163,74,0.5),0 0 0 2.5px white;display:flex;align-items:center;justify-content:center;">'
+    + busSvg + '</div>';
+  return L.divIcon({className: '', html: html, iconSize: [48, 36], iconAnchor: [24, 18]});
 }
 function makeDotIcon(color) {
   return L.divIcon({

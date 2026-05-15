@@ -256,8 +256,17 @@ function initMap() {
     );
     // Drop live bus markers on map
     const busIcon = L.divIcon({
-        html: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>',
-        className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+        className: '',
+        html: '<div style="width:38px;height:28px;border-radius:7px;background:#16a34a;box-shadow:0 2px 8px rgba(22,163,74,0.5),0 0 0 2px white;display:flex;align-items:center;justify-content:center;">'
+            + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 17" width="22" height="16">'
+            + '<rect x="1" y="1" width="22" height="12" rx="2" fill="white" opacity="0.9"/>'
+            + '<rect x="2" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+            + '<rect x="8" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+            + '<rect x="14" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+            + '<circle cx="5.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+            + '<circle cx="18.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+            + '</svg></div>',
+        iconSize: [38, 28], iconAnchor: [19, 14]
     });
     const liveTrips = [];
     <c:forEach var="t" items="${activeTrips}">liveTrips.push({ id: ${t.tripId}, name: "${t.route.routeName}", driver: "${t.driver.name}" });</c:forEach>
@@ -485,8 +494,17 @@ pollNotifs();
             busMarkers.forEach(m => m.remove());
             busMarkers.length = 0;
             const busIcon2 = L.divIcon({
-                html: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>',
-                className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+                className: '',
+                html: '<div style="width:38px;height:28px;border-radius:7px;background:#16a34a;box-shadow:0 2px 8px rgba(22,163,74,0.5),0 0 0 2px white;display:flex;align-items:center;justify-content:center;">'
+                    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 17" width="22" height="16">'
+                    + '<rect x="1" y="1" width="22" height="12" rx="2" fill="white" opacity="0.9"/>'
+                    + '<rect x="2" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+                    + '<rect x="8" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+                    + '<rect x="14" y="2" width="4" height="5" rx="0.8" fill="#16a34a" opacity="0.7"/>'
+                    + '<circle cx="5.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+                    + '<circle cx="18.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+                    + '</svg></div>',
+                iconSize: [38, 28], iconAnchor: [19, 14]
             });
             doc.querySelectorAll('[data-live-trip]').forEach(el => {
                 const tid = el.getAttribute('data-live-trip');

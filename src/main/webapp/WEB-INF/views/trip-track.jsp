@@ -340,14 +340,23 @@ function startDeadReckoning() {
 
 // -- Map initialisation � Google Maps ----------------------------------
 function makeBusIcon(live) {
-  const col = live ? '#22c55e' : '#94a3b8';
-  const ring = live ? 'box-shadow:0 0 0 8px rgba(34,197,94,0.2);' : '';
-  return L.divIcon({
-    className: '',
-    html: '<div style="width:40px;height:40px;border-radius:50%;background:' + col + ';border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;' + ring + 'box-shadow:0 2px 8px rgba(0,0,0,0.3)">&#x1F68C;</div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
-  });
+  const bg = live ? '#16a34a' : '#64748b';
+  const shadow = live
+    ? '0 2px 12px rgba(22,163,74,0.55),0 0 0 2.5px white'
+    : '0 2px 8px rgba(0,0,0,0.35),0 0 0 2.5px white';
+  const busSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 17" width="26" height="19">'
+    + '<rect x="1" y="1" width="22" height="12" rx="2" fill="white" opacity="0.95"/>'
+    + '<rect x="2" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="8" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="14" y="2" width="4" height="5" rx="0.8" fill="' + bg + '" opacity="0.75"/>'
+    + '<rect x="20" y="2" width="3" height="5" rx="0.8" fill="' + bg + '" opacity="0.5"/>'
+    + '<circle cx="5.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+    + '<circle cx="18.5" cy="16" r="2.2" fill="white" opacity="0.9"/>'
+    + '</svg>';
+  const html = '<div style="width:46px;height:34px;border-radius:10px;background:' + bg
+    + ';box-shadow:' + shadow + ';display:flex;align-items:center;justify-content:center;">'
+    + busSvg + '</div>';
+  return L.divIcon({className: '', html: html, iconSize: [46, 34], iconAnchor: [23, 17]});
 }
 function makeDotIcon(color) {
   return L.divIcon({
