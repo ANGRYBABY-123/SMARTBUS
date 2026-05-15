@@ -45,8 +45,8 @@ services:
         sync: false     # set manually in Render dashboard (Gmail App Password)
 
       # ── Google Maps JavaScript API ────────────────────────────────────────
-      - key: GOOGLE_MAPS_API_KEY
-        sync: false     # get key at https://console.cloud.google.com → Maps JS API (~28,000 map loads/month free)
+      - key: GOOGLE_MAPS_KEY
+        value: "AIzaSyBeyYIneNJZdPIyHUSBFZ8VycV9uomRsTA"  # Maps JS API key
       # ── AI (Groq / Llama 3 — free tier: 14,400 req/day) ─────────────────
       - key: GROQ_API_KEY
         sync: false     # get free key at https://console.groq.com

@@ -37,11 +37,11 @@
         Get your key from: https://console.cloud.google.com/apis/credentials
         Enable: Maps JavaScript API, Directions API, Places API
         Restrict by HTTP referrer to prevent unauthorised use.
-        Can also be set via GOOGLE_MAPS_KEY environment variable.
+        Set via GOOGLE_MAPS_KEY environment variable (configured in Render dashboard).
     -->
     <context-param>
         <param-name>google.maps.key</param-name>
-        <param-value>AIzaSyBeyYIneNJZdPIyHUSBFZ8VycV9uomRsTA</param-value>
+        <param-value>YOUR_GOOGLE_MAPS_API_KEY</param-value>
     </context-param>
 
     <!--
