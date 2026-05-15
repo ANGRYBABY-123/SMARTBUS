@@ -74,7 +74,7 @@
         .card-icon.live { background: #dcfce7; }
         .card-icon.scheduled { background: #ede9fe; }
         .card-body { flex: 1; min-width: 0; }
-        .card-title { font-weight: 700; font-size: .98rem; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-title { font-weight: 700; font-size: .98rem; color: #111; }
         .card-sub { font-size: .78rem; color: #888; margin-top: 2px; }
         .card-badge { font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; display: inline-block; margin-top: 5px; }
         .card-badge.live { background: #dcfce7; color: #16a34a; }
