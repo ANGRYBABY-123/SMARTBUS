@@ -41,7 +41,7 @@
     -->
     <context-param>
         <param-name>google.maps.key</param-name>
-        <param-value>YOUR_GOOGLE_MAPS_API_KEY</param-value>
+        <param-value>AIzaSyBeyYIneNJZdPIyHUSBFZ8VycV9uomRsTA</param-value>
     </context-param>
 
     <!--

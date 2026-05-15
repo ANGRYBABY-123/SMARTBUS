@@ -216,6 +216,6 @@ CREATE TABLE IF NOT EXISTS stop_route (
 -- The app also accepts the legacy plaintext on first login and auto-upgrades it.
 INSERT IGNORE INTO user (name, email, password, role, status) VALUES
     ('Administrator', 'Maetsok01@gmail.com',
-     '$2a$12$7QJ1qwHGnbSXG1IjYBZxVeCsMKbDoT4lKNBIMGFBj7U4r2CQMV7XO',
+     '$2a$12$5khGO2mMhCd18ve1c3pMHu8Lq9IDzj7cafzV0q7SWFTD9DVN4Eyn6',
      'ADMIN', 'ACTIVE');
 
