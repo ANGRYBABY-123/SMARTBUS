@@ -42,6 +42,10 @@
             </small>
         </h5>
         <div class="d-flex gap-2">
+            <a href="${pageContext.request.contextPath}/weekly-schedule/new?week=${weekStart}"
+               class="btn btn-sm" style="background:#3b82f6;color:#fff;border:none">
+                <i class="bi bi-plus-lg me-1"></i>Add Entry
+            </a>
             <c:if test="${unpublished > 0}">
                 <form method="post" action="${pageContext.request.contextPath}/weekly-schedule/publish"
                       onsubmit="return confirm('Publish this week\'s schedule? This will create Mon–Fri trips and notify each driver.')">
@@ -174,6 +178,7 @@
                     <th>Shift</th>
                     <th>Shift Hours</th>
                     <th>Status</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -216,6 +221,19 @@
                                 </span>
                             </c:otherwise>
                         </c:choose>
+                    </td>
+                    <td class="text-end">
+                        <c:if test="${!ds.published}">
+                            <a href="${pageContext.request.contextPath}/weekly-schedule/edit?id=${ds.id}&week=${weekStart}"
+                               class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </c:if>
+                        <a href="${pageContext.request.contextPath}/weekly-schedule/delete?id=${ds.id}&week=${weekStart}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Delete this schedule entry?')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
                     </td>
                 </tr>
             </c:forEach>
