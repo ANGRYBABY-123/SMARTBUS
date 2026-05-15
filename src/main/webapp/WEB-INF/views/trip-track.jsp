@@ -343,11 +343,11 @@ function startDeadReckoning() {
 function makeBusIcon(live) {
   const col    = live ? '#22c55e' : '#94a3b8';
   const shadow = live ? '0 0 0 8px rgba(34,197,94,0.25)' : '0 2px 6px rgba(0,0,0,0.2)';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-    <circle cx="20" cy="20" r="18" fill="${col}" stroke="white" stroke-width="3"/>
-    <circle cx="20" cy="20" r="18" fill="transparent" style="box-shadow:${shadow}"/>
-    <text x="20" y="26" text-anchor="middle" font-size="16" fill="white">🚌</text>
-  </svg>`;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">'
+    + '<circle cx="20" cy="20" r="18" fill="' + col + '" stroke="white" stroke-width="3"/>'
+    + '<circle cx="20" cy="20" r="18" fill="transparent" style="box-shadow:' + shadow + '"/>'
+    + '<text x="20" y="26" text-anchor="middle" font-size="16" fill="white">🚌</text>'
+    + '</svg>';
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
     scaledSize: new google.maps.Size(40, 40),
@@ -355,9 +355,9 @@ function makeBusIcon(live) {
   };
 }
 function makeDotIcon(color) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">
-    <circle cx="7" cy="7" r="5" fill="${color}" stroke="white" stroke-width="2.5"/>
-  </svg>`;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">'
+    + '<circle cx="7" cy="7" r="5" fill="' + color + '" stroke="white" stroke-width="2.5"/>'
+    + '</svg>';
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
     scaledSize: new google.maps.Size(14, 14),

@@ -475,9 +475,9 @@ function makeBusIcon() {
   };
 }
 function makeDotIcon(color) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">
-    <circle cx="7" cy="7" r="5" fill="${color}" stroke="white" stroke-width="2.5"/>
-  </svg>`;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">'
+    + '<circle cx="7" cy="7" r="5" fill="' + color + '" stroke="white" stroke-width="2.5"/>'
+    + '</svg>';
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
     scaledSize: new google.maps.Size(14, 14),
