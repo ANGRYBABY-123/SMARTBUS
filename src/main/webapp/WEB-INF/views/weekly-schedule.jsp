@@ -109,12 +109,7 @@
                     <td style="font-weight:600">
                         <i class="bi bi-person-fill me-1" style="color:#60a5fa"></i>${t.driver.name}
                     </td>
-                    <td>
-                        <div style="font-weight:500">${t.route.routeName}</div>
-                        <div style="font-size:.72rem;color:#64748b">
-                            ${t.route.startLocation} &rarr; ${t.route.endLocation}
-                        </div>
-                    </td>
+                    <td style="font-weight:500">${t.route.routeName}</td>
                     <td>
                         <i class="bi bi-bus-front me-1" style="color:#94a3b8"></i>${t.bus.registrationNumber}
                     </td>
@@ -191,12 +186,7 @@
                     <td style="font-weight:600">
                         <i class="bi bi-person-fill me-1" style="color:#60a5fa"></i>${ds.driver.name}
                     </td>
-                    <td>
-                        <div style="font-weight:500">${ds.route.routeName}</div>
-                        <div style="font-size:.72rem;color:#64748b">
-                            ${ds.route.startLocation} &rarr; ${ds.route.endLocation}
-                        </div>
-                    </td>
+                    <td style="font-weight:500">${ds.route.routeName}</td>
                     <td>
                         <i class="bi bi-bus-front me-1" style="color:#94a3b8"></i>${ds.bus.registrationNumber}
                     </td>

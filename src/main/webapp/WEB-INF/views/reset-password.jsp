@@ -58,10 +58,15 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
     <%
         String tokenError = (String) request.getAttribute("tokenError");
         String formError  = (String) request.getAttribute("error");
+        // HTML-escape for safe output
+        String tokenErrorEsc = tokenError == null ? null : tokenError
+            .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        String formErrorEsc = formError == null ? null : formError
+            .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     %>
 
-    <% if (tokenError != null) { %>
-    <div class="alert alert-error"><i class="bi bi-x-circle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= tokenError %></span></div>
+    <% if (tokenErrorEsc != null) { %>
+    <div class="alert alert-error"><i class="bi bi-x-circle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= tokenErrorEsc %></span></div>
     <p style="font-size:.83rem;color:#6b7280;margin-bottom:16px">Please request a new reset code to continue.</p>
     <a href="${pageContext.request.contextPath}/forgot-password" class="btn-main" style="display:block;text-align:center;text-decoration:none;padding:13px">
       <i class="bi bi-arrow-left"></i> Request New Code
@@ -71,8 +76,8 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
     <div class="card-title">Choose a new password</div>
     <p class="card-sub">Must be at least 6 characters.</p>
 
-    <% if (formError != null) { %>
-    <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= formError %></span></div>
+    <% if (formErrorEsc != null) { %>
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= formErrorEsc %></span></div>
     <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/reset-password" id="reset-form">

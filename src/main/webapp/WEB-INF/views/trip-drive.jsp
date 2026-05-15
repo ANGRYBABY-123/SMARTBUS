@@ -273,7 +273,7 @@ function calcHeadingFrom(from, to) {
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-function initMap() {
+window.initMap = function {
   const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
     ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
     : { lat: -25.7313, lng: 28.1648 };

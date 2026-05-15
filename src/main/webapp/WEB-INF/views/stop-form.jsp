@@ -1,12 +1,16 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+    String mapsKey = getServletContext().getInitParameter("google.maps.key");
+    if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
+        mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"><title>${empty stop ? 'Add Stop' : 'Edit Stop'} – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         #pick-map { height: 300px; border-radius: 12px; border: 1.5px solid var(--sb-border); overflow: hidden; margin-bottom: 10px; cursor: crosshair; }
         #pick-hint { font-size: .78rem; color: var(--sb-muted); margin-bottom: 14px; }
@@ -92,49 +96,54 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const latInput = document.getElementById('lat-input');
 const lngInput = document.getElementById('lng-input');
-
 const initLat = parseFloat(latInput.value) || -25.5275;
 const initLng = parseFloat(lngInput.value) || 28.0952;
+let pickMap, pickMarker = null;
 
-const map = L.map('pick-map').setView([initLat, initLng], 13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-
-let marker = null;
-if (latInput.value && lngInput.value) {
-    marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
-    marker.on('dragend', function() {
-        const p = marker.getLatLng();
-        latInput.value = p.lat.toFixed(6);
-        lngInput.value = p.lng.toFixed(6);
+window.initPickMap = function() {
+    pickMap = new google.maps.Map(document.getElementById('pick-map'), {
+        center: { lat: initLat, lng: initLng },
+        zoom: 13,
+        gestureHandling: 'cooperative'
     });
-}
-
-map.on('click', function(e) {
-    latInput.value = e.latlng.lat.toFixed(6);
-    lngInput.value = e.latlng.lng.toFixed(6);
-    if (marker) { marker.setLatLng(e.latlng); }
-    else { marker = L.marker(e.latlng, { draggable: true }).addTo(map);
-        marker.on('dragend', function() {
-            const p = marker.getLatLng();
-            latInput.value = p.lat.toFixed(6);
-            lngInput.value = p.lng.toFixed(6);
+    if (latInput.value && lngInput.value) {
+        pickMarker = new google.maps.Marker({ position: { lat: initLat, lng: initLng }, map: pickMap, draggable: true });
+        pickMarker.addListener('dragend', function() {
+            latInput.value = pickMarker.getPosition().lat().toFixed(6);
+            lngInput.value = pickMarker.getPosition().lng().toFixed(6);
         });
     }
-});
-
-// Sync map if coords typed manually
-[latInput, lngInput].forEach(el => el.addEventListener('change', function() {
-    const lat = parseFloat(latInput.value), lng = parseFloat(lngInput.value);
-    if (!isNaN(lat) && !isNaN(lng)) {
-        map.setView([lat, lng], 14);
-        if (marker) marker.setLatLng([lat, lng]);
-        else { marker = L.marker([lat, lng], { draggable: true }).addTo(map); }
-    }
-}));
+    pickMap.addListener('click', function(e) {
+        latInput.value = e.latLng.lat().toFixed(6);
+        lngInput.value = e.latLng.lng().toFixed(6);
+        if (pickMarker) {
+            pickMarker.setPosition(e.latLng);
+        } else {
+            pickMarker = new google.maps.Marker({ position: e.latLng, map: pickMap, draggable: true });
+            pickMarker.addListener('dragend', function() {
+                latInput.value = pickMarker.getPosition().lat().toFixed(6);
+                lngInput.value = pickMarker.getPosition().lng().toFixed(6);
+            });
+        }
+    });
+    [latInput, lngInput].forEach(el => el.addEventListener('change', function() {
+        const lat = parseFloat(latInput.value), lng = parseFloat(lngInput.value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            const pos = { lat, lng };
+            pickMap.setCenter(pos); pickMap.setZoom(14);
+            if (pickMarker) pickMarker.setPosition(pos);
+            else pickMarker = new google.maps.Marker({ position: pos, map: pickMap, draggable: true });
+        }
+    }));
+};
 </script>
+<% if (!mapsKey.isEmpty()) { %>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initPickMap" async defer></script>
+<% } else { %>
+<script>window.addEventListener('DOMContentLoaded',function(){document.getElementById('pick-map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem">Set GOOGLE_MAPS_KEY to enable map</div>';});</script>
+<% } %>
 </body>
 </html>

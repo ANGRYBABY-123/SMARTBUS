@@ -134,7 +134,13 @@
                     <td>${t.route.routeName}</td>
                     <td>${t.driver.name}</td>
                     <td style="font-family:monospace;color:#93c5fd">${t.bus.registrationNumber}</td>
-                    <td><span class="badge bg-success">${t.status}</span></td>
+                    <td><c:choose>
+                        <c:when test="${t.status == 'IN_PROGRESS'}"><span class="badge bg-success">In Progress</span></c:when>
+                        <c:when test="${t.status == 'COMPLETED'}"><span class="badge bg-secondary">Completed</span></c:when>
+                        <c:when test="${t.status == 'SCHEDULED'}"><span class="badge bg-warning text-dark">Scheduled</span></c:when>
+                        <c:when test="${t.status == 'CANCELLED'}"><span class="badge bg-danger">Cancelled</span></c:when>
+                        <c:otherwise><span class="badge bg-secondary">${t.status}</span></c:otherwise>
+                    </c:choose></td>
                     <td><a href="${pageContext.request.contextPath}/tracking/view?tripId=${t.tripId}" class="btn btn-sm btn-outline-primary"><i class="bi bi-map"></i></a></td>
                 </tr>
             </c:forEach>

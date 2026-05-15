@@ -221,7 +221,6 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const CTX_DASH = '${pageContext.request.contextPath}';
 let sheetState = 'partial'; // partial | expanded | collapsed
@@ -247,7 +246,7 @@ setInterval(updateLastRefreshLabel, 5000);
 
 // -- MAP --
 let map, busMarkers = [];
-function initMap() {
+window.initMap = function() {
     const defaultCenter = { lat: -25.7313, lng: 28.1648 };
     map = new google.maps.Map(document.getElementById('map'), {
         center: defaultCenter,

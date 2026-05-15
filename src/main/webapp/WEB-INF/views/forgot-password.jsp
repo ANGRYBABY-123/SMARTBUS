@@ -61,9 +61,14 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         String forgotError = (String) request.getAttribute("forgotError");
         String prevEmail   = request.getParameter("email");
         if (prevEmail == null) prevEmail = "";
+        // HTML-escape to prevent XSS (forgotError may contain user-supplied email)
+        String forgotErrorEsc = forgotError == null ? null : forgotError
+            .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        String prevEmailEsc = prevEmail
+            .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     %>
-    <% if (forgotError != null) { %>
-    <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= forgotError %></span></div>
+    <% if (forgotErrorEsc != null) { %>
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i><span><%= forgotErrorEsc %></span></div>
     <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/forgot-password" id="fp-form">
@@ -71,7 +76,7 @@ body{min-height:100vh;background:linear-gradient(145deg,#050c1a 0%,#0d1f38 55%,#
         <label for="fp-email">Email Address</label>
         <input type="email" id="fp-email" name="email"
                placeholder="you@example.com"
-               value="<%= prevEmail %>"
+               value="<%= prevEmailEsc %>"
                required autofocus autocomplete="email">
       </div>
       <button type="submit" class="btn-main" id="fp-btn">

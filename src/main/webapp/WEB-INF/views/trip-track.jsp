@@ -362,7 +362,7 @@ function makeDotIcon(color) {
     anchor: new google.maps.Point(7, 7)
   };
 }
-function initMap() {
+window.initMap = function {
   const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
     ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
     : { lat: -25.7313, lng: 28.1648 };
