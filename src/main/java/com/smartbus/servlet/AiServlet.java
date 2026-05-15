@@ -68,6 +68,7 @@ public class AiServlet extends HttpServlet {
         switch (path) {
             case "/eta":        getEta(req, out);        break;
             case "/delay-risk": getDelayRisk(req, out);  break;
+            case "/safe-route": getSafeRoute(req, out);  break;
             default:            out.print("{}");
         }
     }
@@ -297,6 +298,125 @@ public class AiServlet extends HttpServlet {
         } catch (Exception e) {
             out.print("{\"risk\":\"UNKNOWN\",\"confidence\":0,\"message\":\"Analysis error.\"}");
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  /ai/safe-route  — Real-time route safety assessment
+    //  GET params: tripId, lat, lng (current driver GPS position)
+    // ─────────────────────────────────────────────────────────────────────────
+    private void getSafeRoute(HttpServletRequest req, PrintWriter out) {
+        try {
+            long   tripId = Long.parseLong(req.getParameter("tripId"));
+            double lat    = Double.parseDouble(req.getParameter("lat"));
+            double lng    = Double.parseDouble(req.getParameter("lng"));
+
+            Trip trip = tripDAO.findByIdWithDetails(tripId);
+            if (trip == null) {
+                out.print("{\"status\":\"SAFE\",\"message\":\"Trip not found.\",\"deviationM\":0,\"speedKmh\":0}");
+                return;
+            }
+
+            List<GpsTracking> pts = gpsDAO.findRecentByTrip(tripId, 20);
+
+            // ── Speed analysis ───────────────────────────────────────────────
+            double avgSpeed = 0;
+            int slowCount   = 0;
+            if (pts.size() >= 2) {
+                double totalDist = 0, totalSecs = 0;
+                double[] speeds = new double[pts.size() - 1];
+                for (int i = 1; i < pts.size(); i++) {
+                    GpsTracking a = pts.get(i-1), b = pts.get(i);
+                    double dist = haversine(a.getLatitude(), a.getLongitude(), b.getLatitude(), b.getLongitude());
+                    double secs = Math.max(1, ChronoUnit.SECONDS.between(a.getTimestamp(), b.getTimestamp()));
+                    speeds[i-1] = (dist / secs) * 3.6;
+                    totalDist  += dist;
+                    totalSecs  += secs;
+                }
+                avgSpeed = (totalDist / totalSecs) * 3.6;
+                for (double s : speeds) if (s < 5) slowCount++;
+            }
+
+            // ── Route deviation ───────────────────────────────────────────────
+            double deviationM = 0;
+            Double startLat = trip.getRoute().getStartLat(), startLng = trip.getRoute().getStartLng();
+            Double endLat   = trip.getRoute().getEndLat(),   endLng   = trip.getRoute().getEndLng();
+            if (startLat != null && endLat != null) {
+                deviationM = pointToLineDistanceM(lat, lng, startLat, startLng, endLat, endLng);
+            }
+
+            // ── Quick rule-based pre-check (no AI call needed for clear-cut cases) ──
+            String quickStatus = null;
+            String quickMsg    = null;
+            if (deviationM > 500) {
+                quickStatus = "ALERT";
+                quickMsg    = "Bus is " + String.format("%.0f", deviationM)
+                            + "m off the planned route. Possible wrong turn or emergency.";
+            } else if (avgSpeed < 2 && pts.size() >= 5) {
+                quickStatus = "CAUTION";
+                quickMsg    = "Bus has been stationary for several readings. Possible breakdown or traffic jam.";
+            } else if (deviationM < 100 && avgSpeed >= 5) {
+                quickStatus = "SAFE";
+                quickMsg    = "Bus is on route and moving normally at "
+                            + String.format("%.0f", avgSpeed) + " km/h.";
+            }
+
+            if (quickStatus != null) {
+                out.print(String.format(
+                    "{\"status\":\"%s\",\"message\":%s,\"deviationM\":%.0f,\"speedKmh\":%.1f,\"source\":\"rules\"}",
+                    quickStatus, jsonString(quickMsg), deviationM, avgSpeed));
+                return;
+            }
+
+            // ── AI analysis via Groq for ambiguous cases ─────────────────────
+            String context = "Trip: " + trip.getRoute().getRouteName()
+                + ". Route: " + trip.getRoute().getStartLocation()
+                + " to " + trip.getRoute().getEndLocation()
+                + ". Current position: lat=" + String.format("%.5f", lat)
+                + ", lng=" + String.format("%.5f", lng)
+                + ". Deviation from planned straight-line route: " + String.format("%.0f", deviationM) + "m"
+                + ". Average speed (last 20 readings): " + String.format("%.1f", avgSpeed) + " km/h"
+                + ". Slow readings (<5 km/h): " + slowCount + " out of " + Math.max(1, pts.size()-1) + ".";
+
+            String prompt = "You are a transport safety AI for CommuteSafe bus fleet management. "
+                + "Analyse the following bus trip data and respond with EXACTLY ONE of: SAFE, CAUTION, or ALERT. "
+                + "On the same line, add a colon and a brief 1-sentence explanation (max 15 words). "
+                + "SAFE = on route, normal speed. "
+                + "CAUTION = moderate deviation (<300m) or slow (<15 km/h) but not stopped. "
+                + "ALERT = significant deviation (>300m), or stopped for extended time, or dangerous speed. "
+                + "Data: " + context;
+
+            String reply  = callGroq(prompt);
+            String status = "SAFE";
+            if (reply != null) {
+                String upper = reply.toUpperCase();
+                if (upper.startsWith("ALERT") || upper.contains("ALERT:")) status = "ALERT";
+                else if (upper.startsWith("CAUTION") || upper.contains("CAUTION:")) status = "CAUTION";
+            }
+
+            out.print(String.format(
+                "{\"status\":%s,\"message\":%s,\"deviationM\":%.0f,\"speedKmh\":%.1f,\"source\":\"ai\"}",
+                jsonString(status), jsonString(reply != null ? reply : "Route analysis unavailable."),
+                deviationM, avgSpeed));
+
+        } catch (Exception e) {
+            out.print("{\"status\":\"SAFE\",\"message\":\"Route analysis unavailable.\",\"deviationM\":0,\"speedKmh\":0}");
+        }
+    }
+
+    /**
+     * Perpendicular distance (in metres) from point P to the line segment A–B.
+     * Uses a flat-earth approximation which is accurate for short distances (<10 km).
+     */
+    private double pointToLineDistanceM(double pLat, double pLng,
+                                        double aLat, double aLng,
+                                        double bLat, double bLng) {
+        double dx  = bLng - aLng;
+        double dy  = bLat - aLat;
+        double len2 = dx * dx + dy * dy;
+        if (len2 == 0) return haversine(pLat, pLng, aLat, aLng);
+        double t = ((pLng - aLng) * dx + (pLat - aLat) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+        return haversine(pLat, pLng, aLat + t * dy, aLng + t * dx);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

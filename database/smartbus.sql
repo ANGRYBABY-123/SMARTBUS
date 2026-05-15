@@ -11,6 +11,25 @@ CREATE DATABASE IF NOT EXISTS smartbus
 
 USE smartbus;
 
+-- ============================================================
+-- CLEANUP: drop orphan plural / duplicate tables left behind
+-- by earlier Hibernate auto-create runs.
+-- Safe to run repeatedly (IF EXISTS).
+-- ============================================================
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS passengers;
+DROP TABLE IF EXISTS drivers;
+DROP TABLE IF EXISTS routes;
+DROP TABLE IF EXISTS trips;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS schedules;
+DROP TABLE IF EXISTS stop_routes;
+DROP TABLE IF EXISTS password_reset_tokens;
+DROP TABLE IF EXISTS remember_me_tokens;
+SET FOREIGN_KEY_CHECKS = 1;
+-- ============================================================
+
 -- --------------------------------------------------------
 -- 1. user (base table – JOINED inheritance)
 -- --------------------------------------------------------

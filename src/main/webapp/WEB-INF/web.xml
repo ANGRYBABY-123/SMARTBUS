@@ -32,6 +32,60 @@
         <param-value></param-value>
     </context-param>
 
+    <!--
+        Google Maps JavaScript API key.
+        Get your key from: https://console.cloud.google.com/apis/credentials
+        Enable: Maps JavaScript API, Directions API, Places API
+        Restrict by HTTP referrer to prevent unauthorised use.
+        Can also be set via GOOGLE_MAPS_KEY environment variable.
+    -->
+    <context-param>
+        <param-name>google.maps.key</param-name>
+        <param-value>YOUR_GOOGLE_MAPS_API_KEY</param-value>
+    </context-param>
+
+    <!--
+        Google Analytics 4 – Measurement ID (format: G-XXXXXXXXXX).
+        Get it from: https://analytics.google.com → Admin → Data Streams
+        Can also be set via GA_MEASUREMENT_ID environment variable.
+    -->
+    <context-param>
+        <param-name>ga.measurement.id</param-name>
+        <param-value>YOUR_GA4_MEASUREMENT_ID</param-value>
+    </context-param>
+
+    <!--
+        Firebase Cloud Messaging (FCM) – Web Push Notifications.
+        Get values from Firebase Console → Project Settings → General → Your apps (Web).
+        VAPID key: Project Settings → Cloud Messaging → Web Push certificates → Key pair.
+        FCM_SERVER_KEY env var should be set to your Firebase service account JSON path
+        or the JSON content itself (for Render: upload as secret file).
+    -->
+    <context-param>
+        <param-name>firebase.api.key</param-name>
+        <param-value>YOUR_FIREBASE_API_KEY</param-value>
+    </context-param>
+    <context-param>
+        <param-name>firebase.auth.domain</param-name>
+        <param-value>YOUR_PROJECT_ID.firebaseapp.com</param-value>
+    </context-param>
+    <context-param>
+        <param-name>firebase.project.id</param-name>
+        <param-value>YOUR_FIREBASE_PROJECT_ID</param-value>
+    </context-param>
+    <context-param>
+        <param-name>firebase.messaging.sender.id</param-name>
+        <param-value>YOUR_MESSAGING_SENDER_ID</param-value>
+    </context-param>
+    <context-param>
+        <param-name>firebase.app.id</param-name>
+        <param-value>YOUR_FIREBASE_APP_ID</param-value>
+    </context-param>
+    <context-param>
+        <param-name>firebase.vapid.key</param-name>
+        <param-value>YOUR_VAPID_PUBLIC_KEY</param-value>
+    </context-param>
+
     <!-- Default welcome page — routed through DashboardServlet so auth filter applies -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>

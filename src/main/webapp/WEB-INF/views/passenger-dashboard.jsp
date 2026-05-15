@@ -1,6 +1,21 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c"  uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%
+  String mapsKey = getServletContext().getInitParameter("google.maps.key");
+  if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
+      mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
+  String gaMeasurementId = getServletContext().getInitParameter("ga.measurement.id");
+  if (gaMeasurementId == null || "YOUR_GA4_MEASUREMENT_ID".equals(gaMeasurementId))
+      gaMeasurementId = System.getenv("GA_MEASUREMENT_ID") != null ? System.getenv("GA_MEASUREMENT_ID") : "";
+  String fbApiKey       = getServletContext().getInitParameter("firebase.api.key");
+  String fbAuthDomain   = getServletContext().getInitParameter("firebase.auth.domain");
+  String fbProjectId    = getServletContext().getInitParameter("firebase.project.id");
+  String fbMsgSenderId  = getServletContext().getInitParameter("firebase.messaging.sender.id");
+  String fbAppId        = getServletContext().getInitParameter("firebase.app.id");
+  String fbVapidKey     = getServletContext().getInitParameter("firebase.vapid.key");
+  boolean firebaseReady = fbApiKey != null && !fbApiKey.isBlank() && !"YOUR_FIREBASE_API_KEY".equals(fbApiKey);
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +23,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <% if (!gaMeasurementId.isEmpty()) { %>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<%= gaMeasurementId %>"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<%= gaMeasurementId %>');</script>
+    <% } %>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", sans-serif; }
@@ -228,31 +246,46 @@ function updateLastRefreshLabel() {
 setInterval(updateLastRefreshLabel, 5000);
 
 // -- MAP --
-const map = L.map('map', { zoomControl: false, attributionControl: false });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-L.control.zoom({ position: 'topright' }).addTo(map);
-
-navigator.geolocation
-    ? navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), () => map.setView([0,0],2))
-    : map.setView([0,0], 2);
-
-// Drop live bus markers on map
-const busIcon = L.divIcon({
-    className: '',
-    html: '<div style="background:#00c853;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(0,200,83,.3)"></div>',
-    iconSize: [20,20], iconAnchor: [10,10]
-});
-const liveTrips = [];
-<c:forEach var="t" items="${activeTrips}">liveTrips.push({ id: ${t.tripId}, name: "${t.route.routeName}", driver: "${t.driver.name}" });</c:forEach>
-liveTrips.forEach(t => {
-    fetch(CTX_DASH + '/tracking/latest?tripId=' + t.id).then(r => r.json()).then(d => {
-        if (d && d.lat && d.lng) {
-            L.marker([d.lat, d.lng], { icon: busIcon }).addTo(map)
-                .bindPopup('<b>' + t.name + '</b><br>Driver: ' + t.driver);
-            if (liveTrips.length === 1) map.setView([d.lat, d.lng], 14);
-        }
-    }).catch(() => {});
-});
+let map, busMarkers = [];
+function initMap() {
+    const defaultCenter = { lat: -25.7313, lng: 28.1648 };
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: defaultCenter,
+        zoom: 13,
+        disableDefaultUI: false,
+        zoomControl: true,
+        gestureHandling: 'cooperative'
+    });
+    navigator.geolocation && navigator.geolocation.getCurrentPosition(
+        p => map.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => {}
+    );
+    // Drop live bus markers on map
+    const busIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>`;
+    const busGmIcon = {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg),
+        scaledSize: new google.maps.Size(20, 20),
+        anchor: new google.maps.Point(10, 10)
+    };
+    const liveTrips = [];
+    <c:forEach var="t" items="${activeTrips}">liveTrips.push({ id: ${t.tripId}, name: "${t.route.routeName}", driver: "${t.driver.name}" });</c:forEach>
+    liveTrips.forEach(t => {
+        fetch(CTX_DASH + '/tracking/latest?tripId=' + t.id).then(r => r.json()).then(d => {
+            if (d && d.lat && d.lng) {
+                const m = new google.maps.Marker({
+                    position: { lat: d.lat, lng: d.lng },
+                    map: map,
+                    icon: busGmIcon,
+                    title: t.name
+                });
+                const iw = new google.maps.InfoWindow({ content: '<b>' + t.name + '</b><br>Driver: ' + t.driver });
+                m.addListener('click', () => iw.open(map, m));
+                busMarkers.push(m);
+                if (liveTrips.length === 1) map.setCenter({ lat: d.lat, lng: d.lng });
+            }
+        }).catch(() => {});
+    });
+}
 
 // -- SHEET --
 function applyPassState(state) {
@@ -455,16 +488,24 @@ pollNotifs();
             }
             knownLiveIds = freshLiveIds;
             // refresh bus markers on map
-            busMarkers.forEach(m => map.removeLayer(m));
+            busMarkers.forEach(m => m.setMap(null));
             busMarkers.length = 0;
+            const busIconSvg2 = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>`;
+            const busGmIcon2 = map ? {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg2),
+                scaledSize: new google.maps.Size(20, 20),
+                anchor: new google.maps.Point(10, 10)
+            } : null;
             doc.querySelectorAll('[data-live-trip]').forEach(el => {
                 const tid = el.getAttribute('data-live-trip');
                 const name = el.getAttribute('data-trip-name') || '';
                 const driver = el.getAttribute('data-driver') || '';
                 fetch(CTX_DASH + '/tracking/latest?tripId=' + tid).then(r => r.json()).then(d => {
-                    if (d && d.lat && d.lng) {
-                        const m = L.marker([d.lat, d.lng], { icon: busIcon })
-                            .addTo(map).bindPopup('<b>' + name + '</b><br>Driver: ' + driver);
+                    if (d && d.lat && d.lng && map) {
+                        const m = new google.maps.Marker({
+                            position: { lat: d.lat, lng: d.lng }, map: map,
+                            icon: busGmIcon2, title: name
+                        });
                         busMarkers.push(m);
                     }
                 }).catch(() => {});
@@ -499,6 +540,51 @@ pollNotifs();
         }
     })();
 })();
+
+<% if (firebaseReady) { %>
+// ── Firebase Cloud Messaging (push notifications) ─────────────────────────
+(function initFCM() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    const firebaseConfig = {
+        apiKey:            '<%= fbApiKey %>',
+        authDomain:        '<%= fbAuthDomain %>',
+        projectId:         '<%= fbProjectId %>',
+        messagingSenderId: '<%= fbMsgSenderId %>',
+        appId:             '<%= fbAppId %>'
+    };
+    // Load Firebase compat SDK
+    const sdkBase = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-';
+    Promise.all([
+        loadScript(sdkBase + 'app-compat.js'),
+        loadScript(sdkBase + 'messaging-compat.js')
+    ]).then(() => {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+        return navigator.serviceWorker.register('<c:url value="/firebase-messaging-sw.js"/>')
+            .then(reg => messaging.getToken({ vapidKey: '<%= fbVapidKey %>', serviceWorkerRegistration: reg }))
+            .then(token => {
+                if (!token) return;
+                return fetch('<c:url value="/fcm/token"/>', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'token=' + encodeURIComponent(token)
+                });
+            });
+    }).catch(() => {});
+    function loadScript(src) {
+        return new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+        });
+    }
+})();
+<% } %>
 </script>
+<% if (!mapsKey.isEmpty()) { %>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<% } else { %>
+<script>window.addEventListener('DOMContentLoaded',function(){document.getElementById('map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem">Set GOOGLE_MAPS_KEY to enable map</div>';});</script>
+<% } %>
 </body>
 </html>

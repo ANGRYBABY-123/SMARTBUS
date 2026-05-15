@@ -2,6 +2,7 @@ package com.smartbus.listener;
 
 import com.smartbus.dao.UserDAO;
 import com.smartbus.dao.TripDAO;
+import com.smartbus.util.FirebaseUtil;
 import com.smartbus.util.JPAUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletContextEvent;
@@ -28,6 +29,9 @@ public class AppContextListener implements ServletContextListener {
         } catch (Exception e) {
             log.log(Level.SEVERE, "Could not connect to database on startup. Check DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS env vars. App will still start.", e);
         }
+
+        // Initialise Firebase Admin SDK for push notifications (non-fatal if not configured)
+        FirebaseUtil.initialize();
         // Every 60 s, permanently delete users whose 30-minute removal window has expired
         UserDAO purgeDAO = new UserDAO();
         scheduler = Executors.newScheduledThreadPool(2);

@@ -1,5 +1,13 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+  String mapsKey = getServletContext().getInitParameter("google.maps.key");
+  if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
+      mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
+  String gaMeasurementId = getServletContext().getInitParameter("ga.measurement.id");
+  if (gaMeasurementId == null || "YOUR_GA4_MEASUREMENT_ID".equals(gaMeasurementId))
+      gaMeasurementId = System.getenv("GA_MEASUREMENT_ID") != null ? System.getenv("GA_MEASUREMENT_ID") : "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +15,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CommuteSafe – Live Track</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<% if (!gaMeasurementId.isEmpty()) { %>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=<%= gaMeasurementId %>"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<%= gaMeasurementId %>');</script>
+<% } %>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",sans-serif; height:100vh; overflow:hidden; }
@@ -185,8 +196,8 @@
   </div>
 </div>
 <div id="map-controls">
-  <button class="map-btn" onclick="map.zoomIn()"><i class="bi bi-plus"></i></button>
-  <button class="map-btn" onclick="map.zoomOut()"><i class="bi bi-dash"></i></button>
+  <button class="map-btn" onclick="map.setZoom(map.getZoom()+1)"><i class="bi bi-plus"></i></button>
+  <button class="map-btn" onclick="map.setZoom(map.getZoom()-1)"><i class="bi bi-dash"></i></button>
   <button class="map-btn active" id="follow-btn" onclick="toggleFollow()" title="Auto-follow bus"><i class="bi bi-record-circle"></i></button>
   <button class="map-btn" onclick="recenterBus()" title="Re-center on bus"><i class="bi bi-crosshair2"></i></button>
 </div>
@@ -274,21 +285,22 @@ function calcHeading(from, to) {
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-// Smooth camera (Leaflet flyTo)
-function smoothCamera(toLat, toLng, targetZoom, targetTilt, targetHeading) {
+// Smooth camera (Google Maps panTo + setZoom)
+function smoothCamera(toLat, toLng, targetZoom) {
   if (camAnimFrame) cancelAnimationFrame(camAnimFrame);
   camAnimFrame = null;
-  map.flyTo([toLat, toLng], targetZoom, { duration: 1.4, easeLinearity: 0.5 });
+  map.panTo({ lat: toLat, lng: toLng });
+  if (Math.abs(map.getZoom() - targetZoom) >= 0.5) map.setZoom(targetZoom);
 }
 
 function applyDynamicView(lat, lng, speedKmh) {
   if (!autoFollow) return;
   const cam = dynamicCamera(speedKmh);
   if (Math.abs(map.getZoom() - cam.zoom) >= 0.5 || lastDynZoom !== cam.zoom) {
-    smoothCamera(lat, lng, cam.zoom, 0, 0);
+    smoothCamera(lat, lng, cam.zoom);
     lastDynZoom = cam.zoom;
   } else {
-    map.panTo([lat, lng]);
+    map.panTo({ lat, lng });
   }
 }
 
@@ -318,55 +330,67 @@ function startDeadReckoning() {
       const clamp = Math.min(performance.now() - prevGps.ts, 15000);
       const lat = prevGps.lat + velLat * clamp;
       const lng = prevGps.lng + velLng * clamp;
-      busMarker.setLatLng([lat, lng]);
+      busMarker.setPosition({ lat, lng });
       busLat = lat; busLng = lng;
     }
     drRafId = requestAnimationFrame(dr);
   })();
 }
 
-// ── Map initialisation ────────────────────────────────────────────────
+// ── Map initialisation – Google Maps ──────────────────────────────────
 function makeBusIcon(live) {
-  const col = live ? '#22c55e' : '#94a3b8';
+  const col    = live ? '#22c55e' : '#94a3b8';
   const shadow = live ? '0 0 0 8px rgba(34,197,94,0.25)' : '0 2px 6px rgba(0,0,0,0.2)';
-  return L.divIcon({
-    className: '',
-    html: '<div style="width:40px;height:40px;border-radius:50%;background:'+col+';border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:1.15rem;box-shadow:'+shadow+'"><i class=\'bi bi-bus-front-fill\'></i></div>',
-    iconSize: [40,40], iconAnchor: [20,20]
-  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+    <circle cx="20" cy="20" r="18" fill="${col}" stroke="white" stroke-width="3"/>
+    <circle cx="20" cy="20" r="18" fill="transparent" style="box-shadow:${shadow}"/>
+    <text x="20" y="26" text-anchor="middle" font-size="16" fill="white">🚌</text>
+  </svg>`;
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(40, 40),
+    anchor: new google.maps.Point(20, 20)
+  };
 }
 function makeDotIcon(color) {
-  return L.divIcon({
-    html: '<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.35)"></div>',
-    className:'', iconSize:[14,14], iconAnchor:[7,7]
-  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">
+    <circle cx="7" cy="7" r="5" fill="${color}" stroke="white" stroke-width="2.5"/>
+  </svg>`;
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(14, 14),
+    anchor: new google.maps.Point(7, 7)
+  };
 }
 function initMap() {
   const initCenter = (ROUTE_START_LAT && ROUTE_START_LNG)
-    ? [ROUTE_START_LAT, ROUTE_START_LNG]
-    : [-25.7313, 28.1648];
+    ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
+    : { lat: -25.7313, lng: 28.1648 };
 
-  map = L.map('map', { zoomControl:false, attributionControl:false });
-  map.setView(initCenter, 13);
-
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains:'abcd', maxZoom:20
-  }).addTo(map);
-  L.control.attribution({ position:'bottomleft', prefix:false })
-    .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>')
-    .addTo(map);
-
-  map.on('dragstart', onMapDrag);
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: initCenter,
+    zoom: 13,
+    disableDefaultUI: true,
+    gestureHandling: 'greedy',
+    styles: [
+      { featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] },
+      { featureType:'transit.station.bus', stylers:[{ visibility:'off' }] }
+    ]
+  });
 
   if (ROUTE_START_LAT && ROUTE_START_LNG)
-    L.marker([ROUTE_START_LAT,ROUTE_START_LNG], { icon:makeDotIcon('#22c55e') }).addTo(map);
+    new google.maps.Marker({ position:{ lat:ROUTE_START_LAT, lng:ROUTE_START_LNG }, map, icon:makeDotIcon('#22c55e') });
   if (ROUTE_END_LAT && ROUTE_END_LNG)
-    L.marker([ROUTE_END_LAT,ROUTE_END_LNG], { icon:makeDotIcon('#f87171') }).addTo(map);
+    new google.maps.Marker({ position:{ lat:ROUTE_END_LAT, lng:ROUTE_END_LNG }, map, icon:makeDotIcon('#f87171') });
 
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
-    const bounds = L.latLngBounds([[ROUTE_START_LAT,ROUTE_START_LNG],[ROUTE_END_LAT,ROUTE_END_LNG]]);
-    map.fitBounds(bounds, { padding:[60,60] });
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend({ lat:ROUTE_START_LAT, lng:ROUTE_START_LNG });
+    bounds.extend({ lat:ROUTE_END_LAT,   lng:ROUTE_END_LNG   });
+    map.fitBounds(bounds, { top:60, right:60, bottom:220, left:60 });
   }
+
+  map.addListener('dragstart', onMapDrag);
 
   pollBus();
   setInterval(pollBus, 2000);
@@ -374,7 +398,6 @@ function initMap() {
   pollDelay();
   startDeadReckoning();
 }
-function makeBusEl(live) { return makeBusIcon(live); }
 function updateBusMarkerLive(live) {
   if (!busMarker) return;
   busMarker.setIcon(makeBusIcon(live));
@@ -416,13 +439,19 @@ function pollBus() {
       document.getElementById('status-chip').style.color = '#15803d';
       document.getElementById('bus-status-text').textContent = 'Bus is live';
       if (!busMarker) {
-        busMarker = L.marker([d.lat,d.lng], { icon:makeBusIcon(true), zIndexOffset:1000 }).addTo(map);
+        busMarker = new google.maps.Marker({
+          position: { lat: d.lat, lng: d.lng },
+          map: map,
+          icon: makeBusIcon(true),
+          zIndex: 1000
+        });
         busLat=d.lat; busLng=d.lng;
-        map.setView([d.lat,d.lng], 17);
+        map.setCenter({ lat: d.lat, lng: d.lng });
+        map.setZoom(17);
         lastDynZoom = 17;
       } else {
         updateBusMarkerLive(true);
-        busMarker.setLatLng([d.lat, d.lng]);
+        busMarker.setPosition({ lat: d.lat, lng: d.lng });
         busLat=d.lat; busLng=d.lng;
         applyDynamicView(d.lat, d.lng, speedKmh);
       }
@@ -433,7 +462,8 @@ function recenterBus() {
   if (busLat !== null) {
     autoFollow = true;
     document.getElementById('follow-btn').classList.add('active');
-    map.flyTo([busLat, busLng], lastDynZoom>0?lastDynZoom:17, { duration: 1.4 });
+    map.panTo({ lat: busLat, lng: busLng });
+    if (lastDynZoom > 0) map.setZoom(lastDynZoom);
   }
 }
 
@@ -540,6 +570,21 @@ function pollAiEta() {
 setInterval(pollAiEta, 15000);
 pollAiEta();
 </script>
-<script>initMap();</script>
+<% if (!mapsKey.isEmpty()) { %>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<% } else { %>
+<script>
+// Fallback: Google Maps key not configured – display a setup notice on the map
+window.initMap = function() {
+  document.getElementById('map').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f0fdf4;flex-direction:column;gap:12px">' +
+    '<div style="font-size:2rem">🗺️</div>' +
+    '<div style="font-size:.9rem;font-weight:700;color:#374151">Google Maps not configured</div>' +
+    '<div style="font-size:.8rem;color:#6b7280;text-align:center;max-width:280px">Set the <code>google.maps.key</code> context param in <b>web.xml</b> (or <code>GOOGLE_MAPS_KEY</code> env var) to enable the live map.</div>' +
+    '</div>';
+};
+initMap();
+</script>
+<% } %>
 </body>
 </html>

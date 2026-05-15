@@ -5,6 +5,7 @@ import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.Notification;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
+import com.smartbus.util.FirebaseUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -157,6 +158,11 @@ public class NotificationServlet extends HttpServlet {
             Notification notif = new Notification(
                 driver, trip, message, "DELAY", LocalDateTime.now());
             Notification saved = notifDAO.save(notif);
+
+            // Push notification to all registered browsers via FCM
+            String pushTitle = "⚠️ Bus Delay – " + trip.getRoute().getRouteName();
+            String pushBody  = reason + " (Bus " + trip.getBus().getRegistrationNumber() + ")";
+            FirebaseUtil.broadcastToAll(pushTitle, pushBody, null, "delay-" + tripId);
 
             out.print("{\"ok\":true,\"id\":" + saved.getNotificationId()
                     + ",\"message\":\"" + escapeJson(message) + "\""
