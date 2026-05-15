@@ -119,11 +119,12 @@
     position:fixed;bottom:0;left:0;right:0;z-index:500;
     background:white;border-radius:24px 24px 0 0;
     box-shadow:0 -4px 30px rgba(0,0,0,0.18);
-    max-height:55vh;overflow:hidden;display:flex;flex-direction:column;
-    transition:max-height 0.3s ease;
+    height:50vh;overflow:hidden;display:flex;flex-direction:column;
+    transition:height 0.35s cubic-bezier(0.32,0.72,0,1);
   }
-  #sheet-handle { flex-shrink:0;padding:10px 0 4px;display:flex;justify-content:center;cursor:pointer; }
-  .handle-bar { width:40px;height:4px;border-radius:2px;background:#ddd; }
+  #sheet-handle { flex-shrink:0;padding:12px 0 6px;display:flex;justify-content:center;cursor:grab;touch-action:none; }
+  #sheet-handle:active { cursor:grabbing; }
+  .handle-bar { width:40px;height:4px;border-radius:2px;background:#ccc; }
   #sheet-inner { overflow-y:auto;flex:1;padding:0 16px 24px; }
   #bus-status-card {
     background:#f0fdf4;border-radius:14px;padding:14px 16px;margin-bottom:16px;
@@ -202,7 +203,7 @@
   <button class="map-btn" onclick="recenterBus()" title="Re-center on bus"><i class="bi bi-crosshair2"></i></button>
 </div>
 <div id="bottom-sheet">
-  <div id="sheet-handle" onclick="toggleSheet()"><div class="handle-bar"></div></div>
+  <div id="sheet-handle"><div class="handle-bar"></div></div>
   <div id="sheet-inner">
     <!-- ETA Card -->
     <div id="eta-card">
@@ -260,6 +261,7 @@ const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.rou
 let map, busMarker;
 let busLat = null, busLng = null;
 let sheetExpanded = true;
+let sheetState = 'partial'; // collapsed | partial | expanded
 let autoFollow = true;
 let lastDynZoom = -1;
 let currentHeading = 0;
@@ -372,6 +374,7 @@ window.initMap = function {
     zoom: 13,
     disableDefaultUI: true,
     gestureHandling: 'greedy',
+    mapTypeId: 'roadmap',
     styles: [
       { featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] },
       { featureType:'transit.station.bus', stylers:[{ visibility:'off' }] }
@@ -467,9 +470,65 @@ function recenterBus() {
   }
 }
 
+// ── Bottom-sheet drag ───────────────────────────────────────────────────────
+(function() {
+  const sheet  = document.getElementById('bottom-sheet');
+  const handle = document.getElementById('sheet-handle');
+  const HEIGHTS = { collapsed: '72px', partial: '50vh', expanded: '88vh' };
+  let startY = 0, startH = 0, dragging = false, movedPx = 0;
+
+  function applyState(s) {
+    sheetState = s;
+    sheetExpanded = (s === 'expanded');
+    sheet.style.transition = 'height 0.35s cubic-bezier(0.32,0.72,0,1)';
+    sheet.style.height = HEIGHTS[s];
+  }
+  function snap(h, vh) {
+    if (h < vh * 0.18)       applyState('collapsed');
+    else if (h > vh * 0.62)  applyState('expanded');
+    else                     applyState('partial');
+  }
+  function onStart(e) {
+    dragging = true; movedPx = 0;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startH = sheet.getBoundingClientRect().height;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    if (e.cancelable) e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const diff = startY - y;
+    movedPx = Math.abs(diff);
+    const newH = Math.max(52, Math.min(window.innerHeight * 0.92, startH + diff));
+    sheet.style.height = newH + 'px';
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (movedPx > 8) {
+      snap(sheet.getBoundingClientRect().height, window.innerHeight);
+    } else {
+      // tap: cycle states
+      if (sheetState === 'collapsed')      applyState('partial');
+      else if (sheetState === 'partial')   applyState('expanded');
+      else                                 applyState('partial');
+    }
+  }
+  handle.addEventListener('touchstart',  onStart, { passive: true });
+  handle.addEventListener('touchmove',   onMove,  { passive: false });
+  handle.addEventListener('touchend',    onEnd);
+  handle.addEventListener('mousedown',   onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onEnd);
+  // initialise
+  applyState('partial');
+})();
 function toggleSheet() {
-  sheetExpanded = !sheetExpanded;
-  document.getElementById('bottom-sheet').style.maxHeight = sheetExpanded ? '55vh' : '110px';
+  if (sheetState === 'collapsed')     document.getElementById('bottom-sheet').style.height = '50vh', sheetState = 'partial';
+  else if (sheetState === 'partial')  document.getElementById('bottom-sheet').style.height = '88vh', sheetState = 'expanded';
+  else                                document.getElementById('bottom-sheet').style.height = '50vh', sheetState = 'partial';
+  sheetExpanded = sheetState === 'expanded';
 }
 
 var delayDismissed = false;

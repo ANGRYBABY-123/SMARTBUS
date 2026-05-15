@@ -253,7 +253,12 @@ window.initMap = function() {
         zoom: 13,
         disableDefaultUI: false,
         zoomControl: true,
-        gestureHandling: 'cooperative'
+        gestureHandling: 'cooperative',
+        mapTypeId: 'roadmap',
+        styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit.station.bus', stylers: [{ visibility: 'off' }] }
+        ]
     });
     navigator.geolocation && navigator.geolocation.getCurrentPosition(
         p => map.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }),
@@ -311,29 +316,34 @@ function toggleSheet() {
 (function() {
     const handle = document.getElementById('pass-handle');
     const sheet  = document.getElementById('bottom-sheet');
-    let startY = 0, startH = 0, dragging = false;
+    let startY = 0, startH = 0, dragging = false, movedPx = 0;
     function onStart(e) {
-        dragging = true;
+        dragging = true; movedPx = 0;
         startY = e.touches ? e.touches[0].clientY : e.clientY;
         startH = sheet.getBoundingClientRect().height;
         sheet.style.transition = 'none';
     }
     function onMove(e) {
         if (!dragging) return;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const y = e.touches ? e.touches[0].clientY : e.clientY;
-        const newH = Math.max(52, Math.min(window.innerHeight * 0.85, startH + (startY - y)));
+        const diff = startY - y;
+        movedPx = Math.abs(diff);
+        const newH = Math.max(52, Math.min(window.innerHeight * 0.88, startH + diff));
         sheet.style.height = newH + 'px';
     }
     function onEnd() {
         if (!dragging) return;
         dragging = false;
-        const h = sheet.getBoundingClientRect().height;
-        const vh = window.innerHeight;
-        if (h < vh * 0.2)        applyPassState('collapsed');
-        else if (h > vh * 0.55)  applyPassState('expanded');
-        else                      applyPassState('partial');
-        sheet.style.height = '';
+        if (movedPx > 8) {
+            const h = sheet.getBoundingClientRect().height;
+            const vh = window.innerHeight;
+            if (h < vh * 0.2)        applyPassState('collapsed');
+            else if (h > vh * 0.55)  applyPassState('expanded');
+            else                      applyPassState('partial');
+            sheet.style.height = '';
+        }
+        // if movedPx <= 8 it was a tap; click event will fire and call toggleSheet
     }
     handle.addEventListener('touchstart', onStart, { passive: true });
     handle.addEventListener('touchmove',  onMove,  { passive: false });
@@ -341,7 +351,10 @@ function toggleSheet() {
     handle.addEventListener('mousedown',  onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup',   onEnd);
-    handle.addEventListener('click', toggleSheet);
+    handle.addEventListener('click', function() {
+        if (movedPx > 8) return; // was a drag, not a tap
+        toggleSheet();
+    });
 })();
 
 // -- NOTIFICATIONS --

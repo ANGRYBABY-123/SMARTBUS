@@ -130,7 +130,12 @@ window.initRouteMap = function() {
     previewMap = new google.maps.Map(document.getElementById('preview-map'), {
         center: { lat: -25.65, lng: 28.09 },
         zoom: 11,
-        gestureHandling: 'cooperative'
+        gestureHandling: 'cooperative',
+        mapTypeId: 'roadmap',
+        styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit.station.bus', stylers: [{ visibility: 'off' }] }
+        ]
     });
     updateMap();
 };

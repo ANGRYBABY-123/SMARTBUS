@@ -76,10 +76,11 @@
     position:fixed; bottom:0; left:0; right:0; z-index:500;
     background:#0f172a; border-radius:22px 22px 0 0;
     border-top:1px solid #334155;
-    max-height:55vh; overflow:hidden; display:flex; flex-direction:column;
-    transition:max-height 0.3s ease;
+    height:50vh; overflow:hidden; display:flex; flex-direction:column;
+    transition:height 0.35s cubic-bezier(0.32,0.72,0,1);
   }
-  #sheet-handle { flex-shrink:0; padding:10px 0 4px; display:flex; justify-content:center; cursor:pointer; }
+  #sheet-handle { flex-shrink:0; padding:12px 0 6px; display:flex; justify-content:center; cursor:grab; touch-action:none; }
+  #sheet-handle:active { cursor:grabbing; }
   .handle-bar { width:40px; height:4px; border-radius:2px; background:#334155; }
   #sheet-inner { overflow-y:auto; flex:1; padding:0 16px 24px; }
   .sheet-title { font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
@@ -181,7 +182,7 @@
 </div>
 
 <div id="bottom-sheet">
-  <div id="sheet-handle" onclick="toggleSheet()"><div class="handle-bar"></div></div>
+  <div id="sheet-handle"><div class="handle-bar"></div></div>
   <div id="sheet-inner">
     <div id="action-row">
       <c:choose>
@@ -237,7 +238,56 @@ let map, busMarker, routePolyline, historyPolyline;
 let lastLat = null, lastLng = null, lastFix = null, currentHeading = 0;
 let watchId = null, tracking = false;
 let steps = [], stepIdx = 0, sheetExpanded = true;
+let sheetState = 'partial';
 let userPanned = false;
+
+// Draggable bottom sheet
+(function() {
+  const sheet  = document.getElementById('bottom-sheet');
+  const handle = document.getElementById('sheet-handle');
+  const HEIGHTS = { collapsed: '72px', partial: '50vh', expanded: '88vh' };
+  let startY = 0, startH = 0, dragging = false, movedPx = 0;
+  function applyState(s) {
+    sheetState = s; sheetExpanded = (s === 'expanded');
+    sheet.style.transition = 'height 0.35s cubic-bezier(0.32,0.72,0,1)';
+    sheet.style.height = HEIGHTS[s];
+  }
+  function snap(h, vh) {
+    if (h < vh * 0.18)       applyState('collapsed');
+    else if (h > vh * 0.62)  applyState('expanded');
+    else                     applyState('partial');
+  }
+  function onStart(e) {
+    dragging = true; movedPx = 0;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startH = sheet.getBoundingClientRect().height;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    if (e.cancelable) e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const diff = startY - y;
+    movedPx = Math.abs(diff);
+    const newH = Math.max(52, Math.min(window.innerHeight * 0.92, startH + diff));
+    sheet.style.height = newH + 'px';
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (movedPx > 8) snap(sheet.getBoundingClientRect().height, window.innerHeight);
+    else if (sheetState === 'collapsed') applyState('partial');
+    else if (sheetState === 'partial')   applyState('expanded');
+    else                                 applyState('partial');
+  }
+  handle.addEventListener('touchstart',  onStart, { passive: true });
+  handle.addEventListener('touchmove',   onMove,  { passive: false });
+  handle.addEventListener('touchend',    onEnd);
+  handle.addEventListener('mousedown',   onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onEnd);
+  applyState('partial');
+})();
 
 // ── Google Maps marker icons ─────────────────────────────────────────────
 function makeBusIcon3D() {
@@ -483,8 +533,10 @@ function recenterMap() {
 }
 
 function toggleSheet() {
-  sheetExpanded = !sheetExpanded;
-  document.getElementById('bottom-sheet').style.maxHeight = sheetExpanded ? '55vh' : '110px';
+  if (sheetState === 'collapsed')    { document.getElementById('bottom-sheet').style.height = '50vh'; sheetState = 'partial'; }
+  else if (sheetState === 'partial') { document.getElementById('bottom-sheet').style.height = '88vh'; sheetState = 'expanded'; }
+  else                               { document.getElementById('bottom-sheet').style.height = '50vh'; sheetState = 'partial'; }
+  sheetExpanded = (sheetState === 'expanded');
 }
 
 function haversineKm(lat1, lng1, lat2, lng2) {

@@ -107,7 +107,12 @@ window.initPickMap = function() {
     pickMap = new google.maps.Map(document.getElementById('pick-map'), {
         center: { lat: initLat, lng: initLng },
         zoom: 13,
-        gestureHandling: 'cooperative'
+        gestureHandling: 'cooperative',
+        mapTypeId: 'roadmap',
+        styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit.station.bus', stylers: [{ visibility: 'off' }] }
+        ]
     });
     if (latInput.value && lngInput.value) {
         pickMarker = new google.maps.Marker({ position: { lat: initLat, lng: initLng }, map: pickMap, draggable: true });
