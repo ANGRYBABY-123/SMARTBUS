@@ -8,11 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>CommuteSafe Driver</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", sans-serif; }
-        #map { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; }
+        html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", sans-serif; background: #f1f5f9; }
         .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; padding: 12px 16px; gap: 10px; pointer-events: none; }
         .topbar > * { pointer-events: all; }
         .menu-btn { width: 44px; height: 44px; background: #fff; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: 0 2px 14px rgba(0,0,0,0.22); transition: background .2s; }
@@ -96,7 +94,6 @@
     </style>
 </head>
 <body>
-<div id="map"></div>
 
 <div class="topbar">
     <button class="menu-btn" onclick="toggleSheet()"><i class="bi bi-list"></i></button>
@@ -222,7 +219,6 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const DD_CTX = '${pageContext.request.contextPath}';
 let ddTripId = null, ddReason = '', sheetCollapsed = false;
@@ -239,28 +235,6 @@ function formatDtElements(root) {
     });
 }
 formatDtElements();
-
-// -- MAP --
-const map = L.map('map', { zoomControl: false, attributionControl: false });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-L.control.zoom({ position: 'topright' }).addTo(map);
-
-navigator.geolocation
-    ? navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), () => map.setView([-25.7313, 28.1648], 11))
-    : map.setView([-25.7313, 28.1648], 11);
-
-// Show markers for in-progress trips
-const liveTrips = [];
-<c:forEach var="t" items="${trips}"><c:if test="${t.status == 'IN_PROGRESS'}">liveTrips.push({ id: ${t.tripId}, name: "${t.route.routeName}" });</c:if></c:forEach>
-liveTrips.forEach(t => {
-    fetch(DD_CTX + '/tracking/latest?tripId=' + t.id).then(r => r.json()).then(d => {
-        if (d && d.lat && d.lng) {
-            const ic = L.divIcon({ className: '', html: '<div style="background:#00c853;border-radius:50%;width:18px;height:18px;border:3px solid #fff;box-shadow:0 0 0 5px rgba(0,200,83,.3)"></div>', iconSize:[18,18], iconAnchor:[9,9] });
-            L.marker([d.lat, d.lng], { icon: ic }).addTo(map).bindPopup('<b>' + t.name + '</b><br>Your current location');
-            map.setView([d.lat, d.lng], 14);
-        }
-    }).catch(() => {});
-});
 
 // -- SHEET --
 function toggleSheet() {
@@ -349,7 +323,6 @@ function handleStartBtn(btn) {
 }
 
 (function() {
-    const mapMarkers = [];
     async function autoRefresh() {
         try {
             const res = await fetch(location.href, { credentials: 'same-origin' });
@@ -362,19 +335,7 @@ function handleStartBtn(btn) {
                 formatDtElements();
                 refreshStartButtons();
             }
-            // refresh map markers for in-progress trips
-            mapMarkers.forEach(m => map.removeLayer(m));
-            mapMarkers.length = 0;
-            doc.querySelectorAll('[data-trip-id][data-status="IN_PROGRESS"]').forEach(el => {
-                const tid = el.getAttribute('data-trip-id');
-                fetch(DD_CTX + '/tracking/latest?tripId=' + tid).then(r => r.json()).then(d => {
-                    if (d && d.lat && d.lng) {
-                        const ic = L.divIcon({ className: '', html: '<div style="background:#00c853;border-radius:50%;width:18px;height:18px;border:3px solid #fff;box-shadow:0 0 0 5px rgba(0,200,83,.3)"></div>', iconSize:[18,18], iconAnchor:[9,9] });
-                        const m = L.marker([d.lat, d.lng], { icon: ic }).addTo(map);
-                        mapMarkers.push(m);
-                    }
-                }).catch(() => {});
-            });
+
         } catch (e) { /* silent */ }
     }
     setInterval(autoRefresh, 10000);
