@@ -37,8 +37,8 @@
 
             <!-- ===== HIBERNATE SETTINGS ===== -->
             <property name="hibernate.dialect"          value="org.hibernate.dialect.MySQLDialect"/>
-            <!-- none = trust existing schema, no DDL on startup (update crashes on FK analysis with Hibernate 6.2 + MySQL) -->
-            <property name="hibernate.hbm2ddl.auto"    value="none"/>
+            <!-- update = auto-create/alter tables on startup (Hibernate 6.6+ fixes the getForeignKeys NPE on MySQL) -->
+            <property name="hibernate.hbm2ddl.auto"    value="update"/>
             <property name="hibernate.show_sql"         value="true"/>
             <property name="hibernate.format_sql"       value="true"/>
             <property name="hibernate.use_sql_comments" value="true"/>
