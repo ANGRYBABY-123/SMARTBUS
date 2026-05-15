@@ -25,9 +25,13 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 COPY --from=build /app/target/smartbus.war /usr/local/tomcat/webapps/ROOT.war
 
 # Render injects PORT env var – patch HTTP connector to bind 0.0.0.0:$PORT
+# Also disable the Tomcat shutdown port (8005) – Render probes it with HTTP HEAD
+# requests causing "Invalid shutdown command" spam in the logs
 CMD ["/bin/sh", "-c", \
      "PORT=${PORT:-8080} && \
       sed -i \"s|<Connector port=\\\"8080\\\" protocol=\\\"HTTP/1.1\\\"|<Connector port=\\\"${PORT}\\\" address=\\\"0.0.0.0\\\" protocol=\\\"HTTP/1.1\\\"|g\" \
+        /usr/local/tomcat/conf/server.xml && \
+      sed -i 's/port=\"8005\" shutdown=\"SHUTDOWN\"/port=\"-1\" shutdown=\"SHUTDOWN\"/' \
         /usr/local/tomcat/conf/server.xml && \
       catalina.sh run"]
 
