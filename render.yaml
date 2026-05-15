@@ -23,16 +23,18 @@ services:
 
     envVars:
       # ── Database connection ───────────────────────────────────────────────
+      # Set ALL five vars in the Render dashboard.  No defaults here because
+      # the values differ per provider (Railway uses port 31694, DB name "railway").
       - key: DB_HOST
-        sync: false     # set manually in Render dashboard (never commit secrets)
+        sync: false     # e.g. trolley.proxy.rlwy.net
       - key: DB_PORT
-        value: "3306"
+        sync: false     # e.g. 31694 (Railway) or 3306 (most others)
       - key: DB_NAME
-        value: smartbus
+        sync: false     # e.g. railway (Railway) or smartbus (local)
       - key: DB_USER
-        sync: false
+        sync: false     # e.g. root
       - key: DB_PASS
-        sync: false
+        sync: false     # your DB password (never commit secrets)
 
       # ── Email (JavaMail / SMTP) ───────────────────────────────────────────
       - key: SMTP_HOST

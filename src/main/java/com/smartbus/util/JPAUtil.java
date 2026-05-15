@@ -23,14 +23,15 @@ public class JPAUtil {
      * Reads optional environment variables so the same WAR can connect to any
      * database server without recompiling.
      *
-     * Only the properties whose env vars are explicitly set are overridden;
-     * everything else falls through to the values in persistence.xml so the
-     * app works out-of-the-box without any environment configuration.
+     * The override is applied ONLY when ALL THREE of DB_HOST, DB_USER and DB_PASS
+     * are explicitly set in the environment.  If any one is missing the method
+     * returns an empty map and the credentials in persistence.xml are used as-is
+     * (which is the correct Railway fallback).
      *
-     * Set on the application-server / Render env vars:
-     *   DB_HOST  – IP or hostname of the MySQL server
-     *   DB_PORT  – MySQL port                          (default: 3306)
-     *   DB_NAME  – Schema / database name
+     * Required env vars for a full override:
+     *   DB_HOST  – MySQL host (e.g. trolley.proxy.rlwy.net)
+     *   DB_PORT  – MySQL port (default: 3306)
+     *   DB_NAME  – Schema / database name (default: railway)
      *   DB_USER  – DB username
      *   DB_PASS  – DB password
      */
@@ -38,22 +39,23 @@ public class JPAUtil {
         Map<String, Object> props = new HashMap<>();
 
         String host = env("DB_HOST", null);
-        // Only build a URL override when DB_HOST is explicitly supplied.
-        // Without it, fall through to the jdbc.url in persistence.xml.
-        if (host != null) {
-            String port = env("DB_PORT", "3306");
-            String name = env("DB_NAME", "smartbus");
-            String url  = "jdbc:mysql://" + host + ":" + port + "/" + name
-                        + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
-            props.put("jakarta.persistence.jdbc.url", url);
+        String user = env("DB_USER", null);
+        String pass = env("DB_PASS", null);
+
+        // Only apply overrides when the three required vars are ALL present.
+        // Partial configuration would produce a broken connection string.
+        if (host == null || user == null || pass == null) {
+            return props; // fall through to persistence.xml values
         }
 
-        String user = env("DB_USER", null);
-        if (user != null) props.put("jakarta.persistence.jdbc.user", user);
+        String port = env("DB_PORT", "3306");
+        String name = env("DB_NAME", "railway");  // matches Railway.app default
+        String url  = "jdbc:mysql://" + host + ":" + port + "/" + name
+                    + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
-        String pass = env("DB_PASS", null);
-        if (pass != null) props.put("jakarta.persistence.jdbc.password", pass);
-
+        props.put("jakarta.persistence.jdbc.url",      url);
+        props.put("jakarta.persistence.jdbc.user",     user);
+        props.put("jakarta.persistence.jdbc.password", pass);
         return props;
     }
 

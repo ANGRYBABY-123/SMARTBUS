@@ -25,7 +25,11 @@
 
         <properties>
             <!-- ===== DATABASE CONNECTION ===== -->
-            <!-- Override any value at startup with env vars: DB_HOST, DB_PORT, DB_USER, DB_PASS -->
+            <!-- These are the working fallback credentials (Railway.app).    -->
+            <!-- Override ALL at runtime via env vars: DB_HOST, DB_PORT,       -->
+            <!-- DB_NAME, DB_USER, DB_PASS (JPAUtil requires all three of       -->
+            <!-- DB_HOST + DB_USER + DB_PASS to be set for the override to     -->
+            <!-- apply; partial configuration is intentionally ignored).        -->
             <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver"/>
             <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://trolley.proxy.rlwy.net:31694/railway?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
             <property name="jakarta.persistence.jdbc.user"     value="root"/>
