@@ -569,7 +569,7 @@ setInterval(pollDelayRisk, 30000);
 setTimeout(pollDelayRisk, 5000);
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
 <% } else { %>
 <script>
   // Google Maps API key not configured – show setup notice

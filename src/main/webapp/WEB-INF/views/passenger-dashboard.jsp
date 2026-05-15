@@ -582,7 +582,7 @@ pollNotifs();
 <% } %>
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
 <% } else { %>
 <script>window.addEventListener('DOMContentLoaded',function(){document.getElementById('map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem">Set GOOGLE_MAPS_KEY to enable map</div>';});</script>
 <% } %>

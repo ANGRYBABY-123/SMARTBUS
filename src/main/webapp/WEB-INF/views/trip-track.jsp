@@ -571,7 +571,7 @@ setInterval(pollAiEta, 15000);
 pollAiEta();
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
 <% } else { %>
 <script>
 // Fallback: Google Maps key not configured – display a setup notice on the map
