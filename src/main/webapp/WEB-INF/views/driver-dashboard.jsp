@@ -152,7 +152,7 @@
                                     <c:otherwise><i class="bi bi-check-circle-fill" style="color:#6b7280"></i></c:otherwise>
                                 </c:choose>
                             </div>
-                            <div style="flex:1;min-width:0;overflow:hidden">
+                            <div style="flex:1;min-width:0">
                                 <div class="card-sub">
                                     Bus: ${t.bus.registrationNumber}
                                     &nbsp;&middot;&nbsp; Trip #${t.tripId}
