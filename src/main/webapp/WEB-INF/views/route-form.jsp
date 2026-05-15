@@ -1,10 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-    String mapsKey = getServletContext().getInitParameter("google.maps.key");
-    if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
-        mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
-%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +7,8 @@
     <title>${empty route ? 'Add Route' : 'Edit Route'} – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <style>
         #preview-map { height:220px; border-radius:10px; border:1px solid #dee2e6; overflow:hidden; margin-bottom:1rem; }
         .coord-row { display:flex; gap:8px; }
@@ -126,19 +123,14 @@ const NAMES = {
 
 let previewMap, originMarker = null, destMarker = null, routeLine = null;
 
-window.initRouteMap = function() {
-    previewMap = new google.maps.Map(document.getElementById('preview-map'), {
-        center: { lat: -25.65, lng: 28.09 },
-        zoom: 11,
-        gestureHandling: 'cooperative',
-        mapTypeId: 'roadmap',
-        styles: [
-            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'transit.station.bus', stylers: [{ visibility: 'off' }] }
-        ]
-    });
+function initRouteMap() {
+    previewMap = L.map('preview-map', { center: [-25.65, 28.09], zoom: 11 });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 20, subdomains: 'abcd'
+    }).addTo(previewMap);
     updateMap();
-};
+}
 
 function updateMap() {
     if (!previewMap) return;
@@ -147,39 +139,28 @@ function updateMap() {
     const eLat = parseFloat(document.getElementById('endLat').value);
     const eLng = parseFloat(document.getElementById('endLng').value);
 
-    if (originMarker) { originMarker.setMap(null); originMarker = null; }
-    if (destMarker)   { destMarker.setMap(null);   destMarker   = null; }
-    if (routeLine)    { routeLine.setMap(null);    routeLine    = null; }
+    if (originMarker) { originMarker.remove(); originMarker = null; }
+    if (destMarker)   { destMarker.remove();   destMarker   = null; }
+    if (routeLine)    { routeLine.remove();    routeLine    = null; }
 
     const pts = [];
     if (!isNaN(sLat) && !isNaN(sLng)) {
-        originMarker = new google.maps.Marker({
-            position: { lat: sLat, lng: sLng }, map: previewMap,
-            title: document.getElementById('startLocation').value || 'Origin',
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8,
-                    fillColor: '#22c55e', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
-        });
-        pts.push({ lat: sLat, lng: sLng });
+        originMarker = L.circleMarker([sLat, sLng], {
+            radius: 8, fillColor: '#22c55e', fillOpacity: 1, color: '#fff', weight: 2
+        }).addTo(previewMap);
+        pts.push([sLat, sLng]);
     }
     if (!isNaN(eLat) && !isNaN(eLng)) {
-        destMarker = new google.maps.Marker({
-            position: { lat: eLat, lng: eLng }, map: previewMap,
-            title: document.getElementById('endLocation').value || 'Destination',
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8,
-                    fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
-        });
-        pts.push({ lat: eLat, lng: eLng });
+        destMarker = L.circleMarker([eLat, eLng], {
+            radius: 8, fillColor: '#ef4444', fillOpacity: 1, color: '#fff', weight: 2
+        }).addTo(previewMap);
+        pts.push([eLat, eLng]);
     }
     if (pts.length === 2) {
-        routeLine = new google.maps.Polyline({
-            path: pts, map: previewMap,
-            strokeColor: '#3b82f6', strokeWeight: 3, strokeOpacity: 0.8
-        });
-        const bounds = new google.maps.LatLngBounds();
-        pts.forEach(p => bounds.extend(p));
-        previewMap.fitBounds(bounds, 30);
+        routeLine = L.polyline(pts, { color: '#3b82f6', weight: 3, opacity: 0.8 }).addTo(previewMap);
+        previewMap.fitBounds(L.latLngBounds(pts), {padding: [30, 30]});
     } else if (pts.length === 1) {
-        previewMap.setCenter(pts[0]); previewMap.setZoom(13);
+        previewMap.setView(pts[0], 13);
     }
 }
 
@@ -204,11 +185,7 @@ function applyPreset(side, value) {
 ['startLat','startLng','endLat','endLng'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateMap);
 });
+window.addEventListener('DOMContentLoaded', initRouteMap);
 </script>
-<% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initRouteMap" async defer></script>
-<% } else { %>
-<script>window.addEventListener('DOMContentLoaded',function(){document.getElementById('preview-map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem">Set GOOGLE_MAPS_KEY to enable preview</div>';});</script>
-<% } %>
 </body>
 </html>

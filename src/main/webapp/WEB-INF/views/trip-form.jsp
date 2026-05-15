@@ -1,10 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-    String mapsKey = getServletContext().getInitParameter("google.maps.key");
-    if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
-        mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
-%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +7,8 @@
     <title>${empty trip ? 'Dispatch Trip' : 'Edit Trip'} – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <style>#route-preview-map{ height:200px; border-radius:10px; border:1px solid #dee2e6; overflow:hidden; margin-top:.75rem; display:none; }</style>
 </head>
 <body>
@@ -115,11 +112,10 @@
 <script>
 var routePreviewMap = null, rpOrigin = null, rpDest = null, rpLine = null;
 
-window.initMap = function() {
-    // Auto-show map if a route is already selected (edit mode)
+function initMap() {
     var sel = document.getElementById('routeId');
     if (sel && sel.value) onRouteChange(sel.value);
-};
+}
 
 function onRouteChange(routeId) {
     var sel = document.getElementById('routeId');
@@ -133,38 +129,28 @@ function onRouteChange(routeId) {
     }
     mapDiv.style.display = '';
     if (!routePreviewMap) {
-        routePreviewMap = new google.maps.Map(mapDiv, {
-            center: { lat: sLat, lng: sLng }, zoom: 11,
-            mapTypeId: 'roadmap', gestureHandling: 'cooperative',
-            styles: [
-                { featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] },
-                { featureType:'transit.station.bus', stylers:[{ visibility:'off' }] }
-            ]
-        });
+        routePreviewMap = L.map(mapDiv, { center: [sLat, sLng], zoom: 11 });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 20, subdomains: 'abcd'
+        }).addTo(routePreviewMap);
     }
-    if (rpOrigin) { rpOrigin.setMap(null); rpOrigin = null; }
-    if (rpDest)   { rpDest.setMap(null);   rpDest   = null; }
-    if (rpLine)   { rpLine.setMap(null);   rpLine   = null; }
-    rpOrigin = new google.maps.Marker({
-        position:{ lat:sLat, lng:sLng }, map:routePreviewMap, title: opt.dataset.name + ' – Start',
-        icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#22c55e', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
-    });
-    rpDest = new google.maps.Marker({
-        position:{ lat:eLat, lng:eLng }, map:routePreviewMap, title: opt.dataset.name + ' – End',
-        icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#ef4444', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
-    });
-    rpLine = new google.maps.Polyline({
-        path:[{ lat:sLat, lng:sLng },{ lat:eLat, lng:eLng }],
-        map:routePreviewMap, strokeColor:'#3b82f6', strokeWeight:3, strokeOpacity:0.85
-    });
-    var bounds = new google.maps.LatLngBounds();
-    bounds.extend({ lat:sLat, lng:sLng }); bounds.extend({ lat:eLat, lng:eLng });
-    routePreviewMap.fitBounds(bounds, 30);
+    if (rpOrigin) { rpOrigin.remove(); rpOrigin = null; }
+    if (rpDest)   { rpDest.remove();   rpDest   = null; }
+    if (rpLine)   { rpLine.remove();   rpLine   = null; }
+    rpOrigin = L.circleMarker([sLat, sLng], {
+        radius: 8, fillColor: '#22c55e', fillOpacity: 1, color: '#fff', weight: 2
+    }).addTo(routePreviewMap);
+    rpDest = L.circleMarker([eLat, eLng], {
+        radius: 8, fillColor: '#ef4444', fillOpacity: 1, color: '#fff', weight: 2
+    }).addTo(routePreviewMap);
+    rpLine = L.polyline([[sLat, sLng], [eLat, eLng]], {
+        color: '#3b82f6', weight: 3, opacity: 0.85
+    }).addTo(routePreviewMap);
+    routePreviewMap.fitBounds(L.latLngBounds([[sLat, sLng], [eLat, eLng]]), {padding: [30, 30]});
 }
+window.addEventListener('DOMContentLoaded', initMap);
 </script>
-<% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
-<% } %>
 <script>
     // For new trips only, prevent selecting past dates
     <c:if test="${empty trip.tripId}">

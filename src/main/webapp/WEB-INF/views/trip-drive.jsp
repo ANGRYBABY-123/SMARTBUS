@@ -1,9 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
-  String mapsKey = getServletContext().getInitParameter("google.maps.key");
-  if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
-      mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
   String gaMeasurementId = getServletContext().getInitParameter("ga.measurement.id");
   if (gaMeasurementId == null || "YOUR_GA4_MEASUREMENT_ID".equals(gaMeasurementId))
       gaMeasurementId = System.getenv("GA_MEASUREMENT_ID") != null ? System.getenv("GA_MEASUREMENT_ID") : "";
@@ -15,6 +12,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CommuteSafe – Drive</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <% if (!gaMeasurementId.isEmpty()) { %>
 <script async src="https://www.googletagmanager.com/gtag/js?id=<%= gaMeasurementId %>"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<%= gaMeasurementId %>');</script>
@@ -396,7 +395,7 @@ const ROUTE_END_LAT   = '${trip.route.endLat}'   !== '' ? parseFloat('${trip.rou
 const ROUTE_END_LNG   = '${trip.route.endLng}'   !== '' ? parseFloat('${trip.route.endLng}')   : null;
 const START_LOCATION  = '${trip.route.startLocation}';
 
-let map, busMarker, routePolyline, historyPolyline, directionsRenderer;
+let map, busMarker, routePolyline, historyPolyline;
 let lastLat = null, lastLng = null, lastFix = null;
 let watchId = null;
 let steps = [], stepIdx = 0;
@@ -464,25 +463,20 @@ function setGpsState(s) {
 
 /* ─── Map helpers ─────────────────────────────────────────────────────────── */
 function makeBusIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42">
-    <circle cx="21" cy="21" r="19" fill="#16a34a" stroke="white" stroke-width="3"/>
-    <text x="21" y="28" text-anchor="middle" font-size="18" fill="white">&#x1F68C;</text>
-  </svg>`;
-  return {
-    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(42, 42),
-    anchor: new google.maps.Point(21, 21)
-  };
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:42px;height:42px;border-radius:50%;background:#16a34a;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">&#x1F68C;</div>',
+    iconSize: [42, 42],
+    iconAnchor: [21, 21]
+  });
 }
 function makeDotIcon(color) {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14">'
-    + '<circle cx="7" cy="7" r="5" fill="' + color + '" stroke="white" stroke-width="2.5"/>'
-    + '</svg>';
-  return {
-    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(14, 14),
-    anchor: new google.maps.Point(7, 7)
-  };
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';border:2.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+  });
 }
 function calcHeading(from, to) {
   const r = d => d * Math.PI / 180, dL = r(to.lng - from.lng);
@@ -498,51 +492,44 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 }
 
 /* ─── Map init ────────────────────────────────────────────────────────────── */
-window.initMap = function() {
+function initMap() {
   const center = (ROUTE_START_LAT && ROUTE_START_LNG)
-    ? { lat: ROUTE_START_LAT, lng: ROUTE_START_LNG }
-    : { lat: -25.7313, lng: 28.1648 };
+    ? [ROUTE_START_LAT, ROUTE_START_LNG]
+    : [-25.7313, 28.1648];
 
-  map = new google.maps.Map(document.getElementById('map'), {
-    center, zoom: 15,
-    disableDefaultUI: true,
-    gestureHandling: 'greedy',
-    mapTypeId: 'roadmap',
-    styles: [
-      { featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] },
-      { featureType:'transit.station.bus', stylers:[{ visibility:'off' }] }
-    ]
-  });
-  map.addListener('dragstart', () => { userPanned = true; });
+  map = L.map('map', { center: center, zoom: 15, zoomControl: false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 20, subdomains: 'abcd'
+  }).addTo(map);
+  map.on('dragstart', () => { userPanned = true; });
 
   if (ROUTE_START_LAT && ROUTE_START_LNG)
-    new google.maps.Marker({ position:{ lat:ROUTE_START_LAT, lng:ROUTE_START_LNG }, map, icon:makeDotIcon('#16a34a') });
+    L.marker([ROUTE_START_LAT, ROUTE_START_LNG], {icon: makeDotIcon('#16a34a')}).addTo(map);
   if (ROUTE_END_LAT && ROUTE_END_LNG)
-    new google.maps.Marker({ position:{ lat:ROUTE_END_LAT, lng:ROUTE_END_LNG }, map, icon:makeDotIcon('#ef4444') });
+    L.marker([ROUTE_END_LAT, ROUTE_END_LNG], {icon: makeDotIcon('#ef4444')}).addTo(map);
 
   if (ROUTE_START_LAT && ROUTE_END_LAT) {
-    routePolyline = new google.maps.Polyline({
-      path: [{ lat:ROUTE_START_LAT, lng:ROUTE_START_LNG }, { lat:ROUTE_END_LAT, lng:ROUTE_END_LNG }],
-      geodesic: true, strokeColor:'#93c5fd', strokeOpacity:.7, strokeWeight:4, map
-    });
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend({ lat:ROUTE_START_LAT, lng:ROUTE_START_LNG });
-    bounds.extend({ lat:ROUTE_END_LAT,   lng:ROUTE_END_LNG });
-    map.fitBounds(bounds, { top:80, right:70, bottom:220, left:70 });
+    routePolyline = L.polyline(
+      [[ROUTE_START_LAT, ROUTE_START_LNG], [ROUTE_END_LAT, ROUTE_END_LNG]],
+      {color: '#93c5fd', opacity: 0.7, weight: 4}
+    ).addTo(map);
+    map.fitBounds(
+      L.latLngBounds([ROUTE_START_LAT, ROUTE_START_LNG], [ROUTE_END_LAT, ROUTE_END_LNG]),
+      {paddingTopLeft: [70, 80], paddingBottomRight: [70, 220]}
+    );
   }
   loadRouteHistory();
-};
+}
+window.addEventListener('DOMContentLoaded', initMap);
 
 function loadRouteHistory() {
   fetch(CTX + '/tracking/history?tripId=' + TRIP_ID)
     .then(r => r.json())
     .then(pts => {
       if (pts.length) {
-        const path = pts.map(p => ({ lat: p[0], lng: p[1] }));
-        if (historyPolyline) historyPolyline.setMap(null);
-        historyPolyline = new google.maps.Polyline({
-          path, geodesic: true, strokeColor:'#16a34a', strokeOpacity:.5, strokeWeight:3, map
-        });
+        if (historyPolyline) { historyPolyline.remove(); historyPolyline = null; }
+        historyPolyline = L.polyline(pts, {color: '#16a34a', opacity: 0.5, weight: 3}).addTo(map);
       }
       startTracking();
     }).catch(() => startTracking());
@@ -593,12 +580,12 @@ function onPos(pos) {
   lastLat = lat; lastLng = lng;
 
   if (!busMarker) {
-    busMarker = new google.maps.Marker({ position:{ lat, lng }, map, icon:makeBusIcon(), zIndex:1000 });
-    map.setCenter({ lat, lng }); map.setZoom(18);
-    buildGoogleRoute(lat, lng);
+    busMarker = L.marker([lat, lng], {icon: makeBusIcon(), zIndexOffset: 1000}).addTo(map);
+    map.setView([lat, lng], 18);
+    buildRoute(lat, lng);
   } else {
-    busMarker.setPosition({ lat, lng });
-    if (!userPanned) map.panTo({ lat, lng });
+    busMarker.setLatLng([lat, lng]);
+    if (!userPanned) map.panTo([lat, lng]);
     advanceStep(lat, lng);
   }
   sendGps(lat, lng);
@@ -610,36 +597,46 @@ function onPos(pos) {
 }
 
 /* ─── Directions ──────────────────────────────────────────────────────────── */
-function buildGoogleRoute(lat, lng) {
+function buildRoute(lat, lng) {
   if (!ROUTE_END_LAT || !ROUTE_END_LNG) return;
-  const svc = new google.maps.DirectionsService();
-  if (directionsRenderer) directionsRenderer.setMap(null);
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map,
-    suppressMarkers: true,
-    polylineOptions: { strokeColor:'#16a34a', strokeOpacity:.9, strokeWeight:6 }
-  });
-  svc.route({
-    origin: { lat, lng },
-    destination: { lat: ROUTE_END_LAT, lng: ROUTE_END_LNG },
-    travelMode: google.maps.TravelMode.DRIVING
-  }, function(result, status) {
-    if (status !== 'OK') return;
-    directionsRenderer.setDirections(result);
-    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
-    steps = [];
-    (result.routes[0].legs || []).forEach(leg => {
-      document.getElementById('dest-sub').textContent =
-        'Destination · ' + leg.duration.text + ' · ' + leg.distance.text;
+  const url = 'https://router.project-osrm.org/route/v1/driving/'
+    + lng + ',' + lat + ';' + ROUTE_END_LNG + ',' + ROUTE_END_LAT
+    + '?steps=true&geometries=geojson&overview=full';
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.routes || !data.routes.length) return;
+      const route = data.routes[0];
+      const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+      if (routePolyline) { routePolyline.remove(); routePolyline = null; }
+      routePolyline = L.polyline(coords, {color: '#16a34a', opacity: 0.9, weight: 6}).addTo(map);
+      const leg = route.legs[0];
+      const distText = leg.distance >= 1000
+        ? (leg.distance / 1000).toFixed(1) + ' km'
+        : Math.round(leg.distance) + ' m';
+      const durText = Math.round(leg.duration / 60) + ' min';
+      document.getElementById('dest-sub').textContent = 'Destination \u00b7 ' + durText + ' \u00b7 ' + distText;
+      steps = [];
       (leg.steps || []).forEach(s => {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = s.instructions || '';
-        steps.push({ instruction: tmp.textContent || '', distM: s.distance ? s.distance.value : 0 });
+        steps.push({ instruction: getStepInstruction(s), distM: s.distance || 0 });
       });
-    });
-    stepIdx = 0;
-    if (steps.length) showStep(steps[0]);
-  });
+      stepIdx = 0;
+      if (steps.length) showStep(steps[0]);
+    }).catch(() => {});
+}
+function getStepInstruction(step) {
+  const mod  = step.maneuver.modifier || '';
+  const name = step.name ? ' onto ' + step.name : '';
+  switch (step.maneuver.type) {
+    case 'depart':          return 'Head ' + (mod ? mod + ' ' : '') + (step.name ? 'on ' + step.name : 'forward');
+    case 'arrive':          return 'You have arrived';
+    case 'turn':            return 'Turn ' + mod + name;
+    case 'continue':        return 'Continue' + name;
+    case 'merge':           return 'Merge' + name;
+    case 'roundabout':      return 'Enter the roundabout';
+    case 'exit roundabout': return 'Exit the roundabout' + name;
+    default:                return 'Continue' + name;
+  }
 }
 
 function showStep(s) {
@@ -659,7 +656,7 @@ function advanceStep(lat, lng) {
 }
 
 function recenterMap() {
-  if (lastLat) { userPanned = false; map.setCenter({ lat:lastLat, lng:lastLng }); map.setZoom(18); }
+  if (lastLat) { userPanned = false; map.setView([lastLat, lastLng], 18); }
 }
 
 /* ─── AI Risk ─────────────────────────────────────────────────────────────── */
@@ -751,18 +748,5 @@ function sendGps(lat, lng) {
   }).catch(() => {});
 }
 </script>
-
-<% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
-<% } else { %>
-<script>
-window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('map').innerHTML =
-    '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f1f5f9;flex-direction:column;gap:12px;color:#64748b">'
-    + '<i class="bi bi-map" style="font-size:2.5rem;color:#cbd5e1;"></i>'
-    + '<span style="font-size:.9rem;font-weight:600;">Set GOOGLE_MAPS_KEY to enable navigation</span></div>';
-});
-</script>
-<% } %>
 </body>
 </html>

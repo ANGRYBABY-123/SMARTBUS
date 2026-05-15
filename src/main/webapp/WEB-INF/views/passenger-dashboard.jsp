@@ -2,9 +2,6 @@
 <%@ taglib prefix="c"  uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%
-  String mapsKey = getServletContext().getInitParameter("google.maps.key");
-  if (mapsKey == null || mapsKey.isBlank() || "YOUR_GOOGLE_MAPS_API_KEY".equals(mapsKey))
-      mapsKey = System.getenv("GOOGLE_MAPS_KEY") != null ? System.getenv("GOOGLE_MAPS_KEY") : "";
   String gaMeasurementId = getServletContext().getInitParameter("ga.measurement.id");
   if (gaMeasurementId == null || "YOUR_GA4_MEASUREMENT_ID".equals(gaMeasurementId))
       gaMeasurementId = System.getenv("GA_MEASUREMENT_ID") != null ? System.getenv("GA_MEASUREMENT_ID") : "";
@@ -248,7 +245,7 @@ setInterval(updateLastRefreshLabel, 5000);
 
 // -- MAP --
 let map, busMarkers = [];
-window.initMap = function() {
+function initMap() {
     map = L.map('map', { center: [-25.7313, 28.1648], zoom: 13, zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -485,24 +482,18 @@ pollNotifs();
             }
             knownLiveIds = freshLiveIds;
             // refresh bus markers on map
-            busMarkers.forEach(m => m.setMap(null));
+            busMarkers.forEach(m => m.remove());
             busMarkers.length = 0;
-            const busIconSvg2 = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>`;
-            const busGmIcon2 = map ? {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg2),
-                scaledSize: new google.maps.Size(20, 20),
-                anchor: new google.maps.Point(10, 10)
-            } : null;
+            const busIcon2 = L.divIcon({
+                html: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>',
+                className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+            });
             doc.querySelectorAll('[data-live-trip]').forEach(el => {
                 const tid = el.getAttribute('data-live-trip');
                 const name = el.getAttribute('data-trip-name') || '';
-                const driver = el.getAttribute('data-driver') || '';
                 fetch(CTX_DASH + '/tracking/latest?tripId=' + tid).then(r => r.json()).then(d => {
                     if (d && d.lat && d.lng && map) {
-                        const m = new google.maps.Marker({
-                            position: { lat: d.lat, lng: d.lng }, map: map,
-                            icon: busGmIcon2, title: name
-                        });
+                        const m = L.marker([d.lat, d.lng], { icon: busIcon2, title: name }).addTo(map);
                         busMarkers.push(m);
                     }
                 }).catch(() => {});
