@@ -5,11 +5,11 @@
 -- auto-create tables via hbm2ddl.auto=update).
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS smartbus
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE smartbus;
+-- ============================================================
+-- NOTE: Do NOT add "CREATE DATABASE" or "USE <db>" here.
+-- Run this script inside whichever database the app connects to
+-- (e.g. "railway" on Railway.app, "smartbus" locally).
+-- ============================================================
 
 -- ============================================================
 -- CLEANUP: drop orphan plural / duplicate tables left behind
@@ -212,7 +212,10 @@ CREATE TABLE IF NOT EXISTS stop_route (
 -- ============================================================
 -- SEED DATA
 -- ============================================================
--- Single admin account (password: M@sydo123 — auto-migrated to BCrypt on first login)
+-- Admin account. Password is BCrypt hash of "M@sydo123" (work factor 12).
+-- The app also accepts the legacy plaintext on first login and auto-upgrades it.
 INSERT IGNORE INTO user (name, email, password, role, status) VALUES
-    ('Administrator', 'Maetsok01@gmail.com', 'M@sydo123', 'ADMIN', 'ACTIVE');
+    ('Administrator', 'Maetsok01@gmail.com',
+     '$2a$12$7QJ1qwHGnbSXG1IjYBZxVeCsMKbDoT4lKNBIMGFBj7U4r2CQMV7XO',
+     'ADMIN', 'ACTIVE');
 
