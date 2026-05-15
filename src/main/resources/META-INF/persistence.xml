@@ -37,8 +37,10 @@
 
             <!-- ===== HIBERNATE SETTINGS ===== -->
             <property name="hibernate.dialect"          value="org.hibernate.dialect.MySQLDialect"/>
-            <!-- update = auto-create/alter tables on startup (Hibernate 6.6+ fixes the getForeignKeys NPE on MySQL) -->
+            <!-- update = auto-create/alter tables on startup -->
             <property name="hibernate.hbm2ddl.auto"    value="update"/>
+            <!-- Ignore FK metadata resolution failures (Hibernate 6 + MySQL 8 known issue) -->
+            <property name="hibernate.hbm2ddl.halt_on_error" value="false"/>
             <property name="hibernate.show_sql"         value="true"/>
             <property name="hibernate.format_sql"       value="true"/>
             <property name="hibernate.use_sql_comments" value="true"/>
