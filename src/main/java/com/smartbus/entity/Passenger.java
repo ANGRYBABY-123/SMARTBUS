@@ -3,7 +3,7 @@ package com.smartbus.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "passengers")
+@Table(name = "passenger")
 @PrimaryKeyJoinColumn(name = "passenger_id")
 public class Passenger extends User {
 

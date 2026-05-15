@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "driver_schedules")
+@Table(name = "driver_schedule")
 public class DriverSchedule {
 
     @Id

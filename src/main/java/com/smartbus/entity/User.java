@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 @Inheritance(strategy = InheritanceType.JOINED)
 @NamedQueries({
     @NamedQuery(

@@ -86,7 +86,7 @@ public class AppContextListener implements ServletContextListener {
                 Object[] r = routeDefs[i];
                 @SuppressWarnings("unchecked")
                 java.util.List<Object> rRows = em.createNativeQuery(
-                    "SELECT route_id FROM routes WHERE route_name = ? LIMIT 1")
+                    "SELECT route_id FROM route WHERE route_name = ? LIMIT 1")
                     .setParameter(1, r[0]).getResultList();
                 Long existing = rRows.isEmpty() ? null : ((Number) rRows.get(0)).longValue();
                 if (existing != null) {
@@ -128,7 +128,7 @@ public class AppContextListener implements ServletContextListener {
             for (Object[] s : stops) {
                 @SuppressWarnings("unchecked")
                 java.util.List<Object> sRows = em.createNativeQuery(
-                    "SELECT stop_id FROM bus_stops WHERE stop_name = ? LIMIT 1")
+                    "SELECT stop_id FROM bus_stop WHERE stop_name = ? LIMIT 1")
                     .setParameter(1, s[0]).getResultList();
                 Long existingStop = sRows.isEmpty() ? null : ((Number) sRows.get(0)).longValue();
                 long stopId;

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "remember_me_tokens")
+@Table(name = "remember_me_token")
 public class RememberMeToken {
 
     @Id

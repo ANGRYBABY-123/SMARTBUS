@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "drivers")
+@Table(name = "driver")
 @PrimaryKeyJoinColumn(name = "driver_id")
 public class Driver extends User {
 

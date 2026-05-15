@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "bus_stops")
+@Table(name = "bus_stop")
 public class BusStop {
 
     @Id
@@ -25,7 +25,7 @@ public class BusStop {
     /** Routes that serve this stop. BusStop owns the join table. */
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "stop_routes",
+        name = "stop_route",
         joinColumns        = @JoinColumn(name = "stop_id"),
         inverseJoinColumns = @JoinColumn(name = "route_id")
     )
