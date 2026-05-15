@@ -43,7 +43,7 @@
         .card-icon.live { background: #dcfce7; }
         .card-icon.scheduled { background: #ede9fe; }
         .card-icon.done { background: #f3f4f6; }
-        .card-title { font-weight: 700; font-size: 1rem; color: #111; }
+        .card-title { font-weight: 700; font-size: 1rem; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .card-sub { font-size: 0.78rem; color: #888; margin-top: 2px; }
         .card-badge { margin-left: auto; font-size: .68rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; }
         .card-badge.live { background: #dcfce7; color: #16a34a; }
@@ -152,8 +152,7 @@
                                     <c:otherwise><i class="bi bi-check-circle-fill" style="color:#6b7280"></i></c:otherwise>
                                 </c:choose>
                             </div>
-                            <div>
-                                <div class="card-title">${t.route.routeName}</div>
+                            <div style="flex:1;min-width:0;overflow:hidden">
                                 <div class="card-sub">
                                     Bus: ${t.bus.registrationNumber}
                                     &nbsp;&middot;&nbsp; Trip #${t.tripId}
