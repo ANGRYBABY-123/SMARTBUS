@@ -22,7 +22,7 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:"Segoe UI",system-ui,sans-serif;height:100dvh;overflow:hidden;background:#e8eaed;}
-  #map{position:fixed;inset:0;z-index:0;}
+  #map{position:fixed;inset:0;z-index:0;width:100%;height:100vh;}
 
   /* Top overlay */
   #topbar{

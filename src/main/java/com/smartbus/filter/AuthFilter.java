@@ -102,7 +102,7 @@ public class AuthFilter implements Filter {
                 (path.startsWith("/passenger/") || path.startsWith("/tracking/view")
                  || path.startsWith("/tracking/latest") || path.startsWith("/notifications/")
                  || path.startsWith("/api/") || path.startsWith("/ai/")
-                 || path.equals("/stops/nearest"))) {
+                 || path.equals("/stops/nearest") || path.equals("/trips/alternatives"))) {
             chain.doFilter(request, response);
             return;
         }

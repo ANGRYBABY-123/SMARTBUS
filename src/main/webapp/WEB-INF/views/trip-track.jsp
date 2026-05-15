@@ -23,7 +23,7 @@
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",sans-serif; height:100vh; overflow:hidden; }
-  #map { position:fixed; inset:0; z-index:0; }
+  #map { position:fixed; inset:0; z-index:0; width:100%; height:100vh; }
   #topbar {
     position:fixed; top:0; left:0; right:0; z-index:500;
     display:flex; align-items:center; gap:10px; padding:12px 16px;
