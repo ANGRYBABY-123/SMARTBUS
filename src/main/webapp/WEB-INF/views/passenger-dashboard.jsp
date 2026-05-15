@@ -23,6 +23,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <% if (!gaMeasurementId.isEmpty()) { %>
     <script async src="https://www.googletagmanager.com/gtag/js?id=<%= gaMeasurementId %>"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<%= gaMeasurementId %>');</script>
@@ -247,45 +249,29 @@ setInterval(updateLastRefreshLabel, 5000);
 // -- MAP --
 let map, busMarkers = [];
 window.initMap = function() {
-    const defaultCenter = { lat: -25.7313, lng: 28.1648 };
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: defaultCenter,
-        zoom: 13,
-        disableDefaultUI: false,
-        zoomControl: true,
-        gestureHandling: 'cooperative',
-        mapTypeId: 'roadmap',
-        styles: [
-            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'transit.station.bus', stylers: [{ visibility: 'off' }] }
-        ]
-    });
+    map = L.map('map', { center: [-25.7313, 28.1648], zoom: 13, zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
     navigator.geolocation && navigator.geolocation.getCurrentPosition(
-        p => map.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        p => map.setView([p.coords.latitude, p.coords.longitude]),
         () => {}
     );
     // Drop live bus markers on map
-    const busIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>`;
-    const busGmIcon = {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg),
-        scaledSize: new google.maps.Size(20, 20),
-        anchor: new google.maps.Point(10, 10)
-    };
+    const busIcon = L.divIcon({
+        html: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="#00c853" stroke="white" stroke-width="3"/></svg>',
+        className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+    });
     const liveTrips = [];
     <c:forEach var="t" items="${activeTrips}">liveTrips.push({ id: ${t.tripId}, name: "${t.route.routeName}", driver: "${t.driver.name}" });</c:forEach>
     liveTrips.forEach(t => {
         fetch(CTX_DASH + '/tracking/latest?tripId=' + t.id).then(r => r.json()).then(d => {
             if (d && d.lat && d.lng) {
-                const m = new google.maps.Marker({
-                    position: { lat: d.lat, lng: d.lng },
-                    map: map,
-                    icon: busGmIcon,
-                    title: t.name
-                });
-                const iw = new google.maps.InfoWindow({ content: '<b>' + t.name + '</b><br>Driver: ' + t.driver });
-                m.addListener('click', () => iw.open(map, m));
+                const m = L.marker([d.lat, d.lng], { icon: busIcon, title: t.name })
+                    .addTo(map)
+                    .bindPopup('<b>' + t.name + '</b><br>Driver: ' + t.driver);
                 busMarkers.push(m);
-                if (liveTrips.length === 1) map.setCenter({ lat: d.lat, lng: d.lng });
+                if (liveTrips.length === 1) map.setView([d.lat, d.lng]);
             }
         }).catch(() => {});
     });
@@ -592,10 +578,6 @@ pollNotifs();
 })();
 <% } %>
 </script>
-<% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
-<% } else { %>
-<script>window.addEventListener('DOMContentLoaded',function(){document.getElementById('map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem">Set GOOGLE_MAPS_KEY to enable map</div>';});</script>
-<% } %>
+<script>window.addEventListener('DOMContentLoaded', initMap);</script>
 </body>
 </html>
