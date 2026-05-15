@@ -246,8 +246,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
 L.control.zoom({ position: 'topright' }).addTo(map);
 
 navigator.geolocation
-    ? navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), () => map.setView([0,0],2))
-    : map.setView([0,0], 2);
+    ? navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), () => map.setView([-25.7313, 28.1648], 11))
+    : map.setView([-25.7313, 28.1648], 11);
 
 // Show markers for in-progress trips
 const liveTrips = [];
