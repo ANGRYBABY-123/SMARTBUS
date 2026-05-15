@@ -311,7 +311,18 @@ public class UserServlet extends HttpServlet {
 
         String email = req.getParameter("email");
         String password = req.getParameter("password");
-        User user = userDAO.authenticate(email, password);
+
+        User user;
+        try {
+            user = userDAO.authenticate(email, password);
+        } catch (Exception dbEx) {
+            java.util.logging.Logger.getLogger(UserServlet.class.getName())
+                .log(java.util.logging.Level.SEVERE, "Database error during login", dbEx);
+            req.setAttribute("error", "Service temporarily unavailable. Please try again in a moment.");
+            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            return;
+        }
+
         if (user != null) {
             if ("PENDING".equals(user.getStatus())) {
                 req.setAttribute("error", "Your account is pending admin approval. You'll be notified once approved.");

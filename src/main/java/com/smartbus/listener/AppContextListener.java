@@ -97,7 +97,7 @@ public class AppContextListener implements ServletContextListener {
                     routeIds[i] = existing;
                 } else {
                     em.createNativeQuery(
-                        "INSERT INTO routes (route_name, start_location, end_location, start_lat, start_lng, end_lat, end_lng) " +
+                        "INSERT INTO route (route_name, start_location, end_location, start_lat, start_lng, end_lat, end_lng) " +
                         "VALUES (?,?,?,?,?,?,?)")
                         .setParameter(1, r[0]).setParameter(2, r[1]).setParameter(3, r[2])
                         .setParameter(4, r[3]).setParameter(5, r[4])
@@ -140,7 +140,7 @@ public class AppContextListener implements ServletContextListener {
                     stopId = existingStop;
                 } else {
                     em.createNativeQuery(
-                        "INSERT INTO bus_stops (stop_name, latitude, longitude) VALUES (?,?,?)")
+                        "INSERT INTO bus_stop (stop_name, latitude, longitude) VALUES (?,?,?)")
                         .setParameter(1, s[0]).setParameter(2, s[1]).setParameter(3, s[2])
                         .executeUpdate();
                     stopId = ((Number) em.createNativeQuery(
@@ -148,7 +148,7 @@ public class AppContextListener implements ServletContextListener {
                 }
                 for (int ri : (int[]) s[3]) {
                     em.createNativeQuery(
-                        "INSERT IGNORE INTO stop_routes (stop_id, route_id) VALUES (?,?)")
+                        "INSERT IGNORE INTO stop_route (stop_id, route_id) VALUES (?,?)")
                         .setParameter(1, stopId).setParameter(2, routeIds[ri])
                         .executeUpdate();
                 }
