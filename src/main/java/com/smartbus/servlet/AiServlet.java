@@ -283,9 +283,7 @@ public class AiServlet extends HttpServlet {
                 Trip trip = tripDAO.findByIdWithDetails(tripId);
                 if (trip != null) {
                     String notifMsg = "🤖 AI Prediction: " + message
-                        + " (Route: " + trip.getRoute().getRouteName() + ", "
-                        + trip.getRoute().getStartLocation() + " → "
-                        + trip.getRoute().getEndLocation() + ")";
+                        + " (Route: " + trip.getRoute().getRouteName() + ")";
                     notifDAO.save(new Notification(
                         trip.getDriver(), trip, notifMsg, "AI_DELAY", LocalDateTime.now()));
                 }

@@ -1,4 +1,4 @@
-ï»¿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
     String mapsKey = getServletContext().getInitParameter("google.maps.key");
@@ -8,7 +8,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Trips â€“ CommuteSafe</title>
+    <meta charset="UTF-8"><title>Trips – CommuteSafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -153,11 +153,11 @@ function focusTrip(row) {
         map: tripsMap, strokeColor: color, strokeWeight: 4, strokeOpacity: 1
     });
     var mkStart = new google.maps.Marker({
-        position:{ lat:sLat, lng:sLng }, map:tripsMap, title: row.dataset.route + ' â€“ Start',
+        position:{ lat:sLat, lng:sLng }, map:tripsMap, title: row.dataset.route + ' – Start',
         icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#22c55e', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
     });
     var mkEnd = new google.maps.Marker({
-        position:{ lat:eLat, lng:eLng }, map:tripsMap, title: row.dataset.route + ' â€“ End',
+        position:{ lat:eLat, lng:eLng }, map:tripsMap, title: row.dataset.route + ' – End',
         icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2 }
     });
     activeMarkers.push(mkStart, mkEnd);
@@ -167,7 +167,7 @@ function focusTrip(row) {
 }
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
 <% } else { %>
 <script>window.addEventListener('DOMContentLoaded',function(){
     document.getElementById('trips-map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.85rem"><i class="bi bi-map me-2"></i>Set GOOGLE_MAPS_KEY to enable route overview</div>';

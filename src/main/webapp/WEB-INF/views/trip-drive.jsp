@@ -753,7 +753,7 @@ function sendGps(lat, lng) {
 </script>
 
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
 <% } else { %>
 <script>
 window.addEventListener('DOMContentLoaded', function() {

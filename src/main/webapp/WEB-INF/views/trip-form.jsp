@@ -163,7 +163,7 @@ function onRouteChange(routeId) {
 }
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
 <% } %>
 <script>
     // For new trips only, prevent selecting past dates

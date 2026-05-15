@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
   String mapsKey = getServletContext().getInitParameter("google.maps.key");
@@ -13,7 +13,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>CommuteSafe – Live Track</title>
+<title>CommuteSafe � Live Track</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 <% if (!gaMeasurementId.isEmpty()) { %>
 <!-- Google Analytics 4 -->
@@ -163,14 +163,14 @@
   <div class="route-pill"><i class="bi bi-bus-front-fill" style="color:#22c55e"></i> ${trip.route.routeName}</div>
   <div id="status-chip">
     <div class="live-dot"></div>
-    <span id="live-label">Waiting…</span>
+    <span id="live-label">Waiting�</span>
   </div>
 </div>
 <div id="delay-banner">
   <strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1px;margin-right:4px"><path d="M12 2a1 1 0 0 1 .894.553l9 18A1 1 0 0 1 21 22H3a1 1 0 0 1-.894-1.447l9-18A1 1 0 0 1 12 2zm0 3.236L4.118 20h15.764L12 5.236zM11 10v4a1 1 0 1 0 2 0v-4a1 1 0 1 0-2 0zm1 7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Delay Reported</strong>
   <div id="delay-msg-text">The driver has reported a delay on this route.</div>
   <button onclick="document.getElementById('delay-banner').classList.remove('visible');document.getElementById('alt-panel').style.display='none';"
-    style="float:right;background:none;border:none;cursor:pointer;margin-top:-20px;color:#7d5a00;font-size:1rem">✕</button>
+    style="float:right;background:none;border:none;cursor:pointer;margin-top:-20px;color:#7d5a00;font-size:1rem">?</button>
 </div>
 <!-- Alternative buses panel -->
 <div id="alt-panel" style="display:none;position:fixed;top:130px;left:12px;right:12px;z-index:450;
@@ -189,10 +189,10 @@
     <button class="ai-close" onclick="toggleAiPanel()"><i class="bi bi-x-lg"></i></button>
   </div>
   <div id="ai-messages">
-    <div class="ai-msg ai-sys">👋 Hi! I'm your CommuteSafe AI. Ask me anything about your journey — ETA, delays, stops, or anything else.</div>
+    <div class="ai-msg ai-sys">?? Hi! I'm your CommuteSafe AI. Ask me anything about your journey � ETA, delays, stops, or anything else.</div>
   </div>
   <div id="ai-input-row">
-    <input type="text" id="ai-input" placeholder="Ask about your bus…" onkeydown="if(event.key==='Enter')sendAiMsg()">
+    <input type="text" id="ai-input" placeholder="Ask about your bus�" onkeydown="if(event.key==='Enter')sendAiMsg()">
     <button id="ai-send" onclick="sendAiMsg()"><i class="bi bi-send-fill"></i></button>
   </div>
 </div>
@@ -213,7 +213,7 @@
           <span id="eta-mins">--</span>
           <span style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.75)">min</span>
         </div>
-        <div id="eta-label">Calculating ETA…</div>
+        <div id="eta-label">Calculating ETA�</div>
         <div id="dest-name"><i class="bi bi-geo-alt-fill" style="color:#f87171"></i> ${trip.route.endLocation}</div>
         <div id="dist-label">-- km remaining</div>
       </div>
@@ -231,18 +231,18 @@
     <div id="bus-status-card">
       <div class="bus-icon-wrap"><i class="bi bi-bus-front-fill"></i></div>
       <div>
-        <div id="bus-status-text">Locating bus…</div>
-        <div id="bus-status-sub">Locating…</div>
+        <div id="bus-status-text">Locating bus�</div>
+        <div id="bus-status-sub">Locating�</div>
       </div>
     </div>    <!-- AI Speed / Traffic Chips -->
     <div class="ai-eta-row">
       <div class="ai-chip"><i class="bi bi-speedometer2"></i><span id="ai-speed-val">-- km/h</span></div>
-      <div class="ai-chip"><i class="bi bi-activity"></i><span id="ai-traffic-val">Calculating…</span></div>
+      <div class="ai-chip"><i class="bi bi-activity"></i><span id="ai-traffic-val">Calculating�</span></div>
     </div>    <div style="font-size:0.75rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Route</div>
     <div style="font-size:0.9rem;color:#374151;padding:6px 0;">
       <i class="bi bi-circle-fill" style="color:#22c55e;font-size:0.5rem"></i>
       &nbsp;${trip.route.startLocation}
-      &nbsp;→&nbsp;
+      &nbsp;?&nbsp;
       <i class="bi bi-geo-alt-fill" style="color:#ef4444"></i>
       &nbsp;${trip.route.endLocation}
     </div>
@@ -267,9 +267,9 @@ let lastDynZoom = -1;
 let currentHeading = 0;
 let camAnimFrame = null;
 
-// ── Dynamic camera profile ──────────────────────────────────────────────────
+// -- Dynamic camera profile --------------------------------------------------
 function dynamicCamera(speedKmh) {
-  if (speedKmh < 3)   return { zoom:19, tilt:  0 }; // stopped — top-down
+  if (speedKmh < 3)   return { zoom:19, tilt:  0 }; // stopped � top-down
   if (speedKmh < 15)  return { zoom:18, tilt: 30 }; // slow / intersection
   if (speedKmh < 45)  return { zoom:17, tilt: 45 }; // normal urban
   if (speedKmh < 80)  return { zoom:16, tilt: 52 }; // fast urban
@@ -315,7 +315,7 @@ function toggleFollow() {
 }
 function onMapDrag() { if (autoFollow) toggleFollow(); }
 
-// ── Dead-reckoning ───────────────────────────────────────────────────────
+// -- Dead-reckoning -------------------------------------------------------
 let prevGps = null, velLat = 0, velLng = 0, drRafId = null;
 
 function haversineKm(a, b) {
@@ -339,14 +339,14 @@ function startDeadReckoning() {
   })();
 }
 
-// ── Map initialisation – Google Maps ──────────────────────────────────
+// -- Map initialisation � Google Maps ----------------------------------
 function makeBusIcon(live) {
   const col    = live ? '#22c55e' : '#94a3b8';
   const shadow = live ? '0 0 0 8px rgba(34,197,94,0.25)' : '0 2px 6px rgba(0,0,0,0.2)';
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">'
     + '<circle cx="20" cy="20" r="18" fill="' + col + '" stroke="white" stroke-width="3"/>'
     + '<circle cx="20" cy="20" r="18" fill="transparent" style="box-shadow:' + shadow + '"/>'
-    + '<text x="20" y="26" text-anchor="middle" font-size="16" fill="white">🚌</text>'
+    + '<text x="20" y="26" text-anchor="middle" font-size="16" fill="white">??</text>'
     + '</svg>';
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
@@ -411,10 +411,10 @@ function pollBus() {
     .then(r=>r.json())
     .then(d=>{
       if (!d.found) {
-        document.getElementById('live-label').textContent='Waiting…';
+        document.getElementById('live-label').textContent='Waiting�';
         document.getElementById('status-chip').style.background='#fef9c3';
         document.getElementById('status-chip').style.color='#854d0e';
-        document.getElementById('bus-status-text').textContent='Waiting for driver location…';
+        document.getElementById('bus-status-text').textContent='Waiting for driver location�';
         document.getElementById('bus-status-sub').textContent='Driver may still be granting GPS access';
         velLat=0; velLng=0; updateBusMarkerLive(false); return;
       }
@@ -431,7 +431,7 @@ function pollBus() {
             currentHeading = calcHeading(prevGps, newFix);
           } else { velLat=0; velLng=0; }
           document.getElementById('bus-status-sub').textContent =
-            speedKmh > 1 ? speedKmh.toFixed(0)+' km/h · Live' : 'Stopped · Live';
+            speedKmh > 1 ? speedKmh.toFixed(0)+' km/h � Live' : 'Stopped � Live';
         }
       } else {
         document.getElementById('bus-status-sub').textContent = 'Live';
@@ -470,7 +470,7 @@ function recenterBus() {
   }
 }
 
-// ── Bottom-sheet drag ───────────────────────────────────────────────────────
+// -- Bottom-sheet drag -------------------------------------------------------
 (function() {
   const sheet  = document.getElementById('bottom-sheet');
   const handle = document.getElementById('sheet-handle');
@@ -558,15 +558,15 @@ function fetchAlternatives() {
         : '<span style="background:#e5e7eb;color:#9ca3af;border-radius:10px;padding:7px 14px;font-size:.8rem;font-weight:700">Soon</span>';
       return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">'
         +'<div style="flex:1"><div style="font-weight:700;font-size:.88rem">'+t.route+'</div>'
-        +'<div style="font-size:.75rem;color:#888">'+t.from+' → '+t.to+'</div>'
-        +'<div style="font-size:.75rem;color:#aaa;margin-top:2px">'+t.driver+' · '+t.bus+'</div></div>'
+        +'<div style="font-size:.75rem;color:#888">'+t.from+' ? '+t.to+'</div>'
+        +'<div style="font-size:.75rem;color:#aaa;margin-top:2px">'+t.driver+' � '+t.bus+'</div></div>'
         +badge+' '+link+'</div>';
     }).join('');
     document.getElementById('alt-panel').style.display='block';
   }).catch(()=>{});
 }
 
-// ── AI Chat ───────────────────────────────────────────────────────────────────
+// -- AI Chat -------------------------------------------------------------------
 let aiOpen = false;
 function toggleAiPanel() {
   aiOpen = !aiOpen;
@@ -630,14 +630,14 @@ setInterval(pollAiEta, 15000);
 pollAiEta();
 </script>
 <% if (!mapsKey.isEmpty()) { %>
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsKey %>&callback=initMap&loading=async" defer></script>
 <% } else { %>
 <script>
-// Fallback: Google Maps key not configured – display a setup notice on the map
+// Fallback: Google Maps key not configured � display a setup notice on the map
 window.initMap = function() {
   document.getElementById('map').innerHTML =
     '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f0fdf4;flex-direction:column;gap:12px">' +
-    '<div style="font-size:2rem">🗺️</div>' +
+    '<div style="font-size:2rem">???</div>' +
     '<div style="font-size:.9rem;font-weight:700;color:#374151">Google Maps not configured</div>' +
     '<div style="font-size:.8rem;color:#6b7280;text-align:center;max-width:280px">Set the <code>google.maps.key</code> context param in <b>web.xml</b> (or <code>GOOGLE_MAPS_KEY</code> env var) to enable the live map.</div>' +
     '</div>';
