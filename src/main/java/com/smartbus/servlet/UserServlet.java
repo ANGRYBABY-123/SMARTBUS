@@ -180,13 +180,16 @@ public class UserServlet extends HttpServlet {
         if (u != null) {
             u.setStatus("ACTIVE");
             userDAO.save(u);
-            try {
-                EmailUtil.sendApprovalEmail(u.getEmail(), u.getName());
-            } catch (Exception mailEx) {
-                // Log failure but do not block the approval
-                System.err.println("[ApproveUser] Failed to send approval email to "
-                        + u.getEmail() + ": " + mailEx.getMessage());
-            }
+            final String toEmail = u.getEmail();
+            final String toName  = u.getName();
+            new Thread(() -> {
+                try {
+                    EmailUtil.sendApprovalEmail(toEmail, toName);
+                } catch (Exception mailEx) {
+                    System.err.println("[ApproveUser] Failed to send approval email to "
+                            + toEmail + ": " + mailEx.getMessage());
+                }
+            }, "approve-email-" + id).start();
         }
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
@@ -194,7 +197,22 @@ public class UserServlet extends HttpServlet {
     private void rejectUser(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         Long id = Long.parseLong(req.getParameter("id"));
-        userDAO.delete(id);
+        User u = userDAO.findById(id);
+        if (u != null) {
+            final String toEmail = u.getEmail();
+            final String toName  = u.getName();
+            userDAO.delete(id);
+            new Thread(() -> {
+                try {
+                    EmailUtil.sendRejectionEmail(toEmail, toName);
+                } catch (Exception mailEx) {
+                    System.err.println("[RejectUser] Failed to send rejection email to "
+                            + toEmail + ": " + mailEx.getMessage());
+                }
+            }, "reject-email-" + id).start();
+        } else {
+            userDAO.delete(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/users/list");
     }
 

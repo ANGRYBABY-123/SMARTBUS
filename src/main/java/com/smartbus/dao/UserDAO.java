@@ -105,12 +105,12 @@ public class UserDAO extends GenericDAO<User> {
         }
     }
 
-    /** Find all users that are NOT in PENDING_REMOVAL state, ordered by name. */
+    /** Find all users that are ACTIVE (excludes PENDING and PENDING_REMOVAL), ordered by name. */
     public List<User> findAllActive() {
         EntityManager em = getEntityManager();
         try {
             return em.createQuery(
-                "SELECT u FROM User u WHERE u.status <> 'PENDING_REMOVAL' ORDER BY u.name",
+                "SELECT u FROM User u WHERE u.status = 'ACTIVE' ORDER BY u.name",
                 User.class).getResultList();
         } finally {
             em.close();

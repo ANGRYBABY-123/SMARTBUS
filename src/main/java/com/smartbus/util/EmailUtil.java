@@ -23,6 +23,20 @@ public final class EmailUtil {
         return (v != null && !v.isEmpty()) ? v : defaultValue;
     }
 
+    /** Build SMTP session properties with 10-second timeouts to prevent indefinite hangs. */
+    private static Properties buildSmtpProps(String host, int port) {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth",              "true");
+        props.put("mail.smtp.starttls.enable",   "true");
+        props.put("mail.smtp.host",              host);
+        props.put("mail.smtp.port",              String.valueOf(port));
+        props.put("mail.smtp.ssl.trust",         host);
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.timeout",           "10000");
+        props.put("mail.smtp.writetimeout",      "10000");
+        return props;
+    }
+
     /**
      * Sends a 5-digit verification code to the given email address.
      */
@@ -36,12 +50,7 @@ public final class EmailUtil {
             throw new MessagingException("SMTP_USER / SMTP_PASS environment variables are not set.");
         }
 
-        Properties props = new Properties();
-        props.put("mail.smtp.auth",            "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host",            host);
-        props.put("mail.smtp.port",            String.valueOf(port));
-        props.put("mail.smtp.ssl.trust",       host);
+        Properties props = buildSmtpProps(host, port);
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -76,12 +85,7 @@ public final class EmailUtil {
             throw new MessagingException("SMTP_USER / SMTP_PASS environment variables are not set.");
         }
 
-        Properties props = new Properties();
-        props.put("mail.smtp.auth",            "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host",            host);
-        props.put("mail.smtp.port",            String.valueOf(port));
-        props.put("mail.smtp.ssl.trust",       host);
+        Properties props = buildSmtpProps(host, port);
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -111,10 +115,57 @@ public final class EmailUtil {
              + "<p style='color:#555;font-size:.95rem'>Great news! Your CommuteSafe account has been <strong style='color:#00c853'>approved</strong> by our admin team.</p>"
              + "<p style='color:#555;font-size:.95rem'>You can now sign in and start using the platform.</p>"
              + "<div style='text-align:center;margin:28px 0'>"
-             + "<a href='#' style='display:inline-block;background:#000;color:#fff;text-decoration:none;"
+             + "<a href='" + env("APP_URL", "https://smartbus-bf6r.onrender.com") + "/users/login' style='display:inline-block;background:#000;color:#fff;text-decoration:none;"
              + "border-radius:12px;padding:14px 36px;font-size:.95rem;font-weight:800;'>Sign In to CommuteSafe</a>"
              + "</div>"
              + "<p style='color:#999;font-size:.8rem;margin-bottom:0'>If you didn't create a CommuteSafe account, you can safely ignore this email.</p>"
+             + "<hr style='border:none;border-top:1px solid #eee;margin:20px 0'>"
+             + "<p style='color:#bbb;font-size:.75rem;margin:0'>CommuteSafe &mdash; Safe, real-time commuting powered by live GPS</p>"
+             + "</div></body></html>";
+    }
+
+    /**
+     * Sends an account-rejection notification to the declined user.
+     */
+    public static void sendRejectionEmail(String toEmail, String userName) throws MessagingException {
+        String host = env("SMTP_HOST", "smtp.gmail.com");
+        int    port = Integer.parseInt(env("SMTP_PORT", "587"));
+        String user = env("SMTP_USER", null);
+        String pass = env("SMTP_PASS", null);
+
+        if (user == null || pass == null) {
+            throw new MessagingException("SMTP_USER / SMTP_PASS environment variables are not set.");
+        }
+
+        Properties props = buildSmtpProps(host, port);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pass);
+            }
+        });
+
+        Message msg = new MimeMessage(session);
+        try {
+            msg.setFrom(new InternetAddress(user, "CommuteSafe", "UTF-8"));
+        } catch (java.io.UnsupportedEncodingException e) {
+            msg.setFrom(new InternetAddress(user));
+        }
+        msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+        msg.setSubject("CommuteSafe \u2013 Your Account Registration");
+        msg.setContent(buildRejectionHtml(userName), "text/html; charset=UTF-8");
+
+        Transport.send(msg);
+    }
+
+    private static String buildRejectionHtml(String name) {
+        return "<!DOCTYPE html><html><body style='font-family:Segoe UI,sans-serif;background:#f4f7fb;padding:32px'>"
+             + "<div style='max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>"
+             + "<h2 style='color:#000;margin-top:0'><span style='color:#00c853'>Commute</span>Safe \u2013 Registration Update</h2>"
+             + "<p style='color:#555;font-size:.95rem'>Hi <strong>" + name + "</strong>,</p>"
+             + "<p style='color:#555;font-size:.95rem'>Thank you for registering on CommuteSafe. After review, we were unable to approve your account at this time.</p>"
+             + "<p style='color:#555;font-size:.95rem'>If you believe this is a mistake, please contact our support team.</p>"
              + "<hr style='border:none;border-top:1px solid #eee;margin:20px 0'>"
              + "<p style='color:#bbb;font-size:.75rem;margin:0'>CommuteSafe &mdash; Safe, real-time commuting powered by live GPS</p>"
              + "</div></body></html>";
@@ -133,12 +184,7 @@ public final class EmailUtil {
             throw new MessagingException("SMTP_USER / SMTP_PASS environment variables are not set.");
         }
 
-        Properties props = new Properties();
-        props.put("mail.smtp.auth",            "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host",            host);
-        props.put("mail.smtp.port",            String.valueOf(port));
-        props.put("mail.smtp.ssl.trust",       host);
+        Properties props = buildSmtpProps(host, port);
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
