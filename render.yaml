@@ -18,7 +18,7 @@ services:
   - type: web
     name: smartbus
     runtime: docker
-    plan: free          # upgrade to `starter` for no spin-down
+    plan: starter       # always-on – no cold-start spin-down
     healthCheckPath: /users/login
 
     envVars:

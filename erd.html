@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartBus – Entity Relationship Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0b1e2d;
+      font-family: 'Inter', sans-serif;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      width: 100%;
+      background: linear-gradient(90deg, #0b1e2d 0%, #0d2a1e 100%);
+      border-bottom: 2px solid #22c55e;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header svg { flex-shrink: 0; }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    header h1 span { color: #22c55e; }
+
+    header p {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Legend ─────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 18px 40px;
+      width: 100%;
+      background: #0f2233;
+      border-bottom: 1px solid #1e3a52;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── Diagram container ──────────────────────────────── */
+    .diagram-wrap {
+      width: 100%;
+      max-width: 1400px;
+      padding: 32px 24px 48px;
+      overflow-x: auto;
+    }
+
+    .mermaid {
+      background: #0f2233;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid #1e3a52;
+      min-width: 900px;
+    }
+
+    /* ── Table cards ────────────────────────────────────── */
+    .tables-grid {
+      width: 100%;
+      max-width: 1400px;
+      padding: 0 24px 48px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .table-card {
+      background: #0f2233;
+      border: 1px solid #1e3a52;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-card-header {
+      background: #0d2a1e;
+      border-bottom: 1px solid #166534;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-card-header .tname {
+      font-size: 13px;
+      font-weight: 700;
+      color: #22c55e;
+      font-family: 'Courier New', monospace;
+    }
+
+    .table-card-header .badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge-core   { background: #1e3a52; color: #7dd3fc; }
+    .badge-auth   { background: #2d1b4e; color: #c4b5fd; }
+    .badge-ops    { background: #1a2e0e; color: #86efac; }
+    .badge-track  { background: #2d1b0e; color: #fdba74; }
+    .badge-join   { background: #2d2010; color: #fde68a; }
+
+    .table-card-body { padding: 10px 16px 14px; }
+
+    .field-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px solid #1e3a52;
+      font-size: 11.5px;
+    }
+
+    .field-row:last-child { border-bottom: none; }
+
+    .field-name {
+      font-family: 'Courier New', monospace;
+      color: #e2e8f0;
+      font-weight: 500;
+      min-width: 130px;
+    }
+
+    .field-type { color: #60a5fa; font-size: 10.5px; }
+
+    .pk-icon  { color: #fbbf24; font-size: 10px; font-weight: 700; }
+    .fk-icon  { color: #a78bfa; font-size: 10px; font-weight: 700; }
+    .uq-icon  { color: #34d399; font-size: 10px; font-weight: 700; }
+    .nn-icon  { color: #f87171; font-size: 10px; }
+
+    h2.section-title {
+      width: 100%;
+      max-width: 1400px;
+      padding: 8px 24px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    /* ── Download buttons ───────────────────────────────── */
+    .dl-btns {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .dl-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: opacity 0.2s, transform 0.1s;
+      text-decoration: none;
+    }
+
+    .dl-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .dl-btn:active { transform: translateY(0); }
+
+    .dl-btn-svg { background: #1e3a52; color: #7dd3fc; }
+    .dl-btn-png { background: #22c55e; color: #fff; }
+    .dl-btn-pdf { background: #334155; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <svg width="40" height="44" viewBox="0 0 48 54" fill="none">
+    <path d="M24 2L4 10V26C4 37.6 13 48.4 24 52C35 48.4 44 37.6 44 26V10L24 2Z" fill="#22c55e"/>
+    <rect x="14" y="18" width="20" height="16" rx="3" fill="white" opacity="0.95"/>
+    <rect x="16" y="20" width="16" height="8" rx="1.5" fill="#16a34a"/>
+    <circle cx="18" cy="36" r="2" fill="white"/>
+    <circle cx="30" cy="36" r="2" fill="white"/>
+    <rect x="14" y="25" width="20" height="1.5" fill="white" opacity="0.5"/>
+    <rect x="22.5" y="18" width="1.5" height="8" fill="white" opacity="0.5"/>
+  </svg>
+  <div>
+    <h1>Commute<span>Safe</span> — Entity Relationship Diagram</h1>
+    <p>13 entities · 16 foreign-key relationships · MySQL 8</p>
+  </div>
+  <div class="dl-btns">
+    <button class="dl-btn dl-btn-svg" onclick="downloadSVG()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download SVG
+    </button>
+    <button class="dl-btn dl-btn-png" onclick="downloadPNG()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PNG
+    </button>
+    <button class="dl-btn dl-btn-pdf" onclick="window.print()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print / PDF
+    </button>
+  </div>
+</header>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#7dd3fc"></div> Core / Identity</div>
+  <div class="legend-item"><div class="dot" style="background:#c4b5fd"></div> Auth / Security</div>
+  <div class="legend-item"><div class="dot" style="background:#86efac"></div> Operations</div>
+  <div class="legend-item"><div class="dot" style="background:#fdba74"></div> Tracking / Notifications</div>
+  <div class="legend-item"><div class="dot" style="background:#fde68a"></div> Join / Mapping</div>
+  <div class="legend-item" style="margin-left:auto">
+    <span style="color:#fbbf24;font-weight:700">PK</span>&nbsp;Primary key&nbsp;
+    <span style="color:#a78bfa;font-weight:700">FK</span>&nbsp;Foreign key&nbsp;
+    <span style="color:#34d399;font-weight:700">UQ</span>&nbsp;Unique
+  </div>
+</div>
+
+<!-- ERD Diagram -->
+<div class="diagram-wrap">
+  <div class="mermaid">
+erDiagram
+    USER {
+        bigint user_id PK
+        varchar name
+        varchar email
+        varchar password
+        varchar role
+        varchar status
+        varchar google_id
+        varchar phone_number
+    }
+    PASSENGER {
+        bigint passenger_id PK
+        varchar email
+    }
+    DRIVER {
+        bigint driver_id PK
+        varchar registration_number
+    }
+    BUS {
+        bigint bus_id PK
+        varchar registration_number
+        int capacity
+    }
+    ROUTE {
+        bigint route_id PK
+        varchar route_name
+        varchar start_location
+        varchar end_location
+    }
+    BUS_STOP {
+        bigint stop_id PK
+        varchar stop_name
+        double latitude
+        double longitude
+    }
+    STOP_ROUTE {
+        bigint stop_id PK
+        bigint route_id PK
+    }
+    TRIP {
+        bigint trip_id PK
+        bigint driver_id
+        bigint bus_id
+        bigint route_id
+        datetime start_time
+        datetime end_time
+        varchar status
+    }
+    GPS_TRACKING {
+        bigint tracking_id PK
+        bigint trip_id
+        double latitude
+        double longitude
+        datetime timestamp
+    }
+    SCHEDULE {
+        bigint schedule_id PK
+        bigint route_id
+        time departure_time
+        time arrival_time
+    }
+    DRIVER_SCHEDULE {
+        bigint ds_id PK
+        bigint driver_id
+        bigint bus_id
+        bigint route_id
+        varchar shift_type
+        time shift_start
+        time shift_end
+        date week_start_date
+        tinyint published
+    }
+    NOTIFICATION {
+        bigint notification_id PK
+        bigint user_id
+        bigint trip_id
+        text message
+        varchar type
+        tinyint is_read
+        datetime timestamp
+    }
+    PASSWORD_RESET_TOKEN {
+        bigint id PK
+        bigint user_id
+        varchar token
+        datetime expiry
+    }
+    REMEMBER_ME_TOKEN {
+        varchar token PK
+        bigint user_id
+        datetime expires_at
+    }
+
+    USER ||--o| PASSENGER : "IS-A"
+    USER ||--o| DRIVER : "IS-A"
+    USER ||--o{ NOTIFICATION : "receives"
+    USER ||--o{ PASSWORD_RESET_TOKEN : "owns"
+    USER ||--o{ REMEMBER_ME_TOKEN : "owns"
+    DRIVER ||--o{ TRIP : "drives"
+    DRIVER ||--o{ DRIVER_SCHEDULE : "scheduled"
+    BUS ||--o{ TRIP : "used-in"
+    BUS ||--o{ DRIVER_SCHEDULE : "assigned"
+    ROUTE ||--o{ TRIP : "followed-by"
+    ROUTE ||--o{ SCHEDULE : "has"
+    ROUTE ||--o{ DRIVER_SCHEDULE : "covered-by"
+    ROUTE ||--o{ STOP_ROUTE : "contains"
+    BUS_STOP ||--o{ STOP_ROUTE : "part-of"
+    TRIP ||--o{ GPS_TRACKING : "tracked-by"
+    TRIP ||--o{ NOTIFICATION : "triggers"
+  </div>
+</div>
+
+<!-- Table reference cards -->
+<h2 class="section-title">Table Reference</h2>
+<div class="tables-grid">
+
+  <!-- user -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">user</span>
+      <span class="badge badge-core">Core</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">user_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="field-name">name</span><span class="field-type">VARCHAR(100) NN</span></div>
+      <div class="field-row"><span class="uq-icon">UQ</span><span class="field-name">email</span><span class="field-type">VARCHAR(150)</span></div>
+      <div class="field-row"><span class="field-name">password</span><span class="field-type">VARCHAR(255) NN</span></div>
+      <div class="field-row"><span class="field-name">role</span><span class="field-type">VARCHAR(20) NN</span></div>
+      <div class="field-row"><span class="field-name">status</span><span class="field-type">VARCHAR(20) DEFAULT ACTIVE</span></div>
+      <div class="field-row"><span class="uq-icon">UQ</span><span class="field-name">google_id</span><span class="field-type">VARCHAR(100)</span></div>
+      <div class="field-row"><span class="field-name">phone_number</span><span class="field-type">VARCHAR(20)</span></div>
+    </div>
+  </div>
+
+  <!-- passenger -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">passenger</span>
+      <span class="badge badge-core">Core</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="fk-icon">FK</span><span class="field-name">passenger_id</span><span class="field-type">→ user</span></div>
+      <div class="field-row"><span class="field-name">email</span><span class="field-type">VARCHAR(150)</span></div>
+    </div>
+  </div>
+
+  <!-- driver -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">driver</span>
+      <span class="badge badge-core">Core</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="fk-icon">FK</span><span class="field-name">driver_id</span><span class="field-type">→ user</span></div>
+      <div class="field-row"><span class="uq-icon">UQ</span><span class="field-name">registration_number</span><span class="field-type">VARCHAR(50) NN</span></div>
+    </div>
+  </div>
+
+  <!-- bus -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">bus</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">bus_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="uq-icon">UQ</span><span class="field-name">registration_number</span><span class="field-type">VARCHAR(50) NN</span></div>
+      <div class="field-row"><span class="field-name">capacity</span><span class="field-type">INT NN</span></div>
+    </div>
+  </div>
+
+  <!-- route -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">route</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">route_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="field-name">route_name</span><span class="field-type">VARCHAR(100) NN</span></div>
+      <div class="field-row"><span class="field-name">start_location</span><span class="field-type">VARCHAR(150) NN</span></div>
+      <div class="field-row"><span class="field-name">end_location</span><span class="field-type">VARCHAR(150) NN</span></div>
+    </div>
+  </div>
+
+  <!-- bus_stop -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">bus_stop</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">stop_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="field-name">stop_name</span><span class="field-type">VARCHAR(150) NN</span></div>
+      <div class="field-row"><span class="field-name">latitude</span><span class="field-type">DOUBLE</span></div>
+      <div class="field-row"><span class="field-name">longitude</span><span class="field-type">DOUBLE</span></div>
+    </div>
+  </div>
+
+  <!-- stop_route -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">stop_route</span>
+      <span class="badge badge-join">Join</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="fk-icon">FK</span><span class="field-name">stop_id</span><span class="field-type">→ bus_stop</span></div>
+      <div class="field-row"><span class="pk-icon">PK</span><span class="fk-icon">FK</span><span class="field-name">route_id</span><span class="field-type">→ route</span></div>
+    </div>
+  </div>
+
+  <!-- trip -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">trip</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">trip_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">driver_id</span><span class="field-type">→ driver</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">bus_id</span><span class="field-type">→ bus</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">route_id</span><span class="field-type">→ route</span></div>
+      <div class="field-row"><span class="field-name">start_time</span><span class="field-type">DATETIME</span></div>
+      <div class="field-row"><span class="field-name">end_time</span><span class="field-type">DATETIME</span></div>
+      <div class="field-row"><span class="field-name">status</span><span class="field-type">VARCHAR(20)</span></div>
+    </div>
+  </div>
+
+  <!-- gps_tracking -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">gps_tracking</span>
+      <span class="badge badge-track">Tracking</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">tracking_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">trip_id</span><span class="field-type">→ trip</span></div>
+      <div class="field-row"><span class="field-name">latitude</span><span class="field-type">DOUBLE NN</span></div>
+      <div class="field-row"><span class="field-name">longitude</span><span class="field-type">DOUBLE NN</span></div>
+      <div class="field-row"><span class="field-name">timestamp</span><span class="field-type">DATETIME NN</span></div>
+    </div>
+  </div>
+
+  <!-- schedule -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">schedule</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">schedule_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">route_id</span><span class="field-type">→ route</span></div>
+      <div class="field-row"><span class="field-name">departure_time</span><span class="field-type">TIME NN</span></div>
+      <div class="field-row"><span class="field-name">arrival_time</span><span class="field-type">TIME NN</span></div>
+    </div>
+  </div>
+
+  <!-- driver_schedule -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">driver_schedule</span>
+      <span class="badge badge-ops">Operations</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">ds_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">driver_id</span><span class="field-type">→ driver</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">bus_id</span><span class="field-type">→ bus</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">route_id</span><span class="field-type">→ route</span></div>
+      <div class="field-row"><span class="field-name">shift_type</span><span class="field-type">VARCHAR(20) NN</span></div>
+      <div class="field-row"><span class="field-name">shift_start / end</span><span class="field-type">TIME NN</span></div>
+      <div class="field-row"><span class="field-name">week_start_date</span><span class="field-type">DATE NN</span></div>
+      <div class="field-row"><span class="field-name">published</span><span class="field-type">TINYINT(1) DEFAULT 0</span></div>
+    </div>
+  </div>
+
+  <!-- notification -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">notification</span>
+      <span class="badge badge-track">Tracking</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">notification_id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">user_id</span><span class="field-type">→ user</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">trip_id</span><span class="field-type">→ trip (nullable)</span></div>
+      <div class="field-row"><span class="field-name">message</span><span class="field-type">TEXT NN</span></div>
+      <div class="field-row"><span class="field-name">type</span><span class="field-type">VARCHAR(50)</span></div>
+      <div class="field-row"><span class="field-name">is_read</span><span class="field-type">TINYINT(1) DEFAULT 0</span></div>
+      <div class="field-row"><span class="field-name">timestamp</span><span class="field-type">DATETIME NN</span></div>
+    </div>
+  </div>
+
+  <!-- password_reset_token -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">password_reset_token</span>
+      <span class="badge badge-auth">Auth</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">id</span><span class="field-type">BIGINT AI</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">user_id</span><span class="field-type">→ user</span></div>
+      <div class="field-row"><span class="uq-icon">UQ</span><span class="field-name">token</span><span class="field-type">VARCHAR(64)</span></div>
+      <div class="field-row"><span class="field-name">expiry</span><span class="field-type">DATETIME NN</span></div>
+    </div>
+  </div>
+
+  <!-- remember_me_token -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <span class="tname">remember_me_token</span>
+      <span class="badge badge-auth">Auth</span>
+    </div>
+    <div class="table-card-body">
+      <div class="field-row"><span class="pk-icon">PK</span><span class="field-name">token</span><span class="field-type">VARCHAR(64)</span></div>
+      <div class="field-row"><span class="fk-icon">FK</span><span class="field-name">user_id</span><span class="field-type">→ user</span></div>
+      <div class="field-row"><span class="field-name">expires_at</span><span class="field-type">DATETIME NN</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function getMermaidSVG() {
+    return document.querySelector('.mermaid svg');
+  }
+
+  function downloadSVG() {
+    const svg = getMermaidSVG();
+    if (!svg) { alert('Diagram not ready yet — please wait a moment and try again.'); return; }
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    // embed dark background
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', '#0f2233');
+    clone.insertBefore(bg, clone.firstChild);
+    const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'smartbus-erd.svg';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function downloadPNG() {
+    const svg = getMermaidSVG();
+    if (!svg) { alert('Diagram not ready yet — please wait a moment and try again.'); return; }
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', '#0f2233');
+    clone.insertBefore(bg, clone.firstChild);
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = function () {
+      const scale = 2; // 2× retina
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth  * scale || svg.getBoundingClientRect().width  * scale;
+      canvas.height = img.naturalHeight * scale || svg.getBoundingClientRect().height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#0f2233';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.download = 'smartbus-erd.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = url;
+  }
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#0d2a1e',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#22c55e',
+      lineColor: '#22c55e',
+      secondaryColor: '#0b1e2d',
+      tertiaryColor: '#0f2233',
+      edgeLabelBackground: '#0b1e2d',
+      fontFamily: 'Inter, sans-serif'
+    },
+    er: {
+      useMaxWidth: true,
+      layoutDirection: 'TB',
+      minEntityWidth: 100,
+      minEntityHeight: 75,
+      entityPadding: 15
+    }
+  });
+</script>
+</body>
+</html>

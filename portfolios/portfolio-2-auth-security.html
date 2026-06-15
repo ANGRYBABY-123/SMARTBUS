@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio – Backend Auth & Security</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;width:210mm;min-height:297mm;margin:0 auto}
+  @media print{body{margin:0;width:210mm}}
+  .header{background:#0f172a;padding:36px 40px;display:flex;align-items:center;gap:28px}
+  .avatar-placeholder{width:110px;height:110px;border-radius:50%;border:3px solid #38bdf8;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:40px;color:#38bdf8;flex-shrink:0}
+  .avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #38bdf8;overflow:hidden;flex-shrink:0}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .header-info{flex:1}
+  .name{font-family:'Poppins',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+  .role-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:#38bdf8;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+  .project-tag{margin-top:10px;display:inline-block;background:#0369a1;color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;letter-spacing:0.5px}
+  .logo-corner{text-align:right;flex-shrink:0}
+  .logo-corner .logo-text{font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;color:#fff}
+  .logo-corner .logo-text span{color:#00c853}
+  .logo-corner small{display:block;color:#64748b;font-size:10px;margin-top:2px}
+  .accent-bar{height:5px;background:linear-gradient(90deg,#38bdf8,#7c3aed)}
+  .section{padding:24px 40px}
+  .section-alt{background:#f1f5f9}
+  .section-title{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+  .bio-text{font-size:13.5px;line-height:1.75;color:#475569}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .badge{background:#0f172a;color:#fff;font-size:11.5px;font-weight:600;padding:5px 14px;border-radius:20px;letter-spacing:0.3px}
+  .badge.blue{background:#0369a1}
+  .badge.green{background:#15803d}
+  .badge.purple{background:#7c3aed}
+  .badge.red{background:#b91c1c}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px}
+  .card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .card-icon{font-size:26px;margin-bottom:8px}
+  .card-title{font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:#0f172a;margin-bottom:4px}
+  .card-desc{font-size:11.5px;color:#64748b;line-height:1.5}
+  .banner{background:#1e293b;padding:20px 40px;display:flex;align-items:center;justify-content:space-between}
+  .banner-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;color:#fff}
+  .banner-url{font-size:12px;color:#38bdf8;margin-top:3px}
+  .banner-year{font-family:'Poppins',sans-serif;font-size:28px;font-weight:800;color:#1e293b;-webkit-text-stroke:1px #38bdf8}
+  .footer{background:#0f172a;padding:16px 40px;display:flex;align-items:center;justify-content:space-between}
+  .contact-links{display:flex;gap:20px}
+  .contact-link{color:#94a3b8;font-size:12px;text-decoration:none}
+  .footer-note{font-size:11px;color:#475569}
+  .divider{height:1px;background:#e2e8f0;margin:0 40px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="avatar-placeholder">👤</div>
+  <!-- <div class="avatar"><img src="photo2.jpg" alt="Photo"></div> -->
+  <div class="header-info">
+    <div class="name">[ FULL NAME HERE ]</div>
+    <div class="role-title">Backend Developer – Authentication &amp; Security</div>
+    <div class="project-tag">CommuteSafe – Real-Time Bus Tracking System</div>
+  </div>
+  <div class="logo-corner">
+    <div class="logo-text"><span>Commute</span>Safe</div>
+    <small>2026</small>
+  </div>
+</div>
+<div class="accent-bar"></div>
+<div class="section">
+  <div class="section-title">About Me</div>
+  <div class="bio-text">Built the complete user authentication system for CommuteSafe, a real-time bus tracking platform. Implemented secure login, logout, registration, and session management with BCrypt password hashing and remember-me cookie tokens. Integrated Google OAuth 2.0 for social sign-in, reCAPTCHA verification to prevent bot registrations, and the AuthFilter middleware that protects every route. Enforced strict role-based access control separating ADMIN, DRIVER, and PASSENGER capabilities.</div>
+</div>
+<div class="divider"></div>
+<div class="section section-alt">
+  <div class="section-title">Technologies Used</div>
+  <div class="badges">
+    <span class="badge">Java 21</span>
+    <span class="badge blue">Jakarta Servlet API</span>
+    <span class="badge red">BCrypt</span>
+    <span class="badge blue">Google OAuth 2.0</span>
+    <span class="badge purple">reCAPTCHA v2</span>
+    <span class="badge">HTTP Cookies &amp; Sessions</span>
+    <span class="badge green">Tomcat 10.1</span>
+    <span class="badge">Role-Based Access Control</span>
+    <span class="badge blue">JPA / Hibernate</span>
+    <span class="badge">MySQL</span>
+  </div>
+</div>
+<div class="divider"></div>
+<div class="section">
+  <div class="section-title">Key Contributions</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🔐</div>
+      <div class="card-title">Secure Login System</div>
+      <div class="card-desc">Built login with BCrypt verification, transparent password migration, and session binding.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🍪</div>
+      <div class="card-title">Remember-Me Tokens</div>
+      <div class="card-desc">Implemented 30-day persistent login via secure random tokens stored in DB and HttpOnly cookies.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">Google OAuth 2.0</div>
+      <div class="card-desc">Integrated Google sign-in flow with callback handling, user creation, and session restore.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛡️</div>
+      <div class="card-title">AuthFilter Middleware</div>
+      <div class="card-desc">Wrote the servlet filter protecting all routes — redirects unauthenticated requests to login.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <div class="card-title">reCAPTCHA Integration</div>
+      <div class="card-desc">Integrated Google reCAPTCHA v2 on login to block automated bot attacks.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">👥</div>
+      <div class="card-title">Role-Based Access</div>
+      <div class="card-desc">Enforced ADMIN, DRIVER, PASSENGER access boundaries across every endpoint in the system.</div>
+    </div>
+  </div>
+</div>
+<div class="banner">
+  <div>
+    <div class="banner-title">CommuteSafe — Real-Time Bus Tracking System</div>
+    <div class="banner-url">https://smartbus-bf6r.onrender.com</div>
+  </div>
+  <div class="banner-year">2026</div>
+</div>
+<div class="footer">
+  <div class="contact-links">
+    <a class="contact-link" href="#">🔗 LinkedIn: [ your linkedin ]</a>
+    <a class="contact-link" href="#">💻 GitHub: [ your github ]</a>
+    <a class="contact-link" href="#">✉️ [ your email ]</a>
+  </div>
+  <div class="footer-note">CommuteSafe Project · 2026</div>
+</div>
+</body>
+</html>

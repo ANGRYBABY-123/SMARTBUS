@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio – Project Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;width:210mm;min-height:297mm;margin:0 auto}
+  @media print{body{margin:0;width:210mm}}
+
+  /* HEADER */
+  .header{background:#0f172a;padding:36px 40px;display:flex;align-items:center;gap:28px}
+  .avatar-wrap{flex-shrink:0}
+  .avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #00c853;background:#1e293b;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .avatar-placeholder{width:110px;height:110px;border-radius:50%;border:3px solid #00c853;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:40px;color:#38bdf8}
+  .header-info{flex:1}
+  .name{font-family:'Poppins',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+  .role-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:#38bdf8;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+  .project-tag{margin-top:10px;display:inline-block;background:#00c853;color:#0f172a;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;letter-spacing:0.5px}
+  .logo-corner{text-align:right;flex-shrink:0}
+  .logo-corner .logo-text{font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;color:#fff}
+  .logo-corner .logo-text span{color:#00c853}
+  .logo-corner small{display:block;color:#64748b;font-size:10px;margin-top:2px}
+
+  /* ACCENT */
+  .accent-bar{height:5px;background:linear-gradient(90deg,#00c853,#38bdf8)}
+
+  /* SECTIONS */
+  .section{padding:24px 40px}
+  .section-alt{background:#f1f5f9}
+  .section-dark{background:#0f172a}
+  .section-title{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#00c853;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+  .bio-text{font-size:13.5px;line-height:1.75;color:#475569}
+
+  /* TECH BADGES */
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .badge{background:#0f172a;color:#fff;font-size:11.5px;font-weight:600;padding:5px 14px;border-radius:20px;letter-spacing:0.3px}
+  .badge.blue{background:#0369a1}
+  .badge.green{background:#15803d}
+  .badge.purple{background:#7c3aed}
+  .badge.orange{background:#c2410c}
+
+  /* CONTRIBUTIONS */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px}
+  .card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .card-icon{font-size:26px;margin-bottom:8px}
+  .card-title{font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:#0f172a;margin-bottom:4px}
+  .card-desc{font-size:11.5px;color:#64748b;line-height:1.5}
+
+  /* PROJECT BANNER */
+  .banner{background:#1e293b;padding:20px 40px;display:flex;align-items:center;justify-content:space-between}
+  .banner-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;color:#fff}
+  .banner-url{font-size:12px;color:#38bdf8;margin-top:3px}
+  .banner-year{font-family:'Poppins',sans-serif;font-size:28px;font-weight:800;color:#1e293b;-webkit-text-stroke:1px #38bdf8}
+
+  /* FOOTER */
+  .footer{background:#0f172a;padding:16px 40px;display:flex;align-items:center;justify-content:space-between}
+  .contact-links{display:flex;gap:20px}
+  .contact-link{color:#94a3b8;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:5px}
+  .contact-link:hover{color:#38bdf8}
+  .footer-note{font-size:11px;color:#475569}
+
+  /* DIVIDER */
+  .divider{height:1px;background:#e2e8f0;margin:0 40px}
+
+  /* SKILLS ROW */
+  .skills-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .skill-item{display:flex;flex-direction:column;gap:5px}
+  .skill-name{font-size:12px;font-weight:600;color:#0f172a}
+  .skill-bar-bg{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+  .skill-bar{height:6px;border-radius:3px;background:linear-gradient(90deg,#00c853,#38bdf8)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="avatar-wrap">
+    <!-- REPLACE src WITH ACTUAL PHOTO PATH -->
+    <div class="avatar-placeholder">👤</div>
+    <!-- <div class="avatar"><img src="photo1.jpg" alt="Photo"></div> -->
+  </div>
+  <div class="header-info">
+    <div class="name">[ FULL NAME HERE ]</div>
+    <div class="role-title">Project Manager &amp; Scrum Master</div>
+    <div class="project-tag">CommuteSafe – Real-Time Bus Tracking System</div>
+  </div>
+  <div class="logo-corner">
+    <div class="logo-text"><span>Commute</span>Safe</div>
+    <small>2026</small>
+  </div>
+</div>
+<div class="accent-bar"></div>
+
+<!-- ABOUT -->
+<div class="section">
+  <div class="section-title">About Me</div>
+  <div class="bio-text">
+    Oversaw the entire development lifecycle of CommuteSafe — a real-time bus tracking and commuter management system built with Java, Jakarta EE, and MySQL. Responsible for system architecture planning, sprint coordination, GitHub repository management, deployment configuration on Render, and ensuring all modules integrated correctly. Served as the bridge between frontend and backend teams, maintaining documentation, resolving blockers, and delivering the project on time.
+  </div>
+</div>
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<div class="section section-alt">
+  <div class="section-title">Technologies Used</div>
+  <div class="badges">
+    <span class="badge">Git</span>
+    <span class="badge blue">GitHub</span>
+    <span class="badge green">Render</span>
+    <span class="badge orange">Docker</span>
+    <span class="badge purple">Agile / Scrum</span>
+    <span class="badge">Markdown</span>
+    <span class="badge blue">render.yaml Blueprint</span>
+    <span class="badge green">CI/CD</span>
+    <span class="badge">Project Documentation</span>
+  </div>
+</div>
+<div class="divider"></div>
+
+<!-- CONTRIBUTIONS -->
+<div class="section">
+  <div class="section-title">Key Contributions</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🗂️</div>
+      <div class="card-title">System Architecture</div>
+      <div class="card-desc">Designed the overall system structure, module boundaries, and data flow across all 9 development areas.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Deployment Pipeline</div>
+      <div class="card-desc">Configured the Render Blueprint (render.yaml) for automated Docker-based deployments on every GitHub push.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Sprint Management</div>
+      <div class="card-desc">Led Agile sprints, tracked GitHub commits across all team members, and resolved integration conflicts.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <div class="card-title">GitHub Repository</div>
+      <div class="card-desc">Managed the main repository, branching strategy, pull requests, and release tagging throughout development.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📄</div>
+      <div class="card-title">Documentation</div>
+      <div class="card-desc">Wrote and maintained the README, contributor guides, setup instructions, and API environment variable docs.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤝</div>
+      <div class="card-title">Team Coordination</div>
+      <div class="card-desc">Coordinated 9-member team across backend, frontend, and DevOps tracks, ensuring deliverables were met.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT BANNER -->
+<div class="banner">
+  <div>
+    <div class="banner-title">CommuteSafe — Real-Time Bus Tracking System</div>
+    <div class="banner-url">https://smartbus-bf6r.onrender.com</div>
+  </div>
+  <div class="banner-year">2026</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="contact-links">
+    <a class="contact-link" href="#">🔗 LinkedIn: [ your linkedin ]</a>
+    <a class="contact-link" href="#">💻 GitHub: [ your github ]</a>
+    <a class="contact-link" href="#">✉️ [ your email ]</a>
+  </div>
+  <div class="footer-note">CommuteSafe Project · 2026</div>
+</div>
+
+</body>
+</html>
