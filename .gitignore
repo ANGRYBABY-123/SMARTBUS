@@ -17,5 +17,18 @@ Thumbs.db
 *.env
 .env
 
-# Local JDK copies — not part of the project source
+# Local JDK copies – not part of the project source
 database/oracleJdk-26/
+
+# Node (Playwright tooling only – not deployed)
+node_modules/
+package-lock.json
+package.json
+
+# Generated documentation / manuals
+APP_WORKFLOW_MANUAL.html
+APP_WORKFLOW_MANUAL.md
+APP_WORKFLOW_MANUAL.pdf
+APP_WORKFLOW_MANUAL_PHOTO.html
+SYSTEM_USER_MANUAL.html
+SYSTEM_USER_MANUAL.md
