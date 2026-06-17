@@ -1,10 +1,10 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.BusStopDAO;
-import com.smartbus.dao.RouteDAO;
 import com.smartbus.entity.BusStop;
 import com.smartbus.entity.Route;
 import com.smartbus.entity.User;
+import com.smartbus.service.BusStopService;
+import com.smartbus.service.RouteService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -19,8 +19,8 @@ import java.util.List;
 @WebServlet("/stops/*")
 public class StopServlet extends HttpServlet {
 
-    private final BusStopDAO stopDAO  = new BusStopDAO();
-    private final RouteDAO   routeDAO = new RouteDAO();
+    private final BusStopService stopDAO  = new BusStopService();
+    private final RouteService   routeDAO = new RouteService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

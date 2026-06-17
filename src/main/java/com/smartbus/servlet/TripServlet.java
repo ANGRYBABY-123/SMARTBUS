@@ -1,16 +1,16 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.BusDAO;
-import com.smartbus.dao.DriverDAO;
-import com.smartbus.dao.RouteDAO;
-import com.smartbus.dao.ScheduleDAO;
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.Bus;
 import com.smartbus.entity.Driver;
 import com.smartbus.entity.Route;
 import com.smartbus.entity.Schedule;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
+import com.smartbus.service.BusService;
+import com.smartbus.service.DriverService;
+import com.smartbus.service.RouteService;
+import com.smartbus.service.ScheduleService;
+import com.smartbus.service.TripService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -27,11 +27,11 @@ import java.util.List;
 @WebServlet("/trips/*")
 public class TripServlet extends HttpServlet {
 
-    private final TripDAO     tripDAO     = new TripDAO();
-    private final ScheduleDAO scheduleDAO = new ScheduleDAO();
-    private final DriverDAO   driverDAO   = new DriverDAO();
-    private final BusDAO      busDAO      = new BusDAO();
-    private final RouteDAO    routeDAO    = new RouteDAO();
+    private final TripService     tripDAO     = new TripService();
+    private final ScheduleService scheduleDAO = new ScheduleService();
+    private final DriverService   driverDAO   = new DriverService();
+    private final BusService      busDAO      = new BusService();
+    private final RouteService    routeDAO    = new RouteService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

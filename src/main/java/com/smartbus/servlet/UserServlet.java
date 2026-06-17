@@ -1,7 +1,5 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.RememberMeDAO;
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.Driver;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
@@ -9,6 +7,8 @@ import com.smartbus.entity.User;
 import com.smartbus.util.InputValidator;
 import com.smartbus.util.EmailUtil;
 import com.smartbus.util.PasswordUtil;
+import com.smartbus.service.RememberMeService;
+import com.smartbus.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -27,8 +27,8 @@ public class UserServlet extends HttpServlet {
     private static final String COOKIE_NAME = "SMARTBUS_REMEMBER";
     private static final int    COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-    private final UserDAO       userDAO       = new UserDAO();
-    private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
+    private final UserService       userDAO       = new UserService();
+    private final RememberMeService rememberMeDAO = new RememberMeService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

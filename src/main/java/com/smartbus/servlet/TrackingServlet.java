@@ -1,10 +1,10 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.GpsTrackingDAO;
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.GpsTracking;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
+import com.smartbus.service.GpsTrackingService;
+import com.smartbus.service.TripService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -18,8 +18,8 @@ import java.util.List;
 @WebServlet("/tracking/*")
 public class TrackingServlet extends HttpServlet {
 
-    private final TripDAO        tripDAO    = new TripDAO();
-    private final GpsTrackingDAO gpsDAO     = new GpsTrackingDAO();
+    private final TripService        tripDAO    = new TripService();
+    private final GpsTrackingService gpsDAO     = new GpsTrackingService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

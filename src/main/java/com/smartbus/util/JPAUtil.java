@@ -42,15 +42,9 @@ public class JPAUtil {
     private static Map<String, Object> buildOverrides() {
         Map<String, Object> props = new HashMap<>();
 
-        String host = env("DB_HOST", null);
-        String user = env("DB_USER", null);
-        String pass = env("DB_PASS", null);
-
-        // Only apply overrides when the three required vars are ALL present.
-        // Partial configuration would produce a broken connection string.
-        if (host == null || user == null || pass == null) {
-            return props; // fall through to persistence.xml values
-        }
+        String host = requiredEnv("DB_HOST");
+        String user = requiredEnv("DB_USER");
+        String pass = requiredEnv("DB_PASS");
 
         String port = env("DB_PORT", "3306");
         String name = env("DB_NAME", "railway");  // matches Railway.app default
@@ -77,6 +71,14 @@ public class JPAUtil {
         String v = System.getProperty(key);
         if (v == null || v.isBlank()) v = System.getenv(key);
         return (v != null && !v.isBlank()) ? v : defaultValue;
+    }
+
+    private static String requiredEnv(String key) {
+        String value = env(key, null);
+        if (value == null) {
+            throw new IllegalStateException("Missing required database environment variable: " + key);
+        }
+        return value;
     }
 
     public static void close() {

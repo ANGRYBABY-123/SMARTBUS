@@ -1,11 +1,11 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.NotificationDAO;
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.Notification;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
 import com.smartbus.util.FirebaseUtil;
+import com.smartbus.service.NotificationService;
+import com.smartbus.service.TripService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,8 +21,8 @@ import java.util.List;
 @WebServlet("/notifications/*")
 public class NotificationServlet extends HttpServlet {
 
-    private final NotificationDAO notifDAO = new NotificationDAO();
-    private final TripDAO         tripDAO  = new TripDAO();
+    private final NotificationService notifDAO = new NotificationService();
+    private final TripService         tripDAO  = new TripService();
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 

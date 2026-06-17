@@ -1,9 +1,9 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.PasswordResetTokenDAO;
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.User;
 import com.smartbus.util.PasswordUtil;
+import com.smartbus.service.PasswordResetTokenService;
+import com.smartbus.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,8 +15,8 @@ import java.io.IOException;
 @WebServlet("/reset-password")
 public class ResetPasswordServlet extends HttpServlet {
 
-    private final PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private final UserDAO userDAO = new UserDAO();
+    private final PasswordResetTokenService tokenDAO = new PasswordResetTokenService();
+    private final UserService userDAO = new UserService();
 
     /** GET: check session for a verified userId, show the form or an error. */
     @Override

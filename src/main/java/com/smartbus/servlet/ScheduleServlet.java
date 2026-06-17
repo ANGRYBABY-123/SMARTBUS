@@ -1,9 +1,9 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.RouteDAO;
-import com.smartbus.dao.ScheduleDAO;
 import com.smartbus.entity.Route;
 import com.smartbus.entity.Schedule;
+import com.smartbus.service.RouteService;
+import com.smartbus.service.ScheduleService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,8 +16,8 @@ import java.util.List;
 @WebServlet("/schedules/*")
 public class ScheduleServlet extends HttpServlet {
 
-    private final ScheduleDAO scheduleDAO = new ScheduleDAO();
-    private final RouteDAO routeDAO = new RouteDAO();
+    private final ScheduleService scheduleDAO = new ScheduleService();
+    private final RouteService routeDAO = new RouteService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

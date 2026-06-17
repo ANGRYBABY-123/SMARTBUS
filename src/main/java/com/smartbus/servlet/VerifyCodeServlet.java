@@ -1,7 +1,7 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.PasswordResetTokenDAO;
 import com.smartbus.entity.PasswordResetToken;
+import com.smartbus.service.PasswordResetTokenService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @WebServlet("/verify-code")
 public class VerifyCodeServlet extends HttpServlet {
 
-    private final PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
+    private final PasswordResetTokenService tokenDAO = new PasswordResetTokenService();
 
     /** GET: show the 5-digit code entry form. */
     @Override

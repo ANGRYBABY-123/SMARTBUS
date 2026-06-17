@@ -1,7 +1,7 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.Trip;
+import com.smartbus.service.TripService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,11 +15,11 @@ import java.util.List;
 @WebServlet("/passenger/*")
 public class PassengerServlet extends HttpServlet {
 
-    private TripDAO tripDAO;
+    private TripService tripDAO;
 
     @Override
     public void init() {
-        tripDAO = new TripDAO();
+        tripDAO = new TripService();
     }
 
     @Override

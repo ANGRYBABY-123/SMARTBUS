@@ -1,10 +1,10 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.PasswordResetTokenDAO;
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.PasswordResetToken;
 import com.smartbus.entity.User;
 import com.smartbus.util.EmailUtil;
+import com.smartbus.service.PasswordResetTokenService;
+import com.smartbus.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -20,8 +20,8 @@ public class ForgotPasswordServlet extends HttpServlet {
     private static final int TOKEN_EXPIRY_MINUTES = 15;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final UserDAO userDAO = new UserDAO();
-    private final PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
+    private final UserService userDAO = new UserService();
+    private final PasswordResetTokenService tokenDAO = new PasswordResetTokenService();
 
     /** GET: show the standalone forgot-password page. */
     @Override

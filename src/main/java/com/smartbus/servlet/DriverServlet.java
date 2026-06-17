@@ -1,9 +1,9 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.DriverScheduleDAO;
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
+import com.smartbus.service.DriverScheduleService;
+import com.smartbus.service.TripService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -18,8 +18,8 @@ import java.util.List;
 @WebServlet("/driver/*")
 public class DriverServlet extends HttpServlet {
 
-    private final TripDAO             tripDAO     = new TripDAO();
-    private final DriverScheduleDAO   dsDAO       = new DriverScheduleDAO();
+    private final TripService           tripDAO     = new TripService();
+    private final DriverScheduleService dsDAO       = new DriverScheduleService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

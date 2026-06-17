@@ -1,12 +1,12 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.GpsTrackingDAO;
-import com.smartbus.dao.NotificationDAO;
-import com.smartbus.dao.TripDAO;
 import com.smartbus.entity.GpsTracking;
 import com.smartbus.entity.Notification;
 import com.smartbus.entity.Trip;
 import com.smartbus.entity.User;
+import com.smartbus.service.GpsTrackingService;
+import com.smartbus.service.NotificationService;
+import com.smartbus.service.TripService;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,9 +45,9 @@ public class AiServlet extends HttpServlet {
     /** Resolved at startup from env var. */
     private String groqApiKey;
 
-    private final TripDAO        tripDAO  = new TripDAO();
-    private final GpsTrackingDAO gpsDAO   = new GpsTrackingDAO();
-    private final NotificationDAO notifDAO = new NotificationDAO();
+    private final TripService        tripDAO  = new TripService();
+    private final GpsTrackingService gpsDAO   = new GpsTrackingService();
+    private final NotificationService notifDAO = new NotificationService();
 
     @Override
     public void init() {

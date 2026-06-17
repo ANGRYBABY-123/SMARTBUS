@@ -1,7 +1,7 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.User;
+import com.smartbus.service.UserService;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +18,7 @@ import java.io.IOException;
 @WebServlet("/api/pending-count")
 public class PendingCountServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final UserService userDAO = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {

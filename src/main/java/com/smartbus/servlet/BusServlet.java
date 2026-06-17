@@ -1,7 +1,7 @@
 package com.smartbus.servlet;
 
-import com.smartbus.dao.BusDAO;
 import com.smartbus.entity.Bus;
+import com.smartbus.service.BusService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,7 +13,7 @@ import java.util.List;
 @WebServlet("/buses/*")
 public class BusServlet extends HttpServlet {
 
-    private final BusDAO busDAO = new BusDAO();
+    private final BusService busDAO = new BusService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

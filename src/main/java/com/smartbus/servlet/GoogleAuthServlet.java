@@ -2,11 +2,11 @@ package com.smartbus.servlet;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.smartbus.dao.RememberMeDAO;
-import com.smartbus.dao.UserDAO;
 import com.smartbus.entity.Passenger;
 import com.smartbus.entity.RememberMeToken;
 import com.smartbus.entity.User;
+import com.smartbus.service.RememberMeService;
+import com.smartbus.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -46,8 +46,8 @@ public class GoogleAuthServlet extends HttpServlet {
     private static final String TOKEN_URI    = "https://oauth2.googleapis.com/token";
     private static final String USERINFO_URI = "https://www.googleapis.com/oauth2/v3/userinfo";
 
-    private final UserDAO       userDAO       = new UserDAO();
-    private final RememberMeDAO rememberMeDAO = new RememberMeDAO();
+    private final UserService       userDAO       = new UserService();
+    private final RememberMeService rememberMeDAO = new RememberMeService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
