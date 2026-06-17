@@ -34,14 +34,15 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1. user (base table – JOINED inheritance)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user (
-    user_id      BIGINT       NOT NULL AUTO_INCREMENT,
-    name         VARCHAR(100) NOT NULL,
-    email        VARCHAR(150) NOT NULL,
-    password     VARCHAR(255) NOT NULL,
-    role         VARCHAR(20)  NOT NULL,
-    status       VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    google_id    VARCHAR(100) NULL,
-    phone_number VARCHAR(20)  NULL,
+    user_id               BIGINT       NOT NULL AUTO_INCREMENT,
+    name                  VARCHAR(100) NOT NULL,
+    email                 VARCHAR(150) NOT NULL,
+    password              VARCHAR(255) NOT NULL,
+    role                  VARCHAR(20)  NOT NULL,
+    status                VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    google_id             VARCHAR(100) NULL,
+    phone_number          VARCHAR(20)  NULL,
+    removal_scheduled_at  DATETIME     NULL,
     CONSTRAINT pk_user       PRIMARY KEY (user_id),
     CONSTRAINT uq_user_email  UNIQUE (email),
     CONSTRAINT uq_google_id   UNIQUE (google_id)
@@ -212,10 +213,112 @@ CREATE TABLE IF NOT EXISTS stop_route (
 -- ============================================================
 -- SEED DATA
 -- ============================================================
--- Admin account. Password is BCrypt hash of "M@sydo123" (work factor 12).
--- The app also accepts the legacy plaintext on first login and auto-upgrades it.
+-- Admin : Maetsok01@gmail.com  / M@sydo123
+-- Others: Admin@123
+-- ============================================================
+
+-- Users (1 admin, 4 drivers, 5 passengers)
 INSERT IGNORE INTO user (name, email, password, role, status) VALUES
-    ('Administrator', 'Maetsok01@gmail.com',
+    ('Kamo Maetso',       'Maetsok01@gmail.com',
      '$2a$12$5khGO2mMhCd18ve1c3pMHu8Lq9IDzj7cafzV0q7SWFTD9DVN4Eyn6',
-     'ADMIN', 'ACTIVE');
+     'ADMIN', 'ACTIVE'),
+    ('Thabo Nkosi',       'thabo.nkosi@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'DRIVER', 'ACTIVE'),
+    ('Sipho Dlamini',     'sipho.dlamini@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'DRIVER', 'ACTIVE'),
+    ('Bongani Zulu',      'bongani.zulu@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'DRIVER', 'ACTIVE'),
+    ('Mandla Khumalo',    'mandla.khumalo@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'DRIVER', 'ACTIVE'),
+    ('Lerato Mokoena',    'lerato.mokoena@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'PASSENGER', 'ACTIVE'),
+    ('Nomsa Khumalo',     'nomsa.khumalo@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'PASSENGER', 'ACTIVE'),
+    ('Tebogo Sithole',    'tebogo.sithole@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'PASSENGER', 'ACTIVE'),
+    ('Zanele Ndlovu',     'zanele.ndlovu@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'PASSENGER', 'ACTIVE'),
+    ('Siyabonga Mthembu', 'siyabonga.mthembu@smartbus.com',
+     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImf/fTiS',
+     'PASSENGER', 'ACTIVE');
+
+-- Driver sub-records
+INSERT IGNORE INTO driver (driver_id, registration_number)
+    SELECT user_id, 'DRV-001' FROM user WHERE email = 'thabo.nkosi@smartbus.com';
+INSERT IGNORE INTO driver (driver_id, registration_number)
+    SELECT user_id, 'DRV-002' FROM user WHERE email = 'sipho.dlamini@smartbus.com';
+INSERT IGNORE INTO driver (driver_id, registration_number)
+    SELECT user_id, 'DRV-003' FROM user WHERE email = 'bongani.zulu@smartbus.com';
+INSERT IGNORE INTO driver (driver_id, registration_number)
+    SELECT user_id, 'DRV-004' FROM user WHERE email = 'mandla.khumalo@smartbus.com';
+
+-- Passenger sub-records
+INSERT IGNORE INTO passenger (passenger_id, email)
+    SELECT user_id, email FROM user WHERE email = 'lerato.mokoena@smartbus.com';
+INSERT IGNORE INTO passenger (passenger_id, email)
+    SELECT user_id, email FROM user WHERE email = 'nomsa.khumalo@smartbus.com';
+INSERT IGNORE INTO passenger (passenger_id, email)
+    SELECT user_id, email FROM user WHERE email = 'tebogo.sithole@smartbus.com';
+INSERT IGNORE INTO passenger (passenger_id, email)
+    SELECT user_id, email FROM user WHERE email = 'zanele.ndlovu@smartbus.com';
+INSERT IGNORE INTO passenger (passenger_id, email)
+    SELECT user_id, email FROM user WHERE email = 'siyabonga.mthembu@smartbus.com';
+
+-- Buses
+INSERT IGNORE INTO bus (registration_number, capacity) VALUES
+    ('TUT-BUS-001', 60),
+    ('TUT-BUS-002', 60),
+    ('TUT-BUS-003', 45),
+    ('TUT-BUS-004', 45),
+    ('TUT-BUS-005', 30);
+
+-- Routes (with GPS coords)
+INSERT IGNORE INTO route (route_name, start_location, end_location, start_lat, start_lng, end_lat, end_lng) VALUES
+    ('Soshanguve -> Pretoria CBD',        'Soshanguve',         'Pretoria CBD',        -25.5051, 28.1019, -25.7454, 28.1879),
+    ('Soshanguve -> TUT Pretoria Campus', 'Soshanguve',         'TUT Pretoria Campus', -25.5051, 28.1019, -25.7313, 28.1648),
+    ('Ga-Rankuwa -> Pretoria Campus',     'Ga-Rankuwa',         'TUT Pretoria Campus', -25.6169, 27.9964, -25.7313, 28.1648),
+    ('Arcadia Pretoria Shuttle',          'Arcadia Campus',     'Pretoria Campus',     -25.7469, 28.1961, -25.7313, 28.1648),
+    ('Soshanguve -> Bosman Station',      'Soshanguve',         'Bosman Station',      -25.5051, 28.1019, -25.7465, 28.1892),
+    ('Soshanguve -> TUT Arcadia Campus',  'Soshanguve',         'TUT Arcadia Campus',  -25.5051, 28.1019, -25.7469, 28.1961);
+
+-- Schedules (morning + afternoon)
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '06:00:00', '07:00:00' FROM route WHERE route_name = 'Soshanguve -> Pretoria CBD';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '16:00:00', '17:00:00' FROM route WHERE route_name = 'Soshanguve -> Pretoria CBD';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '07:00:00', '08:00:00' FROM route WHERE route_name = 'Soshanguve -> TUT Pretoria Campus';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '17:00:00', '18:00:00' FROM route WHERE route_name = 'Soshanguve -> TUT Pretoria Campus';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '06:30:00', '07:30:00' FROM route WHERE route_name = 'Ga-Rankuwa -> Pretoria Campus';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '16:30:00', '17:30:00' FROM route WHERE route_name = 'Ga-Rankuwa -> Pretoria Campus';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '08:00:00', '08:30:00' FROM route WHERE route_name = 'Arcadia Pretoria Shuttle';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '13:00:00', '13:30:00' FROM route WHERE route_name = 'Arcadia Pretoria Shuttle';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '06:00:00', '07:00:00' FROM route WHERE route_name = 'Soshanguve -> Bosman Station';
+INSERT IGNORE INTO schedule (route_id, departure_time, arrival_time)
+    SELECT route_id, '07:00:00', '08:10:00' FROM route WHERE route_name = 'Soshanguve -> TUT Arcadia Campus';
+
+-- Bus stops
+INSERT IGNORE INTO bus_stop (stop_name, latitude, longitude) VALUES
+    ('Soshanguve L Bus Stop',        -25.5310, 28.1015),
+    ('Soshanguve TT Bus Stop',       -25.5488, 28.0902),
+    ('Wonderpark Mall Stop',         -25.6427, 28.1381),
+    ('Pretoria CBD Church Square',   -25.7454, 28.1879),
+    ('TUT Pretoria Campus Gate',     -25.7313, 28.1648),
+    ('TUT Arcadia Campus Gate',      -25.7469, 28.1961),
+    ('Bosman Station',               -25.7465, 28.1892),
+    ('Ga-Rankuwa Taxi Rank',         -25.6169, 27.9964);
 
