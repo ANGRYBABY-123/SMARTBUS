@@ -4,17 +4,21 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class JPAUtil {
 
     private static final String PERSISTENCE_UNIT = "SmartBusPU";
+    private static final Logger log = Logger.getLogger(JPAUtil.class.getName());
     private static EntityManagerFactory emf;
 
     private JPAUtil() {}
 
     public static EntityManagerFactory getEntityManagerFactory() {
         if (emf == null || !emf.isOpen()) {
-            emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT, buildOverrides());
+            Map<String, Object> overrides = buildOverrides();
+            emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT, overrides);
+            logResolvedDatabase(overrides);
         }
         return emf;
     }
@@ -57,6 +61,15 @@ public class JPAUtil {
         props.put("jakarta.persistence.jdbc.user",     user);
         props.put("jakarta.persistence.jdbc.password", pass);
         return props;
+    }
+
+    private static void logResolvedDatabase(Map<String, Object> overrides) {
+        String url = (String) overrides.get("jakarta.persistence.jdbc.url");
+        if (url != null) {
+            log.info("Using database from environment override: " + url);
+        } else {
+            log.info("Using database from persistence.xml fallback configuration.");
+        }
     }
 
     private static String env(String key, String defaultValue) {
