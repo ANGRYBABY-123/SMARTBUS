@@ -31,44 +31,42 @@ database/smartbus.sql
 ### 1. Prerequisites
 - JDK 11+
 - Maven 3.6+
-- MySQL 8 running on localhost:3306
-- Apache Tomcat 10.x (Jakarta EE 9 compatible)
+- A Railway MySQL service with the `smartbus` schema created
+- Render account for the Docker deployment
 
-### 2. Create the Database
-```sql
-mysql -u root -p < database/smartbus.sql
-```
-This creates the `smartbus` database, all tables, and seed data.
+### 2. Create the Railway database
+Run `database/smartbus.sql` against your Railway MySQL database first so the tables exist before the app starts.
 
-### 3. Configure DB Credentials
-Edit `src/main/resources/META-INF/persistence.xml` and set:
-```xml
-<property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/smartbus?..."/>
-<property name="jakarta.persistence.jdbc.user"     value="YOUR_DB_USER"/>
-<property name="jakarta.persistence.jdbc.password" value="YOUR_DB_PASSWORD"/>
+### 3. Configure Railway connection values
+Copy the Railway MySQL URL from the Railway dashboard and set it as `DB_URL` (or `MYSQL_PUBLIC_URL`). The app can read the full URL directly, so you do not need to split out host, port, and database.
+
+Example format:
+```text
+mysql://root:********@zephyr.proxy.rlwy.net:51546/railway
 ```
 
-### 4. Build
+### 4. Deploy with Render
+Use `render.yaml` as the Blueprint. Set the secret environment variables in the Render dashboard, especially `DB_URL` (or `MYSQL_PUBLIC_URL`), `SMTP_USER`, `SMTP_PASS`, and any optional API keys.
+
+### 5. Build
 ```bash
 mvn clean package
 ```
 The WAR is generated at `target/smartbus.war`.
 
-### 5. Deploy to Tomcat
-Copy `target/smartbus.war` to `$TOMCAT_HOME/webapps/`.
-
 ### 6. Access
+The Docker image serves the app at the root path, so open:
 ```
-http://localhost:8080/smartbus/
+https://<your-service>.onrender.com/
 ```
 Default login: `admin@smartbus.com` / `admin123`
 
 ## Default URLs
 | Page | URL |
 |------|-----|
-| Dashboard | `/smartbus/` |
-| Users | `/smartbus/users/list` |
-| Buses | `/smartbus/buses/list` |
-| Routes | `/smartbus/routes/list` |
-| Trips | `/smartbus/trips/list` |
-| Schedules | `/smartbus/schedules/list` |
+| Dashboard | `/` |
+| Users | `/users/list` |
+| Buses | `/buses/list` |
+| Routes | `/routes/list` |
+| Trips | `/trips/list` |
+| Schedules | `/schedules/list` |

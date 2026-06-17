@@ -4,14 +4,14 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # 1. Push this repo to GitHub / GitLab.
 # 2. On render.com → New → Blueprint → connect your repo.
-# 3. Fill in the four secret env vars (DB_HOST, DB_USER, DB_PASS, DB_NAME).
+# 3. Fill in the Railway database URL secret (DB_URL, or MYSQL_PUBLIC_URL).
 #    Recommended MySQL providers (free tier available):
 #      • PlanetScale  https://planetscale.com
 #      • Railway      https://railway.app
 #      • Aiven        https://aiven.io
 #      • TiDB Cloud   https://tidbcloud.com
 # 4. Deploy – Render will build the Docker image and start the app at
-#    https://<service-name>.onrender.com/login
+#    https://<service-name>.onrender.com/
 # ──────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -23,15 +23,7 @@ services:
 
     envVars:
       # ── Database connection ───────────────────────────────────────────────
-      - key: DB_HOST
-        value: "trolley.proxy.rlwy.net"
-      - key: DB_PORT
-        value: "31694"
-      - key: DB_NAME
-        value: "railway"
-      - key: DB_USER
-        value: "root"
-      - key: DB_PASS
+      - key: DB_URL
         sync: false     # set manually in Render dashboard
 
       # ── Email (JavaMail / SMTP) ───────────────────────────────────────────

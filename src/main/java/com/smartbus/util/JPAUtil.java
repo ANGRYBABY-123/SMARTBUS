@@ -5,11 +5,16 @@ import jakarta.persistence.Persistence;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JPAUtil {
 
     private static final String PERSISTENCE_UNIT = "SmartBusPU";
     private static final Logger log = Logger.getLogger(JPAUtil.class.getName());
+    private static final Pattern MYSQL_URL = Pattern.compile(
+        "^(?:jdbc:)?mysql://(?:(?<user>[^:/@?#]+)(?::(?<pass>[^@/?#]*))?@)?(?<host>[^:/?#]+)(?::(?<port>\\d+))?/(?<db>[^?]+)(?:\\?(?<params>.*))?$"
+    );
     private static EntityManagerFactory emf;
 
     private JPAUtil() {}
@@ -24,23 +29,26 @@ public class JPAUtil {
     }
 
     /**
-     * Reads optional environment variables so the same WAR can connect to any
-     * database server without recompiling.
+     * Reads environment variables so the same WAR can connect to Railway or
+     * another MySQL server without recompiling.
      *
-     * The override is applied ONLY when ALL THREE of DB_HOST, DB_USER and DB_PASS
-     * are explicitly set in the environment.  If any one is missing the method
-     * returns an empty map and the credentials in persistence.xml are used as-is
-     * (which is the correct Railway fallback).
+     * Preferred overrides, in order:
+     *   1. DB_URL / MYSQL_PUBLIC_URL / MYSQL_URL (full MySQL URL)
+     *   2. DB_HOST + DB_USER + DB_PASS (split credentials)
      *
-     * Required env vars for a full override:
-     *   DB_HOST  – MySQL host (e.g. trolley.proxy.rlwy.net)
-     *   DB_PORT  – MySQL port (default: 3306)
-     *   DB_NAME  – Schema / database name (default: railway)
-     *   DB_USER  – DB username
-     *   DB_PASS  – DB password
+     * If no override is present, the persistence.xml fallback is used.
      */
     private static Map<String, Object> buildOverrides() {
         Map<String, Object> props = new HashMap<>();
+
+        String url = env("DB_URL", null);
+        if (url == null) url = env("MYSQL_PUBLIC_URL", null);
+        if (url == null) url = env("MYSQL_URL", null);
+
+        if (url != null) {
+            props.putAll(fromMysqlUrl(url));
+            return props;
+        }
 
         String host = requiredEnv("DB_HOST");
         String user = requiredEnv("DB_USER");
@@ -54,6 +62,38 @@ public class JPAUtil {
         props.put("jakarta.persistence.jdbc.url",      url);
         props.put("jakarta.persistence.jdbc.user",     user);
         props.put("jakarta.persistence.jdbc.password", pass);
+        return props;
+    }
+
+    private static Map<String, Object> fromMysqlUrl(String rawUrl) {
+        String url = rawUrl.trim();
+        Matcher matcher = MYSQL_URL.matcher(url);
+        if (!matcher.matches()) {
+            throw new IllegalStateException("Invalid MySQL URL in DB_URL/MYSQL_PUBLIC_URL/MYSQL_URL");
+        }
+
+        String host = matcher.group("host");
+        String port = matcher.group("port") != null ? matcher.group("port") : "3306";
+        String db   = matcher.group("db");
+        String params = matcher.group("params");
+        String user = matcher.group("user");
+        String pass = matcher.group("pass");
+
+        String jdbcUrl = "jdbc:mysql://" + host + ":" + port + "/" + db;
+        if (params != null && !params.isBlank()) {
+            jdbcUrl += "?" + params;
+        } else {
+            jdbcUrl += "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+        }
+
+        Map<String, Object> props = new HashMap<>();
+        props.put("jakarta.persistence.jdbc.url", jdbcUrl);
+        if (user != null && !user.isBlank()) {
+            props.put("jakarta.persistence.jdbc.user", user);
+        }
+        if (pass != null && !pass.isBlank()) {
+            props.put("jakarta.persistence.jdbc.password", pass);
+        }
         return props;
     }
 

@@ -25,9 +25,9 @@
 
         <properties>
             <!-- ===== DATABASE CONNECTION ===== -->
-            <!-- Database settings must be supplied at runtime via env vars.   -->
-            <!-- JPAUtil now requires DB_HOST, DB_USER and DB_PASS so the app  -->
-            <!-- can only talk to the configured Railway MySQL database.       -->
+            <!-- Runtime values are injected by JPAUtil from DB_HOST, DB_PORT, -->
+            <!-- DB_NAME, DB_USER, and DB_PASS. These values are only a local -->
+            <!-- fallback if the container is launched without env vars.       -->
             <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver"/>
             <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/smartbus?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
             <property name="jakarta.persistence.jdbc.user"     value="smartbus"/>
