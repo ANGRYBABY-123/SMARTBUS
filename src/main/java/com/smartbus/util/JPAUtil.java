@@ -54,12 +54,12 @@ public class JPAUtil {
         String user = requiredEnv("DB_USER");
         String pass = requiredEnv("DB_PASS");
 
-        String port = env("DB_PORT", "3306");
-        String name = env("DB_NAME", "railway");  // matches Railway.app default
-        String url  = "jdbc:mysql://" + host + ":" + port + "/" + name
-                    + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+        String port    = env("DB_PORT", "3306");
+        String name    = env("DB_NAME", "railway");
+        String jdbcUrl = "jdbc:mysql://" + host + ":" + port + "/" + name
+                       + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
-        props.put("jakarta.persistence.jdbc.url",      url);
+        props.put("jakarta.persistence.jdbc.url",      jdbcUrl);
         props.put("jakarta.persistence.jdbc.user",     user);
         props.put("jakarta.persistence.jdbc.password", pass);
         return props;
